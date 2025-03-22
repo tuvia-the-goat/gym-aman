@@ -2,7 +2,7 @@
 export type UserRole = 'allBasesAdmin' | 'gymAdmin';
 
 export interface Admin {
-  id: string;
+  _id: string;
   username: string;
   password: string;
   role: UserRole;
@@ -10,20 +10,20 @@ export interface Admin {
 }
 
 export interface Base {
-  id: string;
+  _id: string;
   name: string;
   location: string;
   departments: Department[];
 }
 
 export interface Department {
-  id: string;
+  _id: string;
   name: string;
   baseId: string;
 }
 
 export interface Trainee {
-  id: string;
+  _id: string;
   personalId: string; // 7 digits
   fullName: string;
   medicalProfile: '97' | '82' | '72' | '64' | '45' | '25';
@@ -37,7 +37,7 @@ export interface Trainee {
 }
 
 export interface Entry {
-  id: string;
+  _id: string;
   traineeId: string;
   entryDate: string;
   entryTime: string;
