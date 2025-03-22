@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // קביעת URL בסיסי
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
 // יצירת מופע Axios קונפיגורציה
 const api = axios.create({
