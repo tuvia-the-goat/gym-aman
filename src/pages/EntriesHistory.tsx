@@ -1,8 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../components/DashboardLayout';
 import { useAdmin } from '../context/AdminContext';
-import { Entry, Trainee, Department, Base } from '../types';
+import { Entry, Trainee } from '../types';
+import { traineeService } from '../services/api';
+import { useToast } from '@/components/ui/use-toast';
 import {
   Dialog,
   DialogContent,
@@ -14,6 +15,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recha
 const EntriesHistory = () => {
   const { admin, entries, trainees, departments, bases } = useAdmin();
   const [filteredEntries, setFilteredEntries] = useState<Entry[]>([]);
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDepartment, setSelectedDepartment] = useState('');
   const [selectedBase, setSelectedBase] = useState('');
@@ -56,7 +58,7 @@ const EntriesHistory = () => {
     }
     
     // Apply base filter (only for all bases admin)
-    if (admin?.role === 'allBasesAdmin' && selectedBase) {
+    if (admin?.role === 'generalAdmin' && selectedBase) {
       filtered = filtered.filter(entry => entry.baseId === selectedBase);
     }
     
@@ -64,7 +66,7 @@ const EntriesHistory = () => {
     if (selectedProfile) {
       const traineesWithProfile = trainees.filter(
         trainee => trainee.medicalProfile === selectedProfile
-      ).map(trainee => trainee.id);
+      ).map(trainee => trainee._id);
       
       filtered = filtered.filter(entry =>
         traineesWithProfile.includes(entry.traineeId)
@@ -80,17 +82,17 @@ const EntriesHistory = () => {
   }, [admin, entries, searchTerm, selectedDepartment, selectedBase, selectedProfile, selectedDate, trainees]);
 
   const getDepartmentName = (id: string) => {
-    const department = departments.find(dept => dept.id === id);
+    const department = departments.find(dept => dept._id === id);
     return department ? department.name : '';
   };
 
   const getBaseName = (id: string) => {
-    const base = bases.find(base => base.id === id);
+    const base = bases.find(base => base._id === id);
     return base ? base.name : '';
   };
 
   const handleTraineeClick = (traineeId: string) => {
-    const trainee = trainees.find(t => t.id === traineeId);
+    const trainee = trainees.find(t => t._id === traineeId);
     if (trainee) {
       setSelectedTrainee(trainee);
       setIsDialogOpen(true);
@@ -134,8 +136,8 @@ const EntriesHistory = () => {
     
     // Percentile among all trainees
     const allTraineeEntryCounts = trainees.map(t => {
-      const count = entries.filter(e => e.traineeId === t.id).length;
-      return { traineeId: t.id, count };
+      const count = entries.filter(e => e.traineeId === t._id).length;
+      return { traineeId: t._id, count };
     }).sort((a, b) => b.count - a.count);
     
     const rank = allTraineeEntryCounts.findIndex(t => t.traineeId === traineeId) + 1;
@@ -150,34 +152,32 @@ const EntriesHistory = () => {
     };
   };
 
-  const updateMedicalApproval = (approved: boolean) => {
+  const updateMedicalApproval = async (approved: boolean) => {
     if (!selectedTrainee) return;
     
-    // Get all trainees
-    const allTrainees = [...trainees];
-    const traineeIndex = allTrainees.findIndex(t => t.id === selectedTrainee.id);
-    
-    if (traineeIndex !== -1) {
-      // Create a new trainee object with updated medical approval
-      const updatedTrainee = {
-        ...allTrainees[traineeIndex],
-        medicalApproval: {
-          approved,
-          expirationDate: approved 
-            ? new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString() 
-            : null,
-        },
-      };
+    try {
+      // Update medical approval via API
+      const updatedTrainee = await traineeService.updateMedicalApproval(
+        selectedTrainee._id, 
+        approved
+      );
       
-      // Update the trainee in the array
-      allTrainees[traineeIndex] = updatedTrainee;
-      
-      // Update the state and localStorage
-      useAdmin().setTrainees(allTrainees);
-      localStorage.setItem('trainees', JSON.stringify(allTrainees));
-      
-      // Update the selected trainee
+      // Update the selected trainee state
       setSelectedTrainee(updatedTrainee);
+      
+      toast({
+        title: approved ? "אישור רפואי עודכן" : "אישור רפואי בוטל",
+        description: approved 
+          ? "האישור הרפואי עודכן בהצלחה לשנה" 
+          : "האישור הרפואי בוטל בהצלחה",
+      });
+    } catch (error) {
+      console.error('Error updating medical approval:', error);
+      toast({
+        title: "שגיאה",
+        description: "אירעה שגיאה בעת עדכון האישור הרפואי",
+        variant: "destructive",
+      });
     }
   };
 
@@ -214,11 +214,11 @@ const EntriesHistory = () => {
               <option value="">כל המחלקות</option>
               {departments
                 .filter(dept => 
-                  admin?.role === 'allBasesAdmin' || 
+                  admin?.role === 'generalAdmin' || 
                   dept.baseId === admin?.baseId
                 )
                 .map(dept => (
-                  <option key={dept.id} value={dept.id}>
+                  <option key={dept._id} value={dept._id}>
                     {dept.name}
                   </option>
                 ))
@@ -226,7 +226,7 @@ const EntriesHistory = () => {
             </select>
           </div>
           
-          {admin?.role === 'allBasesAdmin' && (
+          {admin?.role === 'generalAdmin' && (
             <div>
               <label htmlFor="base" className="block text-sm font-medium mb-1">סינון לפי בסיס</label>
               <select
@@ -237,7 +237,7 @@ const EntriesHistory = () => {
               >
                 <option value="">כל הבסיסים</option>
                 {bases.map(base => (
-                  <option key={base.id} value={base.id}>
+                  <option key={base._id} value={base._id}>
                     {base.name}
                   </option>
                 ))}
@@ -284,7 +284,7 @@ const EntriesHistory = () => {
                   <th className="px-4 py-3 text-right">שם מתאמן</th>
                   <th className="px-4 py-3 text-right">מספר אישי</th>
                   <th className="px-4 py-3 text-right">מחלקה</th>
-                  {admin?.role === 'allBasesAdmin' && (
+                  {admin?.role === 'generalAdmin' && (
                     <th className="px-4 py-3 text-right">בסיס</th>
                   )}
                   <th className="px-4 py-3 text-right">תאריך</th>
@@ -295,14 +295,14 @@ const EntriesHistory = () => {
                 {filteredEntries.length > 0 ? (
                   filteredEntries.map((entry) => (
                     <tr 
-                      key={entry.id} 
+                      key={entry._id} 
                       className="border-t hover:bg-muted/50 cursor-pointer transition-colors"
                       onClick={() => handleTraineeClick(entry.traineeId)}
                     >
                       <td className="px-4 py-3">{entry.traineeFullName}</td>
                       <td className="px-4 py-3">{entry.traineePersonalId}</td>
                       <td className="px-4 py-3">{getDepartmentName(entry.departmentId)}</td>
-                      {admin?.role === 'allBasesAdmin' && (
+                      {admin?.role === 'generalAdmin' && (
                         <td className="px-4 py-3">{getBaseName(entry.baseId)}</td>
                       )}
                       <td className="px-4 py-3">{entry.entryDate}</td>
@@ -311,7 +311,7 @@ const EntriesHistory = () => {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={admin?.role === 'allBasesAdmin' ? 6 : 5} className="px-4 py-8 text-center text-muted-foreground">
+                    <td colSpan={admin?.role === 'generalAdmin' ? 6 : 5} className="px-4 py-8 text-center text-muted-foreground">
                       לא נמצאו רשומות
                     </td>
                   </tr>
@@ -381,7 +381,7 @@ const EntriesHistory = () => {
                       <h3 className="font-semibold text-lg mb-2">התפלגות ימי אימון</h3>
                       <ResponsiveContainer width="100%" height={120}>
                         <BarChart 
-                          data={getTraineeAnalytics(selectedTrainee.id).dayData} 
+                          data={getTraineeAnalytics(selectedTrainee._id).dayData} 
                           margin={{ top: 5, right: 5, bottom: 5, left: 5 }}
                         >
                           <XAxis dataKey="name" />
@@ -396,7 +396,7 @@ const EntriesHistory = () => {
                       <h3 className="font-semibold text-lg mb-2">התפלגות שעות אימון</h3>
                       <ResponsiveContainer width="100%" height={120}>
                         <BarChart 
-                          data={getTraineeAnalytics(selectedTrainee.id).hourData} 
+                          data={getTraineeAnalytics(selectedTrainee._id).hourData} 
                           margin={{ top: 5, right: 5, bottom: 5, left: 5 }}
                         >
                           <XAxis dataKey="name" />
@@ -410,14 +410,14 @@ const EntriesHistory = () => {
                     <div className="grid grid-cols-2 gap-4">
                       <div className="bg-muted p-4 rounded-lg text-center">
                         <div className="text-3xl font-bold">
-                          {getTraineeAnalytics(selectedTrainee.id).monthlyAverage}
+                          {getTraineeAnalytics(selectedTrainee._id).monthlyAverage}
                         </div>
                         <div className="text-sm text-muted-foreground">כניסות בחודש (ממוצע)</div>
                       </div>
                       
                       <div className="bg-muted p-4 rounded-lg text-center">
                         <div className="text-3xl font-bold">
-                          {getTraineeAnalytics(selectedTrainee.id).percentile}%
+                          {getTraineeAnalytics(selectedTrainee._id).percentile}%
                         </div>
                         <div className="text-sm text-muted-foreground">אחוזון המתאמנים</div>
                       </div>

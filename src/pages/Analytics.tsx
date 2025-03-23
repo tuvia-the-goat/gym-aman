@@ -66,9 +66,9 @@ const Analytics = () => {
   // Top trainees data
   const topTraineesData = useMemo(() => {
     const traineeCounts = filteredTrainees.map(trainee => {
-      const count = filteredEntries.filter(entry => entry.traineeId === trainee.id).length;
+      const count = filteredEntries.filter(entry => entry.traineeId === trainee._id).length;
       return { 
-        id: trainee.id, 
+        id: trainee._id, 
         name: trainee.fullName, 
         count, 
         departmentId: trainee.departmentId,
@@ -101,7 +101,7 @@ const Analytics = () => {
         id: deptId,
         name: getDepartmentName(deptId),
         value: count,
-        baseId: departments.find(d => d.id === deptId)?.baseId || '',
+        baseId: departments.find(d => d._id === deptId)?.baseId || '',
       }))
       .sort((a, b) => b.value - a.value)
       .slice(0, 5)
@@ -114,7 +114,7 @@ const Analytics = () => {
   
   // Bases data (only for all bases admin)
   const basesData = useMemo(() => {
-    if (admin?.role !== 'allBasesAdmin') return [];
+    if (admin?.role !== 'generalAdmin') return [];
     
     const baseCounts: { [key: string]: number } = {};
     
@@ -139,12 +139,12 @@ const Analytics = () => {
   
   // Helper functions to get names
   function getDepartmentName(id: string): string {
-    const department = departments.find(dept => dept.id === id);
+    const department = departments.find(dept => dept._id === id);
     return department ? department.name : '';
   }
   
   function getBaseName(id: string): string {
-    const base = bases.find(base => base.id === id);
+    const base = bases.find(base => base._id === id);
     return base ? base.name : '';
   }
   
@@ -241,7 +241,7 @@ const Analytics = () => {
                       <tr>
                         <th className="px-4 py-2 text-right">שם</th>
                         <th className="px-4 py-2 text-right">מחלקה</th>
-                        {admin?.role === 'allBasesAdmin' && (
+                        {admin?.role === 'generalAdmin' && (
                           <th className="px-4 py-2 text-right">בסיס</th>
                         )}
                         <th className="px-4 py-2 text-right">כניסות</th>
@@ -252,7 +252,7 @@ const Analytics = () => {
                         <tr key={index} className="border-t">
                           <td className="px-4 py-2">{trainee.name}</td>
                           <td className="px-4 py-2">{trainee.departmentName}</td>
-                          {admin?.role === 'allBasesAdmin' && (
+                          {admin?.role === 'generalAdmin' && (
                             <td className="px-4 py-2">{trainee.baseName}</td>
                           )}
                           <td className="px-4 py-2">{trainee.value}</td>
@@ -298,7 +298,7 @@ const Analytics = () => {
                     <thead className="bg-muted">
                       <tr>
                         <th className="px-4 py-2 text-right">מחלקה</th>
-                        {admin?.role === 'allBasesAdmin' && (
+                        {admin?.role === 'generalAdmin' && (
                           <th className="px-4 py-2 text-right">בסיס</th>
                         )}
                         <th className="px-4 py-2 text-right">כניסות</th>
@@ -308,7 +308,7 @@ const Analytics = () => {
                       {topDepartmentsData.map((dept, index) => (
                         <tr key={index} className="border-t">
                           <td className="px-4 py-2">{dept.name}</td>
-                          {admin?.role === 'allBasesAdmin' && (
+                          {admin?.role === 'generalAdmin' && (
                             <td className="px-4 py-2">{dept.baseName}</td>
                           )}
                           <td className="px-4 py-2">{dept.value}</td>
@@ -325,7 +325,7 @@ const Analytics = () => {
         </div>
         
         {/* Bases Chart (only for allBasesAdmin) */}
-        {admin?.role === 'allBasesAdmin' && basesData.length > 0 && (
+        {admin?.role === 'generalAdmin' && basesData.length > 0 && (
           <div className="bg-card shadow-sm rounded-lg p-6 border">
             <h3 className="text-lg font-medium mb-4">כניסות לפי בסיסים</h3>
             <div className="h-64">

@@ -1,9 +1,15 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAdmin } from '../context/AdminContext';
-import { Department, Base, Trainee, Entry } from '../types';
+import { Department, Base, Trainee } from '../types';
 import { useToast } from '@/components/ui/use-toast';
+import { 
+  baseService, 
+  departmentService, 
+  traineeService, 
+  entryService, 
+  authService 
+} from '../services/api';
 
 const Registration = () => {
   const navigate = useNavigate();
@@ -34,12 +40,12 @@ const Registration = () => {
   
   // Initialize the selected base based on the admin role
   useEffect(() => {
-    if (admin?.role === 'gymAdmin' && admin.baseId) {
-      const base = bases.find(b => b.id === admin.baseId);
+    if (admin?.role && admin.baseId) {
+      const base = bases.find(b => b._id === admin.baseId);
       if (base) {
         setSelectedBase(base);
       }
-    } else if (admin?.role === 'allBasesAdmin' && bases.length > 0) {
+    } else if (admin?.role === 'generalAdmin' && bases.length > 0) {
       setSelectedBase(null); // Require selection for allBasesAdmin
     }
   }, [admin, bases]);
@@ -49,30 +55,18 @@ const Registration = () => {
     e.preventDefault();
     
     try {
-      // Get admins from localStorage
-      const admins = JSON.parse(localStorage.getItem('admins') || '[]');
+      // Login using API service
+      const admin = await authService.login(loginUsername, loginPassword);
       
-      const matchedAdmin = admins.find(
-        (a: any) => a.username === loginUsername && a.password === loginPassword
-      );
-      
-      if (matchedAdmin) {
-        navigate('/dashboard');
-        toast({
-          title: "התחברות הצליחה",
-          description: `ברוך הבא, ${loginUsername}!`,
-        });
-      } else {
-        toast({
-          title: "התחברות נכשלה",
-          description: "שם משתמש או סיסמה שגויים",
-          variant: "destructive",
-        });
-      }
+      navigate('/dashboard');
+      toast({
+        title: "התחברות הצליחה",
+        description: `ברוך הבא, ${loginUsername}!`,
+      });
     } catch (error) {
       toast({
-        title: "שגיאת התחברות",
-        description: "אירעה שגיאה במהלך ההתחברות",
+        title: "התחברות נכשלה",
+        description: "שם משתמש או סיסמה שגויים",
         variant: "destructive",
       });
     }
@@ -89,7 +83,7 @@ const Registration = () => {
   };
   
   // Handle trainee registration
-  const handleRegistration = (e: React.FormEvent) => {
+  const handleRegistration = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!selectedBase) {
@@ -131,37 +125,39 @@ const Registration = () => {
       return;
     }
     
-    // Create new trainee
-    const newTrainee: Trainee = {
-      id: Date.now().toString(),
-      personalId,
-      fullName,
-      medicalProfile: medicalProfile as '97' | '82' | '72' | '64' | '45' | '25',
-      departmentId,
-      phoneNumber,
-      medicalApproval: {
-        approved: false,
-        expirationDate: null,
-      },
-      baseId: selectedBase.id,
-    };
-    
-    // Add trainee to state and localStorage
-    const updatedTrainees = [...trainees, newTrainee];
-    setTrainees(updatedTrainees);
-    localStorage.setItem('trainees', JSON.stringify(updatedTrainees));
-    
-    // Reset form
-    setPersonalId('');
-    setFullName('');
-    setMedicalProfile('');
-    setDepartmentId('');
-    setPhoneNumber('');
-    
-    toast({
-      title: "הרשמה הצליחה",
-      description: "המתאמן נרשם בהצלחה למערכת",
-    });
+    try {
+      // Create new trainee via API
+      const newTrainee = await traineeService.create({
+        personalId,
+        fullName,
+        medicalProfile: medicalProfile as '97' | '82' | '72' | '64' | '45' | '25',
+        departmentId,
+        phoneNumber,
+        baseId: selectedBase._id
+      });
+      
+      // Update state with new trainee
+      setTrainees([...trainees, newTrainee]);
+      
+      // Reset form
+      setPersonalId('');
+      setFullName('');
+      setMedicalProfile('');
+      setDepartmentId('');
+      setPhoneNumber('');
+      
+      toast({
+        title: "הרשמה הצליחה",
+        description: "המתאמן נרשם בהצלחה למערכת",
+      });
+    } catch (error) {
+      toast({
+        title: "שגיאה",
+        description: "אירעה שגיאה בעת הרשמת המתאמן",
+        variant: "destructive",
+      });
+      console.error('Registration error:', error);
+    }
   };
   
   // Handle personal ID check for entry
@@ -191,7 +187,7 @@ const Registration = () => {
   };
   
   // Handle entry confirmation
-  const handleEntryConfirmation = () => {
+  const handleEntryConfirmation = async () => {
     if (!entryTrainee || !selectedBase) return;
     
     // Check if medical approval is valid
@@ -209,54 +205,46 @@ const Registration = () => {
       return;
     }
     
-    // Check if already entered today
-    const today = new Date().toISOString().split('T')[0];
-    const alreadyEntered = entries.some(
-      e => e.traineeId === entryTrainee.id && e.entryDate === today
-    );
-    
-    if (alreadyEntered) {
+    try {
+      // Today's date in format YYYY-MM-DD
+      const today = new Date().toISOString().split('T')[0];
+      const currentTime = new Date().toTimeString().split(' ')[0];
+      
+      // Create entry via API
+      const newEntry = await entryService.create({
+        traineeId: entryTrainee._id,
+        entryDate: today,
+        entryTime: currentTime,
+        traineeFullName: entryTrainee.fullName,
+        traineePersonalId: entryTrainee.personalId,
+        departmentId: entryTrainee.departmentId,
+        baseId: entryTrainee.baseId
+      });
+      
+      // Update state with new entry
+      setEntries([newEntry, ...entries]);
+      
       toast({
-        title: "כניסה כפולה",
-        description: "כבר נרשמה כניסה למתאמן זה היום",
+        title: "כניסה נרשמה בהצלחה",
+        description: `${entryTrainee.fullName} נרשם/ה בהצלחה`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "שגיאה",
+        description: error.response?.data?.message || "אירעה שגיאה בעת רישום הכניסה",
         variant: "destructive",
       });
+    } finally {
+      // Reset form
       setConfirmingEntry(false);
       setEntryTrainee(null);
       setEntryPersonalId('');
-      return;
     }
-    
-    // Record entry
-    const newEntry: Entry = {
-      id: Date.now().toString(),
-      traineeId: entryTrainee.id,
-      entryDate: today,
-      entryTime: new Date().toTimeString().split(' ')[0],
-      traineeFullName: entryTrainee.fullName,
-      traineePersonalId: entryTrainee.personalId,
-      departmentId: entryTrainee.departmentId,
-      baseId: entryTrainee.baseId,
-    };
-    
-    const updatedEntries = [...entries, newEntry];
-    setEntries(updatedEntries);
-    localStorage.setItem('entries', JSON.stringify(updatedEntries));
-    
-    toast({
-      title: "כניסה נרשמה בהצלחה",
-      description: `${entryTrainee.fullName} נרשם/ה בהצלחה`,
-    });
-    
-    // Reset form
-    setConfirmingEntry(false);
-    setEntryTrainee(null);
-    setEntryPersonalId('');
   };
   
   // Filter departments by selected base
   const filteredDepartments = departments.filter(
-    dept => selectedBase && dept.baseId === selectedBase.id
+    dept => selectedBase && dept.baseId === selectedBase._id
   );
 
   return (
@@ -280,13 +268,13 @@ const Registration = () => {
       <main className="flex-1 container mx-auto px-6 py-8">
         <div className="max-w-4xl mx-auto">
           {/* Base Selection for allBasesAdmin */}
-          {admin?.role === 'allBasesAdmin' && !selectedBase && (
+          {admin?.role === 'generalAdmin' && !selectedBase && (
             <div className="glass p-8 rounded-2xl mb-8 animate-scale-in">
               <h2 className="text-2xl font-bold mb-6 text-center">בחר בסיס לרישום</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {bases.map((base) => (
                   <button
-                    key={base.id}
+                    key={base._id}
                     onClick={() => setSelectedBase(base)}
                     className="neomorphic p-6 text-center hover:-translate-y-1 transition-transform duration-300"
                   >
@@ -330,22 +318,12 @@ const Registration = () => {
                 >
                   הצטרפות למערכת
                 </button>
-                <button
-                  onClick={() => setView('login')}
-                  className={`px-6 py-2 rounded-md font-medium ${
-                    view === 'login' 
-                      ? 'bg-primary text-primary-foreground' 
-                      : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
-                  }`}
-                >
-                  התחברות מנהלים
-                </button>
               </div>
               
               {/* Login Form */}
               {view === 'login' && (
                 <div className="glass max-w-md mx-auto p-8 rounded-2xl animate-fade-up">
-                  <h3 className="text-xl font-bold mb-4 text-center">התחברות מנהלים</h3>
+                  <h3 className="text-xl font-bold mb-4 text-center">ט מנהלים</h3>
                   <form onSubmit={handleAdminLogin} className="space-y-6">
                     <div className="space-y-2">
                       <label htmlFor="username" className="block text-sm font-medium">
@@ -466,7 +444,7 @@ const Registration = () => {
                         >
                           <option value="">בחר מחלקה</option>
                           {filteredDepartments.map((dept) => (
-                            <option key={dept.id} value={dept.id}>
+                            <option key={dept._id} value={dept._id}>
                               {dept.name}
                             </option>
                           ))}
@@ -544,7 +522,7 @@ const Registration = () => {
                     <div className="space-y-6">
                       <div className="text-center mb-6">
                         <p className="text-lg">האם שמך הוא</p>
-                        <p className="text-2xl font-bold">{entryTrainee?.fullName}</p>
+                        <p className="text-2xl font-bold">{entryTrainee?.fullName}?</p>
                       </div>
                       
                       <div className="p-4 border rounded-lg bg-secondary">

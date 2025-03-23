@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAdmin } from '../context/AdminContext';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
+import { authService } from '../services/api';
 
 const Login = () => {
   const [username, setUsername] = useState('');
@@ -22,38 +23,23 @@ const Login = () => {
     setLoading(true);
     
     try {
-      // Simulate API call with a small delay
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      // Get admins from localStorage
-      const admins = JSON.parse(localStorage.getItem('admins') || '[]');
-      const admin = admins.find((a: any) => a.username === username && a.password === password);
+      // Login using API service
+      const admin = await authService.login(username, password);
       
-      if (admin) {
-        // Set the admin in context
-        setAdmin(admin);
-        
-        // Store the admin in localStorage to persist the login
-        localStorage.setItem('admin', JSON.stringify(admin));
-        
-        // Navigate to dashboard
-        navigate('/dashboard');
-        
-        toast({
-          title: "התחברות הצליחה",
-          description: `ברוך הבא, ${username}!`
-        });
-      } else {
-        toast({
-          title: "התחברות נכשלה",
-          description: "שם משתמש או סיסמה שגויים",
-          variant: "destructive"
-        });
-      }
+      // Set the admin in context
+      setAdmin(admin);
+      
+      // Navigate to dashboard
+      navigate('/dashboard');
+      
+      toast({
+        title: "התחברות הצליחה",
+        description: `ברוך הבא, ${username}!`
+      });
     } catch (error) {
       toast({
-        title: "שגיאת התחברות",
-        description: "אירעה שגיאה במהלך ההתחברות",
+        title: "התחברות נכשלה",
+        description: "שם משתמש או סיסמה שגויים",
         variant: "destructive"
       });
       console.error('Login error:', error);
@@ -97,10 +83,6 @@ const Login = () => {
                 מתחבר...
               </span> : "התחבר"}
           </Button>
-          
-          <div className="text-center text-sm text-muted-foreground mt-4">
-            
-          </div>
         </form>
       </div>
     </div>;

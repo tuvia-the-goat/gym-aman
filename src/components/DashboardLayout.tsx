@@ -4,6 +4,9 @@ import { useNavigate } from 'react-router-dom';
 import { useAdmin } from '../context/AdminContext';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/components/ui/use-toast';
+import { baseService } from '@/services/api';
+import { Base } from '@/types';
+import { log } from 'console';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -11,11 +14,11 @@ interface DashboardLayoutProps {
 }
 
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, activeTab }) => {
-  const { admin, setAdmin } = useAdmin();
+  const { bases, admin, setAdmin } = useAdmin();
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const isAllBasesAdmin = admin?.role === 'allBasesAdmin';
+  const isAllBasesAdmin = admin?.role === 'generalAdmin';
   const adminTypeClass = isAllBasesAdmin ? 'bg-admin' : 'bg-gymadmin';
 
   const handleLogout = () => {
@@ -108,9 +111,8 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, activeTab }
   );
 
   // Helper function to get basis name
-  function getBasisName(baseId: string): string {
-    const bases = JSON.parse(localStorage.getItem('bases') || '[]');
-    const base = bases.find((b: any) => b.id === baseId);
+   function getBasisName(baseId: string){   
+    const base = bases.find((b: any) => b._id === baseId);    
     return base ? base.name : '';
   }
 };

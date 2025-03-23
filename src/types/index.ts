@@ -1,29 +1,27 @@
-
-export type UserRole = 'allBasesAdmin' | 'gymAdmin';
-
+export type UserRole = 'generalAdmin' | 'gymAdmin';
+//allaaaaa
 export interface Admin {
-  id: string;
+  _id: string;
   username: string;
-  password: string;
+  password?: string; // Optional as we don't always want to include the password
   role: UserRole;
   baseId?: string; // Only for gymAdmin
 }
 
 export interface Base {
-  id: string;
+  _id: string;
   name: string;
   location: string;
-  departments: Department[];
 }
 
 export interface Department {
-  id: string;
+  _id: string;
   name: string;
   baseId: string;
 }
 
 export interface Trainee {
-  id: string;
+  _id: string;
   personalId: string; // 7 digits
   fullName: string;
   medicalProfile: '97' | '82' | '72' | '64' | '45' | '25';
@@ -33,11 +31,11 @@ export interface Trainee {
     approved: boolean;
     expirationDate: string | null;
   };
-  baseId: string; // Reference to the base through department
+  baseId: string;
 }
 
 export interface Entry {
-  id: string;
+  _id: string;
   traineeId: string;
   entryDate: string;
   entryTime: string;
@@ -45,6 +43,7 @@ export interface Entry {
   traineePersonalId: string;
   departmentId: string;
   baseId: string;
+  createdAt?: string; // From MongoDB timestamp
 }
 
 export interface ChartData {

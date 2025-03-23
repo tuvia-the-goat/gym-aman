@@ -1,13 +1,18 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import DashboardLayout from '../components/DashboardLayout';
 import { useAdmin } from '../context/AdminContext';
-import { Trainee, Department, Base, Admin } from '../types';
+import { Trainee } from '../types';
 import { useToast } from '@/components/ui/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { 
+  baseService, 
+  departmentService, 
+  traineeService, 
+  adminService 
+} from '../services/api';
 
 const Settings = () => {
-  const { admin, bases, setBases, departments, setDepartments, trainees, setTrainees } = useAdmin();
+  const { admin, bases, setBases, departments, setDepartments, trainees } = useAdmin();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('medicalApproval');
   
@@ -25,7 +30,7 @@ const Settings = () => {
   // New admin
   const [newAdminUsername, setNewAdminUsername] = useState('');
   const [newAdminPassword, setNewAdminPassword] = useState('');
-  const [newAdminRole, setNewAdminRole] = useState<'allBasesAdmin' | 'gymAdmin'>('gymAdmin');
+  const [newAdminRole, setNewAdminRole] = useState<'generalAdmin' | 'gymAdmin'>('gymAdmin');
   const [selectedBaseForAdmin, setSelectedBaseForAdmin] = useState('');
   
   // Filter trainees based on medical approval status
@@ -73,45 +78,39 @@ const Settings = () => {
   
   // Get department and base names
   const getDepartmentName = (id: string) => {
-    const department = departments.find(dept => dept.id === id);
+    const department = departments.find(dept => dept._id === id);
     return department ? department.name : '';
   };
   
   const getBaseName = (id: string) => {
-    const base = bases.find(base => base.id === id);
+    const base = bases.find(base => base._id === id);
     return base ? base.name : '';
   };
   
   // Handle medical approval update
-  const updateMedicalApproval = (traineeId: string, approved: boolean) => {
-    const updatedTrainees = trainees.map(trainee => {
-      if (trainee.id === traineeId) {
-        return {
-          ...trainee,
-          medicalApproval: {
-            approved,
-            expirationDate: approved 
-              ? new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString() 
-              : null,
-          },
-        };
-      }
-      return trainee;
-    });
-    
-    setTrainees(updatedTrainees);
-    localStorage.setItem('trainees', JSON.stringify(updatedTrainees));
-    
-    toast({
-      title: approved ? "אישור רפואי עודכן" : "אישור רפואי בוטל",
-      description: approved 
-        ? "האישור הרפואי עודכן בהצלחה לשנה" 
-        : "האישור הרפואי בוטל בהצלחה",
-    });
+  const updateMedicalApproval = async (traineeId: string, approved: boolean) => {
+    try {
+      // Update medical approval via API
+      await traineeService.updateMedicalApproval(traineeId, approved);
+      
+      toast({
+        title: approved ? "אישור רפואי עודכן" : "אישור רפואי בוטל",
+        description: approved 
+          ? "האישור הרפואי עודכן בהצלחה לשנה" 
+          : "האישור הרפואי בוטל בהצלחה",
+      });
+    } catch (error) {
+      console.error('Error updating medical approval:', error);
+      toast({
+        title: "שגיאה",
+        description: "אירעה שגיאה בעת עדכון האישור הרפואי",
+        variant: "destructive",
+      });
+    }
   };
   
   // Handle adding a new base
-  const handleAddBase = (e: React.FormEvent) => {
+  const handleAddBase = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!newBaseName.trim() || !newBaseLocation.trim()) {
@@ -123,28 +122,36 @@ const Settings = () => {
       return;
     }
     
-    const newBase: Base = {
-      id: Date.now().toString(),
-      name: newBaseName,
-      location: newBaseLocation,
-      departments: [],
-    };
-    
-    const updatedBases = [...bases, newBase];
-    setBases(updatedBases);
-    localStorage.setItem('bases', JSON.stringify(updatedBases));
-    
-    setNewBaseName('');
-    setNewBaseLocation('');
-    
-    toast({
-      title: "בסיס חדש נוסף",
-      description: `בסיס ${newBaseName} נוסף בהצלחה`,
-    });
+    try {
+      // Create new base via API
+      const newBase = await baseService.create({
+        name: newBaseName,
+        location: newBaseLocation
+      });
+      
+      // Update bases state
+      setBases([...bases, newBase]);
+      
+      // Reset form
+      setNewBaseName('');
+      setNewBaseLocation('');
+      
+      toast({
+        title: "בסיס חדש נוסף",
+        description: `בסיס ${newBase.name} נוסף בהצלחה`,
+      });
+    } catch (error) {
+      console.error('Error adding base:', error);
+      toast({
+        title: "שגיאה",
+        description: "אירעה שגיאה בעת הוספת הבסיס",
+        variant: "destructive",
+      });
+    }
   };
   
   // Handle adding a new department
-  const handleAddDepartment = (e: React.FormEvent) => {
+  const handleAddDepartment = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!newDepartmentName.trim() || !selectedBaseForDepartment) {
@@ -156,27 +163,36 @@ const Settings = () => {
       return;
     }
     
-    const newDepartment: Department = {
-      id: Date.now().toString(),
-      name: newDepartmentName,
-      baseId: selectedBaseForDepartment,
-    };
-    
-    const updatedDepartments = [...departments, newDepartment];
-    setDepartments(updatedDepartments);
-    localStorage.setItem('departments', JSON.stringify(updatedDepartments));
-    
-    setNewDepartmentName('');
-    setSelectedBaseForDepartment('');
-    
-    toast({
-      title: "מחלקה חדשה נוספה",
-      description: `מחלקה ${newDepartmentName} נוספה בהצלחה`,
-    });
+    try {
+      // Create department via API
+      const newDepartment = await departmentService.create({
+        name: newDepartmentName,
+        baseId: selectedBaseForDepartment
+      });
+      
+      // Update departments state
+      setDepartments([...departments, newDepartment]);
+      
+      // Reset form
+      setNewDepartmentName('');
+      setSelectedBaseForDepartment('');
+      
+      toast({
+        title: "מחלקה חדשה נוספה",
+        description: `מחלקה ${newDepartment.name} נוספה בהצלחה`,
+      });
+    } catch (error) {
+      console.error('Error adding department:', error);
+      toast({
+        title: "שגיאה",
+        description: "אירעה שגיאה בעת הוספת המחלקה",
+        variant: "destructive",
+      });
+    }
   };
   
   // Handle adding a new admin
-  const handleAddAdmin = (e: React.FormEvent) => {
+  const handleAddAdmin = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!newAdminUsername.trim() || !newAdminPassword.trim() || 
@@ -189,39 +205,35 @@ const Settings = () => {
       return;
     }
     
-    // Get existing admins
-    const admins = JSON.parse(localStorage.getItem('admins') || '[]');
-    
-    // Check if username already exists
-    if (admins.some((a: Admin) => a.username === newAdminUsername)) {
+    try {
+      // Create admin via API
+      const adminData = {
+        username: newAdminUsername,
+        password: newAdminPassword,
+        role: newAdminRole,
+        ...(newAdminRole === 'gymAdmin' && { baseId: selectedBaseForAdmin })
+      };
+      
+      await adminService.create(adminData);
+      
+      // Reset form
+      setNewAdminUsername('');
+      setNewAdminPassword('');
+      setNewAdminRole('gymAdmin');
+      setSelectedBaseForAdmin('');
+      
+      toast({
+        title: "מנהל חדש נוסף",
+        description: `מנהל ${newAdminUsername} נוסף בהצלחה`,
+      });
+    } catch (error: any) {
       toast({
         title: "שגיאה",
-        description: "שם משתמש כבר קיים במערכת",
+        description: error.response?.data?.message || "אירעה שגיאה בעת הוספת המנהל",
         variant: "destructive",
       });
-      return;
+      console.error('Error adding admin:', error);
     }
-    
-    const newAdmin: Admin = {
-      id: Date.now().toString(),
-      username: newAdminUsername,
-      password: newAdminPassword,
-      role: newAdminRole,
-      ...(newAdminRole === 'gymAdmin' && { baseId: selectedBaseForAdmin }),
-    };
-    
-    const updatedAdmins = [...admins, newAdmin];
-    localStorage.setItem('admins', JSON.stringify(updatedAdmins));
-    
-    setNewAdminUsername('');
-    setNewAdminPassword('');
-    setNewAdminRole('gymAdmin');
-    setSelectedBaseForAdmin('');
-    
-    toast({
-      title: "מנהל חדש נוסף",
-      description: `מנהל ${newAdminUsername} נוסף בהצלחה`,
-    });
   };
   
   // Default tab selection based on admin role
@@ -242,7 +254,7 @@ const Settings = () => {
           <TabsList>
             <TabsTrigger value="medicalApproval">ניהול אישורים רפואיים</TabsTrigger>
             <TabsTrigger value="departments">ניהול מחלקות</TabsTrigger>
-            {admin?.role === 'allBasesAdmin' && (
+            {admin?.role === 'generalAdmin' && (
               <>
                 <TabsTrigger value="bases">ניהול בסיסים</TabsTrigger>
                 <TabsTrigger value="admins">ניהול מנהלים</TabsTrigger>
@@ -298,7 +310,7 @@ const Settings = () => {
                       <th className="px-4 py-3 text-right">שם מתאמן</th>
                       <th className="px-4 py-3 text-right">מספר אישי</th>
                       <th className="px-4 py-3 text-right">מחלקה</th>
-                      {admin?.role === 'allBasesAdmin' && (
+                      {admin?.role === 'generalAdmin' && (
                         <th className="px-4 py-3 text-right">בסיס</th>
                       )}
                       <th className="px-4 py-3 text-right">סטטוס אישור</th>
@@ -308,11 +320,11 @@ const Settings = () => {
                   <tbody>
                     {filteredTrainees.length > 0 ? (
                       filteredTrainees.map((trainee) => (
-                        <tr key={trainee.id} className="border-t hover:bg-muted/30">
+                        <tr key={trainee._id} className="border-t hover:bg-muted/30">
                           <td className="px-4 py-3">{trainee.fullName}</td>
                           <td className="px-4 py-3">{trainee.personalId}</td>
                           <td className="px-4 py-3">{getDepartmentName(trainee.departmentId)}</td>
-                          {admin?.role === 'allBasesAdmin' && (
+                          {admin?.role === 'generalAdmin' && (
                             <td className="px-4 py-3">{getBaseName(trainee.baseId)}</td>
                           )}
                           <td className="px-4 py-3">
@@ -328,7 +340,7 @@ const Settings = () => {
                           </td>
                           <td className="px-4 py-3">
                             <button
-                              onClick={() => updateMedicalApproval(trainee.id, true)}
+                              onClick={() => updateMedicalApproval(trainee._id, true)}
                               className="btn-primary text-sm py-1"
                             >
                               אישור לשנה
@@ -339,7 +351,7 @@ const Settings = () => {
                     ) : (
                       <tr>
                         <td 
-                          colSpan={admin?.role === 'allBasesAdmin' ? 6 : 5} 
+                          colSpan={admin?.role === 'generalAdmin' ? 6 : 5} 
                           className="px-4 py-8 text-center text-muted-foreground"
                         >
                           לא נמצאו רשומות מתאימות
@@ -388,10 +400,10 @@ const Settings = () => {
                       <option value="">בחר בסיס</option>
                       {bases
                         .filter(base => 
-                          admin?.role === 'allBasesAdmin' || base.id === admin?.baseId
+                          admin?.role === 'generalAdmin' || base._id === admin?.baseId
                         )
                         .map(base => (
-                          <option key={base.id} value={base.id}>
+                          <option key={base._id} value={base._id}>
                             {base.name}
                           </option>
                         ))
@@ -420,10 +432,10 @@ const Settings = () => {
                     <tbody>
                       {departments
                         .filter(dept => 
-                          admin?.role === 'allBasesAdmin' || dept.baseId === admin?.baseId
+                          admin?.role === 'generalAdmin' || dept.baseId === admin?.baseId
                         )
                         .map((department) => (
-                          <tr key={department.id} className="border-t hover:bg-muted/30">
+                          <tr key={department._id} className="border-t hover:bg-muted/30">
                             <td className="px-4 py-3">{department.name}</td>
                             <td className="px-4 py-3">{getBaseName(department.baseId)}</td>
                           </tr>
@@ -437,7 +449,7 @@ const Settings = () => {
           </TabsContent>
           
           {/* Bases Tab (allBasesAdmin only) */}
-          {admin?.role === 'allBasesAdmin' && (
+          {admin?.role === 'generalAdmin' && (
             <TabsContent value="bases" className="pt-6">
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                 <div className="bg-card shadow-sm rounded-lg border p-6">
@@ -496,11 +508,11 @@ const Settings = () => {
                       </thead>
                       <tbody>
                         {bases.map((base) => (
-                          <tr key={base.id} className="border-t hover:bg-muted/30">
+                          <tr key={base._id} className="border-t hover:bg-muted/30">
                             <td className="px-4 py-3">{base.name}</td>
                             <td className="px-4 py-3">{base.location}</td>
                             <td className="px-4 py-3">
-                              {departments.filter(dept => dept.baseId === base.id).length}
+                              {departments.filter(dept => dept.baseId === base._id).length}
                             </td>
                           </tr>
                         ))}
@@ -513,7 +525,7 @@ const Settings = () => {
           )}
           
           {/* Admins Tab (allBasesAdmin only) */}
-          {admin?.role === 'allBasesAdmin' && (
+          {admin?.role === 'generalAdmin' && (
             <TabsContent value="admins" className="pt-6">
               <div className="bg-card shadow-sm rounded-lg border p-6">
                 <h3 className="font-semibold text-lg mb-4">הוספת מנהל חדש</h3>
@@ -557,11 +569,11 @@ const Settings = () => {
                     <select
                       id="adminRole"
                       value={newAdminRole}
-                      onChange={(e) => setNewAdminRole(e.target.value as 'allBasesAdmin' | 'gymAdmin')}
+                      onChange={(e) => setNewAdminRole(e.target.value as 'generalAdmin' | 'gymAdmin')}
                       className="input-field"
                       required
                     >
-                      <option value="allBasesAdmin">מנהל כללי</option>
+                      <option value="generalAdmin">מנהל כללי</option>
                       <option value="gymAdmin">מנהל מכון</option>
                     </select>
                   </div>
@@ -580,7 +592,7 @@ const Settings = () => {
                       >
                         <option value="">בחר בסיס</option>
                         {bases.map(base => (
-                          <option key={base.id} value={base.id}>
+                          <option key={base._id} value={base._id}>
                             {base.name}
                           </option>
                         ))}

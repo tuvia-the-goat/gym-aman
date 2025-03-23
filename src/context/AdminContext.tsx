@@ -1,116 +1,75 @@
-
-import React, { createContext, useState, useContext, ReactNode } from 'react';
+import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
 import { Admin, Base, Department, Trainee, Entry, AdminContextType } from '../types';
-
-// Initialize with default data
-const initialBases: Base[] = [
-  {
-    id: '1',
-    name: 'גלילות',
-    location: 'מרכז',
-    departments: [],
-  },
-];
-
-const initialDepartments: Department[] = [
-  {
-    id: '1',
-    name: 'ארטק',
-    baseId: '1',
-  },
-];
-
-const initialAdmins: Admin[] = [
-  {
-    id: '1',
-    username: 'allBasesAdmin',
-    password: '12345',
-    role: 'allBasesAdmin',
-  },
-  {
-    id: '2',
-    username: 'gymAdmin',
-    password: '12345',
-    role: 'gymAdmin',
-    baseId: '1', // גלילות
-  },
-];
+import { 
+  authService, 
+  baseService, 
+  departmentService, 
+  traineeService, 
+  entryService,
+  initializeSystem
+} from '../services/api';
 
 const AdminContext = createContext<AdminContextType | undefined>(undefined);
 
 export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [admin, setAdmin] = useState<Admin | null>(null);
-  const [bases, setBases] = useState<Base[]>(initialBases);
-  const [departments, setDepartments] = useState<Department[]>(initialDepartments);
+  const [bases, setBases] = useState<Base[]>([]);
+  const [departments, setDepartments] = useState<Department[]>([]);
   const [trainees, setTrainees] = useState<Trainee[]>([]);
   const [entries, setEntries] = useState<Entry[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  // Check if there's a stored admin in localStorage
-  React.useEffect(() => {
-    const storedAdmin = localStorage.getItem('admin');
-    if (storedAdmin) {
-      setAdmin(JSON.parse(storedAdmin));
-    }
+  // Initialize data from server
+  useEffect(() => {
+    const initializeData = async () => {
+      try {
+        setLoading(true);
+        
+        // Initialize system (creates default data if needed)
+        await initializeSystem();
+        
+        // Check if there's a stored token/admin in localStorage
+        const storedAdmin = localStorage.getItem('admin');
+        if (storedAdmin) {
+          try {
+            // Verify token is valid
+            const verifiedAdmin = await authService.verify();
+            setAdmin(JSON.parse(storedAdmin));
+          } catch (error) {
+            console.error('Invalid token, clearing stored data');
+            localStorage.removeItem('token');
+            localStorage.removeItem('admin');
+          }
+        }
+        
+        // Fetch initial data
+        const [basesData, departmentsData, traineesData, entriesData] = await Promise.all([
+          baseService.getAll(),
+          departmentService.getAll(),
+          traineeService.getAll(),
+          entryService.getAll()
+        ]);
+        
+        setBases(basesData);
+        setDepartments(departmentsData);
+        setTrainees(traineesData);
+        setEntries(entriesData);
+      } catch (error) {
+        console.error('Error initializing data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
     
-    // Load initial data from localStorage if it exists
-    const storedBases = localStorage.getItem('bases');
-    if (storedBases) {
-      setBases(JSON.parse(storedBases));
-    } else {
-      localStorage.setItem('bases', JSON.stringify(initialBases));
-    }
-    
-    const storedDepartments = localStorage.getItem('departments');
-    if (storedDepartments) {
-      setDepartments(JSON.parse(storedDepartments));
-    } else {
-      localStorage.setItem('departments', JSON.stringify(initialDepartments));
-    }
-    
-    const storedTrainees = localStorage.getItem('trainees');
-    if (storedTrainees) {
-      setTrainees(JSON.parse(storedTrainees));
-    } else {
-      localStorage.setItem('trainees', JSON.stringify([]));
-    }
-    
-    const storedEntries = localStorage.getItem('entries');
-    if (storedEntries) {
-      setEntries(JSON.parse(storedEntries));
-    } else {
-      localStorage.setItem('entries', JSON.stringify([]));
-    }
-    
-    // Store admins if not already stored
-    const storedAdmins = localStorage.getItem('admins');
-    if (!storedAdmins) {
-      localStorage.setItem('admins', JSON.stringify(initialAdmins));
-    }
+    initializeData();
   }, []);
 
-  // Update localStorage when state changes
-  React.useEffect(() => {
+  // Update admin in localStorage when state changes
+  useEffect(() => {
     if (admin) {
       localStorage.setItem('admin', JSON.stringify(admin));
     }
   }, [admin]);
-
-  React.useEffect(() => {
-    localStorage.setItem('bases', JSON.stringify(bases));
-  }, [bases]);
-
-  React.useEffect(() => {
-    localStorage.setItem('departments', JSON.stringify(departments));
-  }, [departments]);
-
-  React.useEffect(() => {
-    localStorage.setItem('trainees', JSON.stringify(trainees));
-  }, [trainees]);
-
-  React.useEffect(() => {
-    localStorage.setItem('entries', JSON.stringify(entries));
-  }, [entries]);
 
   return (
     <AdminContext.Provider
