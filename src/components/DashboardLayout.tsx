@@ -40,7 +40,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, activeTab }
       {/* Header */}
       <header className={`${adminTypeClass} text-white shadow-md px-6 py-4`}>
         <div className="container mx-auto flex justify-between items-center">
-          <h1 className="text-2xl font-bold">מערכת ניהול חדרי כושר</h1>
+          <h1 className="text-2xl font-bold">מערכת אימ"ון</h1>
           <div className="flex items-center space-x-4">
             <div className="flex flex-col items-end ml-4">
               <span className="font-medium">{admin?.username}</span>
@@ -104,7 +104,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, activeTab }
       {/* Footer */}
       <footer className="bg-background border-t py-6">
         <div className="container mx-auto px-6 text-center text-muted-foreground">
-          <p>© {new Date().getFullYear()} מערכת ניהול חדרי כושר</p>
+          <p>© {new Date().getFullYear()} מערכת אימ"ון </p>
         </div>
       </footer>
     </div>

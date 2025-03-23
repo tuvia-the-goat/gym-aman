@@ -12,7 +12,7 @@ import {
 } from '../services/api';
 
 const Settings = () => {
-  const { admin, bases, setBases, departments, setDepartments, trainees } = useAdmin();
+  const { admin, bases, setBases, departments, setDepartments, trainees, setTrainees } = useAdmin();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('medicalApproval');
   
@@ -93,6 +93,26 @@ const Settings = () => {
       // Update medical approval via API
       await traineeService.updateMedicalApproval(traineeId, approved);
       
+    // Update local state to reflect the change
+    const updatedTrainees = trainees.map(trainee => {
+      if (trainee._id === traineeId) {
+        // Create a new expiration date (1 year from now)
+        const expirationDate = new Date();
+        expirationDate.setFullYear(expirationDate.getFullYear() + 1);
+        
+        return {
+          ...trainee,
+          medicalApproval: {
+            approved: approved,
+            expirationDate: expirationDate.toISOString()
+          }
+        };
+      }
+      return trainee;
+    });
+    
+    // Update the state with the modified trainees array
+    setTrainees(updatedTrainees);
       toast({
         title: approved ? "אישור רפואי עודכן" : "אישור רפואי בוטל",
         description: approved 

@@ -51,7 +51,7 @@ const Login = () => {
   return <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-b from-blue-50 to-white">
       <div className="glass max-w-md w-full p-8 rounded-2xl animate-fade-up">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold mb-2">מערכת ניהול חדרי כושר</h1>
+          <h1 className="text-3xl font-bold mb-2">מערכת אימ"ון</h1>
           <p className="text-muted-foreground">התחבר כדי להמשיך</p>
         </div>
         
