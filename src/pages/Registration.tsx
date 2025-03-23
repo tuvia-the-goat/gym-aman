@@ -1,45 +1,37 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAdmin } from '../context/AdminContext';
 import { Department, Base, Trainee, Entry } from '../types';
 import { useToast } from '@/components/ui/use-toast';
+
 const Registration = () => {
   const navigate = useNavigate();
-  const {
-    admin,
-    bases,
-    departments,
-    trainees,
-    setTrainees,
-    entries,
-    setEntries
-  } = useAdmin();
-  const {
-    toast
-  } = useToast();
-
+  const { admin, bases, departments, trainees, setTrainees, entries, setEntries } = useAdmin();
+  const { toast } = useToast();
+  
   // Selected base for registration
   const [selectedBase, setSelectedBase] = useState<Base | null>(null);
-
+  
   // Login/Registration view state
   const [view, setView] = useState<'login' | 'register' | 'entry'>('entry');
-
+  
   // Login fields
   const [loginUsername, setLoginUsername] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
-
+  
   // Registration fields
   const [personalId, setPersonalId] = useState('');
   const [fullName, setFullName] = useState('');
   const [medicalProfile, setMedicalProfile] = useState<string>('');
   const [departmentId, setDepartmentId] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
-
+  
   // Entry fields
   const [entryPersonalId, setEntryPersonalId] = useState('');
   const [confirmingEntry, setConfirmingEntry] = useState(false);
   const [entryTrainee, setEntryTrainee] = useState<Trainee | null>(null);
-
+  
   // Initialize the selected base based on the admin role
   useEffect(() => {
     if (admin?.role === 'gymAdmin' && admin.baseId) {
@@ -51,87 +43,94 @@ const Registration = () => {
       setSelectedBase(null); // Require selection for allBasesAdmin
     }
   }, [admin, bases]);
-
+  
   // Handle admin login
   const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    
     try {
       // Get admins from localStorage
       const admins = JSON.parse(localStorage.getItem('admins') || '[]');
-      const matchedAdmin = admins.find((a: any) => a.username === loginUsername && a.password === loginPassword);
+      
+      const matchedAdmin = admins.find(
+        (a: any) => a.username === loginUsername && a.password === loginPassword
+      );
+      
       if (matchedAdmin) {
         navigate('/dashboard');
         toast({
           title: "התחברות הצליחה",
-          description: `ברוך הבא, ${loginUsername}!`
+          description: `ברוך הבא, ${loginUsername}!`,
         });
       } else {
         toast({
           title: "התחברות נכשלה",
           description: "שם משתמש או סיסמה שגויים",
-          variant: "destructive"
+          variant: "destructive",
         });
       }
     } catch (error) {
       toast({
         title: "שגיאת התחברות",
         description: "אירעה שגיאה במהלך ההתחברות",
-        variant: "destructive"
+        variant: "destructive",
       });
     }
   };
-
+  
   // Validate personal ID (7 digits)
   const validatePersonalId = (id: string) => {
     return /^\d{7}$/.test(id);
   };
-
+  
   // Validate phone number (10 digits starting with 05)
   const validatePhoneNumber = (phone: string) => {
     return /^05\d{8}$/.test(phone);
   };
-
+  
   // Handle trainee registration
   const handleRegistration = (e: React.FormEvent) => {
     e.preventDefault();
+    
     if (!selectedBase) {
       toast({
         title: "שגיאה",
         description: "יש לבחור בסיס",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
-
+    
     // Validate inputs
     if (!validatePersonalId(personalId)) {
       toast({
         title: "שגיאה",
         description: "מספר אישי חייב להיות בדיוק 7 ספרות",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
+    
     if (!validatePhoneNumber(phoneNumber)) {
       toast({
         title: "שגיאה",
         description: "מספר טלפון חייב להיות 10 ספרות ולהתחיל ב-05",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
-
+    
     // Check if personal ID already exists
     const existingTrainee = trainees.find(t => t.personalId === personalId);
     if (existingTrainee) {
       toast({
         title: "שגיאה",
         description: "מספר אישי כבר קיים במערכת",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
-
+    
     // Create new trainee
     const newTrainee: Trainee = {
       id: Date.now().toString(),
@@ -142,85 +141,92 @@ const Registration = () => {
       phoneNumber,
       medicalApproval: {
         approved: false,
-        expirationDate: null
+        expirationDate: null,
       },
-      baseId: selectedBase.id
+      baseId: selectedBase.id,
     };
-
+    
     // Add trainee to state and localStorage
     const updatedTrainees = [...trainees, newTrainee];
     setTrainees(updatedTrainees);
     localStorage.setItem('trainees', JSON.stringify(updatedTrainees));
-
+    
     // Reset form
     setPersonalId('');
     setFullName('');
     setMedicalProfile('');
     setDepartmentId('');
     setPhoneNumber('');
+    
     toast({
       title: "הרשמה הצליחה",
-      description: "המתאמן נרשם בהצלחה למערכת"
+      description: "המתאמן נרשם בהצלחה למערכת",
     });
   };
-
+  
   // Handle personal ID check for entry
   const handlePersonalIdCheck = () => {
     if (!validatePersonalId(entryPersonalId)) {
       toast({
         title: "שגיאה",
         description: "מספר אישי חייב להיות בדיוק 7 ספרות",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
-
+    
     // Find trainee by personal ID
     const trainee = trainees.find(t => t.personalId === entryPersonalId);
     if (!trainee) {
       toast({
         title: "מתאמן לא נמצא",
         description: "המתאמן אינו רשום במערכת",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
+    
     setEntryTrainee(trainee);
     setConfirmingEntry(true);
   };
-
+  
   // Handle entry confirmation
   const handleEntryConfirmation = () => {
     if (!entryTrainee || !selectedBase) return;
-
+    
     // Check if medical approval is valid
-    if (!entryTrainee.medicalApproval.approved || entryTrainee.medicalApproval.expirationDate && new Date(entryTrainee.medicalApproval.expirationDate) < new Date()) {
+    if (!entryTrainee.medicalApproval.approved || 
+        (entryTrainee.medicalApproval.expirationDate && 
+         new Date(entryTrainee.medicalApproval.expirationDate) < new Date())) {
       toast({
         title: "אישור רפואי נדרש",
         description: "לא ניתן לרשום כניסה ללא אישור רפואי בתוקף",
-        variant: "destructive"
+        variant: "destructive",
       });
       setConfirmingEntry(false);
       setEntryTrainee(null);
       setEntryPersonalId('');
       return;
     }
-
+    
     // Check if already entered today
     const today = new Date().toISOString().split('T')[0];
-    const alreadyEntered = entries.some(e => e.traineeId === entryTrainee.id && e.entryDate === today);
+    const alreadyEntered = entries.some(
+      e => e.traineeId === entryTrainee.id && e.entryDate === today
+    );
+    
     if (alreadyEntered) {
       toast({
         title: "כניסה כפולה",
         description: "כבר נרשמה כניסה למתאמן זה היום",
-        variant: "destructive"
+        variant: "destructive",
       });
       setConfirmingEntry(false);
       setEntryTrainee(null);
       setEntryPersonalId('');
       return;
     }
-
+    
     // Record entry
     const newEntry: Entry = {
       id: Date.now().toString(),
@@ -230,31 +236,40 @@ const Registration = () => {
       traineeFullName: entryTrainee.fullName,
       traineePersonalId: entryTrainee.personalId,
       departmentId: entryTrainee.departmentId,
-      baseId: entryTrainee.baseId
+      baseId: entryTrainee.baseId,
     };
+    
     const updatedEntries = [...entries, newEntry];
     setEntries(updatedEntries);
     localStorage.setItem('entries', JSON.stringify(updatedEntries));
+    
     toast({
       title: "כניסה נרשמה בהצלחה",
-      description: `${entryTrainee.fullName} נרשם/ה בהצלחה`
+      description: `${entryTrainee.fullName} נרשם/ה בהצלחה`,
     });
-
+    
     // Reset form
     setConfirmingEntry(false);
     setEntryTrainee(null);
     setEntryPersonalId('');
   };
-
+  
   // Filter departments by selected base
-  const filteredDepartments = departments.filter(dept => selectedBase && dept.baseId === selectedBase.id);
-  return <div className="min-h-screen flex flex-col bg-background">
+  const filteredDepartments = departments.filter(
+    dept => selectedBase && dept.baseId === selectedBase.id
+  );
+
+  return (
+    <div className="min-h-screen flex flex-col bg-background">
       {/* Header */}
       <header className="bg-primary text-primary-foreground shadow-md px-6 py-4">
         <div className="container mx-auto flex justify-between items-center">
           <h1 className="text-2xl font-bold">מערכת ניהול חדרי כושר</h1>
           <div className="flex items-center">
-            <button onClick={() => navigate('/login')} className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-md transition-colors">
+            <button
+              onClick={() => navigate('/login')}
+              className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-md transition-colors"
+            >
               התחברות מנהלים
             </button>
           </div>
@@ -265,17 +280,26 @@ const Registration = () => {
       <main className="flex-1 container mx-auto px-6 py-8">
         <div className="max-w-4xl mx-auto">
           {/* Base Selection for allBasesAdmin */}
-          {admin?.role === 'allBasesAdmin' && !selectedBase && <div className="glass p-8 rounded-2xl mb-8 animate-scale-in">
+          {admin?.role === 'allBasesAdmin' && !selectedBase && (
+            <div className="glass p-8 rounded-2xl mb-8 animate-scale-in">
               <h2 className="text-2xl font-bold mb-6 text-center">בחר בסיס לרישום</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {bases.map(base => <button key={base.id} onClick={() => setSelectedBase(base)} className="neomorphic p-6 text-center hover:-translate-y-1 transition-transform duration-300">
+                {bases.map((base) => (
+                  <button
+                    key={base.id}
+                    onClick={() => setSelectedBase(base)}
+                    className="neomorphic p-6 text-center hover:-translate-y-1 transition-transform duration-300"
+                  >
                     <h3 className="text-xl font-semibold mb-2">{base.name}</h3>
                     <p className="text-muted-foreground">{base.location}</p>
-                  </button>)}
+                  </button>
+                ))}
               </div>
-            </div>}
+            </div>
+          )}
           
-          {selectedBase && <div className="space-y-8">
+          {selectedBase && (
+            <div className="space-y-8">
               {/* Base Info */}
               <div className="text-center">
                 <span className="inline-block px-4 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium mb-2">
@@ -286,42 +310,89 @@ const Registration = () => {
               
               {/* Tabs */}
               <div className="flex justify-center space-x-4 border-b pb-4">
-                <button onClick={() => setView('entry')} className={`px-6 py-2 rounded-md font-medium ${view === 'entry' ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'}`}>
+                <button
+                  onClick={() => setView('entry')}
+                  className={`px-6 py-2 rounded-md font-medium ${
+                    view === 'entry' 
+                      ? 'bg-primary text-primary-foreground' 
+                      : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
+                  }`}
+                >
                   רישום כניסה
                 </button>
-                <button onClick={() => setView('register')} className={`px-6 py-2 rounded-md font-medium ${view === 'register' ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'}`}>
+                <button
+                  onClick={() => setView('register')}
+                  className={`px-6 py-2 rounded-md font-medium ${
+                    view === 'register' 
+                      ? 'bg-primary text-primary-foreground' 
+                      : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
+                  }`}
+                >
                   הצטרפות למערכת
                 </button>
-                
+                <button
+                  onClick={() => setView('login')}
+                  className={`px-6 py-2 rounded-md font-medium ${
+                    view === 'login' 
+                      ? 'bg-primary text-primary-foreground' 
+                      : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
+                  }`}
+                >
+                  התחברות מנהלים
+                </button>
               </div>
               
               {/* Login Form */}
-              {view === 'login' && <div className="glass max-w-md mx-auto p-8 rounded-2xl animate-fade-up">
+              {view === 'login' && (
+                <div className="glass max-w-md mx-auto p-8 rounded-2xl animate-fade-up">
                   <h3 className="text-xl font-bold mb-4 text-center">התחברות מנהלים</h3>
                   <form onSubmit={handleAdminLogin} className="space-y-6">
                     <div className="space-y-2">
                       <label htmlFor="username" className="block text-sm font-medium">
                         שם משתמש
                       </label>
-                      <input id="username" type="text" value={loginUsername} onChange={e => setLoginUsername(e.target.value)} className="input-field" placeholder="הזן שם משתמש" required autoComplete="off" />
+                      <input
+                        id="username"
+                        type="text"
+                        value={loginUsername}
+                        onChange={(e) => setLoginUsername(e.target.value)}
+                        className="input-field"
+                        placeholder="הזן שם משתמש"
+                        required
+                        autoComplete="off"
+                      />
                     </div>
                     
                     <div className="space-y-2">
                       <label htmlFor="password" className="block text-sm font-medium">
                         סיסמה
                       </label>
-                      <input id="password" type="password" value={loginPassword} onChange={e => setLoginPassword(e.target.value)} className="input-field" placeholder="הזן סיסמה" required autoComplete="off" />
+                      <input
+                        id="password"
+                        type="password"
+                        value={loginPassword}
+                        onChange={(e) => setLoginPassword(e.target.value)}
+                        className="input-field"
+                        placeholder="הזן סיסמה"
+                        required
+                        autoComplete="off"
+                      />
                     </div>
                     
-                    <button type="submit" className="w-full bg-primary text-primary-foreground py-3 rounded-lg font-medium shadow-md
-                      transition duration-300 hover:bg-primary/90 hover:shadow-lg">
+                    <button
+                      type="submit"
+                      className="w-full bg-primary text-primary-foreground py-3 rounded-lg font-medium shadow-md
+                      transition duration-300 hover:bg-primary/90 hover:shadow-lg"
+                    >
                       התחבר
                     </button>
                   </form>
-                </div>}
+                </div>
+              )}
               
               {/* Registration Form */}
-              {view === 'register' && <div className="glass max-w-xl mx-auto p-8 rounded-2xl animate-fade-up">
+              {view === 'register' && (
+                <div className="glass max-w-xl mx-auto p-8 rounded-2xl animate-fade-up">
                   <h3 className="text-xl font-bold mb-4 text-center">הצטרפות למערכת</h3>
                   <form onSubmit={handleRegistration} className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -329,24 +400,49 @@ const Registration = () => {
                         <label htmlFor="personalId" className="block text-sm font-medium">
                           מספר אישי (7 ספרות)
                         </label>
-                        <input id="personalId" type="text" inputMode="numeric" value={personalId} onChange={e => {
-                    const value = e.target.value.replace(/\D/g, '').slice(0, 7);
-                    setPersonalId(value);
-                  }} className="input-field" placeholder="1234567" required autoComplete="off" />
+                        <input
+                          id="personalId"
+                          type="text"
+                          inputMode="numeric"
+                          value={personalId}
+                          onChange={(e) => {
+                            const value = e.target.value.replace(/\D/g, '').slice(0, 7);
+                            setPersonalId(value);
+                          }}
+                          className="input-field"
+                          placeholder="1234567"
+                          required
+                          autoComplete="off"
+                        />
                       </div>
                       
                       <div className="space-y-2">
                         <label htmlFor="fullName" className="block text-sm font-medium">
                           שם מלא
                         </label>
-                        <input id="fullName" type="text" value={fullName} onChange={e => setFullName(e.target.value)} className="input-field" placeholder="שם פרטי ומשפחה" required autoComplete="off" />
+                        <input
+                          id="fullName"
+                          type="text"
+                          value={fullName}
+                          onChange={(e) => setFullName(e.target.value)}
+                          className="input-field"
+                          placeholder="שם פרטי ומשפחה"
+                          required
+                          autoComplete="off"
+                        />
                       </div>
                       
                       <div className="space-y-2">
                         <label htmlFor="medicalProfile" className="block text-sm font-medium">
                           פרופיל רפואי
                         </label>
-                        <select id="medicalProfile" value={medicalProfile} onChange={e => setMedicalProfile(e.target.value)} className="input-field" required>
+                        <select
+                          id="medicalProfile"
+                          value={medicalProfile}
+                          onChange={(e) => setMedicalProfile(e.target.value)}
+                          className="input-field"
+                          required
+                        >
                           <option value="">בחר פרופיל</option>
                           <option value="97">97</option>
                           <option value="82">82</option>
@@ -361,11 +457,19 @@ const Registration = () => {
                         <label htmlFor="department" className="block text-sm font-medium">
                           מחלקה
                         </label>
-                        <select id="department" value={departmentId} onChange={e => setDepartmentId(e.target.value)} className="input-field" required>
+                        <select
+                          id="department"
+                          value={departmentId}
+                          onChange={(e) => setDepartmentId(e.target.value)}
+                          className="input-field"
+                          required
+                        >
                           <option value="">בחר מחלקה</option>
-                          {filteredDepartments.map(dept => <option key={dept.id} value={dept.id}>
+                          {filteredDepartments.map((dept) => (
+                            <option key={dept.id} value={dept.id}>
                               {dept.name}
-                            </option>)}
+                            </option>
+                          ))}
                         </select>
                       </div>
                       
@@ -373,40 +477,71 @@ const Registration = () => {
                         <label htmlFor="phoneNumber" className="block text-sm font-medium">
                           מספר טלפון (10 ספרות, מתחיל ב-05)
                         </label>
-                        <input id="phoneNumber" type="text" inputMode="numeric" value={phoneNumber} onChange={e => {
-                    const value = e.target.value.replace(/\D/g, '').slice(0, 10);
-                    setPhoneNumber(value);
-                  }} className="input-field" placeholder="05XXXXXXXX" required autoComplete="off" />
+                        <input
+                          id="phoneNumber"
+                          type="text"
+                          inputMode="numeric"
+                          value={phoneNumber}
+                          onChange={(e) => {
+                            const value = e.target.value.replace(/\D/g, '').slice(0, 10);
+                            setPhoneNumber(value);
+                          }}
+                          className="input-field"
+                          placeholder="05XXXXXXXX"
+                          required
+                          autoComplete="off"
+                        />
                       </div>
                     </div>
                     
-                    <button type="submit" className="w-full bg-primary text-primary-foreground py-3 rounded-lg font-medium shadow-md
-                      transition duration-300 hover:bg-primary/90 hover:shadow-lg">
+                    <button
+                      type="submit"
+                      className="w-full bg-primary text-primary-foreground py-3 rounded-lg font-medium shadow-md
+                      transition duration-300 hover:bg-primary/90 hover:shadow-lg"
+                    >
                       הצטרף
                     </button>
                   </form>
-                </div>}
+                </div>
+              )}
               
               {/* Entry Form */}
-              {view === 'entry' && <div className="glass max-w-xl mx-auto p-8 rounded-2xl animate-fade-up">
+              {view === 'entry' && (
+                <div className="glass max-w-xl mx-auto p-8 rounded-2xl animate-fade-up">
                   <h3 className="text-xl font-bold mb-4 text-center">רישום כניסה לחדר כושר</h3>
                   
-                  {!confirmingEntry ? <div className="space-y-6">
+                  {!confirmingEntry ? (
+                    <div className="space-y-6">
                       <div className="space-y-2">
                         <label htmlFor="entryPersonalId" className="block text-sm font-medium">
                           מספר אישי (7 ספרות)
                         </label>
-                        <input id="entryPersonalId" type="text" inputMode="numeric" value={entryPersonalId} onChange={e => {
-                  const value = e.target.value.replace(/\D/g, '').slice(0, 7);
-                  setEntryPersonalId(value);
-                }} className="input-field" placeholder="1234567" required autoComplete="off" />
+                        <input
+                          id="entryPersonalId"
+                          type="text"
+                          inputMode="numeric"
+                          value={entryPersonalId}
+                          onChange={(e) => {
+                            const value = e.target.value.replace(/\D/g, '').slice(0, 7);
+                            setEntryPersonalId(value);
+                          }}
+                          className="input-field"
+                          placeholder="1234567"
+                          required
+                          autoComplete="off"
+                        />
                       </div>
                       
-                      <button onClick={handlePersonalIdCheck} className="w-full bg-primary text-primary-foreground py-3 rounded-lg font-medium shadow-md
-                        transition duration-300 hover:bg-primary/90 hover:shadow-lg">
+                      <button
+                        onClick={handlePersonalIdCheck}
+                        className="w-full bg-primary text-primary-foreground py-3 rounded-lg font-medium shadow-md
+                        transition duration-300 hover:bg-primary/90 hover:shadow-lg"
+                      >
                         בדוק
                       </button>
-                    </div> : <div className="space-y-6">
+                    </div>
+                  ) : (
+                    <div className="space-y-6">
                       <div className="text-center mb-6">
                         <p className="text-lg">האם שמך הוא</p>
                         <p className="text-2xl font-bold">{entryTrainee?.fullName}</p>
@@ -437,22 +572,31 @@ const Registration = () => {
                       </div>
                       
                       <div className="flex space-x-4">
-                        <button onClick={() => {
-                  setConfirmingEntry(false);
-                  setEntryTrainee(null);
-                  setEntryPersonalId('');
-                }} className="flex-1 bg-secondary text-secondary-foreground py-3 rounded-lg font-medium
-                          transition duration-300 hover:bg-secondary/80">
+                        <button
+                          onClick={() => {
+                            setConfirmingEntry(false);
+                            setEntryTrainee(null);
+                            setEntryPersonalId('');
+                          }}
+                          className="flex-1 bg-secondary text-secondary-foreground py-3 rounded-lg font-medium
+                          transition duration-300 hover:bg-secondary/80"
+                        >
                           ביטול
                         </button>
-                        <button onClick={handleEntryConfirmation} className="flex-1 bg-primary text-primary-foreground py-3 rounded-lg font-medium shadow-md
-                          transition duration-300 hover:bg-primary/90 hover:shadow-lg">
+                        <button
+                          onClick={handleEntryConfirmation}
+                          className="flex-1 bg-primary text-primary-foreground py-3 rounded-lg font-medium shadow-md
+                          transition duration-300 hover:bg-primary/90 hover:shadow-lg"
+                        >
                           רישום כניסה
                         </button>
                       </div>
-                    </div>}
-                </div>}
-            </div>}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </main>
 
@@ -462,6 +606,8 @@ const Registration = () => {
           <p>© {new Date().getFullYear()} מערכת ניהול חדרי כושר</p>
         </div>
       </footer>
-    </div>;
+    </div>
+  );
 };
+
 export default Registration;
