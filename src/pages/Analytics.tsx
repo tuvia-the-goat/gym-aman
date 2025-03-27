@@ -186,7 +186,7 @@ const Analytics = () => {
                 <BarChart data={weekdaysData}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="name" />
-                  <YAxis />
+                  <YAxis tickMargin={40}/>
                   <Tooltip />
                   <Bar dataKey="value" fill="#3b82f6" />
                 </BarChart>
@@ -202,7 +202,7 @@ const Analytics = () => {
                 <LineChart data={monthlyData}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="name" />
-                  <YAxis />
+                  <YAxis tickMargin={20}/>
                   <Tooltip />
                   <Line 
                     type="monotone" 
@@ -228,8 +228,8 @@ const Analytics = () => {
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart layout="vertical" data={topTraineesData}>
                       <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis type="number" />
-                      <YAxis dataKey="name" type="category" width={150} />
+                      <XAxis type="number"/>
+                      <YAxis dataKey="name" type="category" width={150} tickMargin={100}/>
                       <Tooltip />
                       <Bar dataKey="value" fill="#3b82f6" />
                     </BarChart>
@@ -283,7 +283,7 @@ const Analytics = () => {
                         outerRadius={80}
                         fill="#8884d8"
                         dataKey="value"
-                        label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                        // label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
                       >
                         {topDepartmentsData.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />

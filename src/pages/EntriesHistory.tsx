@@ -210,6 +210,7 @@ const EntriesHistory = () => {
               value={selectedDepartment}
               onChange={(e) => setSelectedDepartment(e.target.value)}
               className="input-field"
+              style={{marginLeft: "20px"}}
             >
               <option value="">כל המחלקות</option>
               {departments
@@ -325,11 +326,11 @@ const EntriesHistory = () => {
       {/* Trainee Details Dialog */}
       {selectedTrainee && (
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="max-w-3xl">
-            <DialogHeader>
+          <DialogContent className="max-w-3xl" style={{direction:"rtl"}}>
+            <DialogHeader style={{textAlign:"right"}}>
               <DialogTitle className="text-2xl">{selectedTrainee.fullName}</DialogTitle>
             </DialogHeader>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4" >
               <div>
                 <div className="bg-muted p-4 rounded-lg space-y-4">
                   <h3 className="font-semibold text-lg">פרטי מתאמן</h3>
@@ -361,6 +362,7 @@ const EntriesHistory = () => {
                     <button
                       onClick={() => updateMedicalApproval(true)}
                       className="btn-primary"
+                      style={{marginLeft:"10px"}}
                     >
                       אישור רפואי לשנה
                     </button>
@@ -384,8 +386,8 @@ const EntriesHistory = () => {
                           data={getTraineeAnalytics(selectedTrainee._id).dayData} 
                           margin={{ top: 5, right: 5, bottom: 5, left: 5 }}
                         >
-                          <XAxis dataKey="name" />
-                          <YAxis />
+                          <XAxis dataKey="name" tickMargin={12}/>
+                          <YAxis tickMargin={32}/>
                           <Tooltip />
                           <Bar dataKey="count" fill="#4f46e5" />
                         </BarChart>
@@ -399,8 +401,8 @@ const EntriesHistory = () => {
                           data={getTraineeAnalytics(selectedTrainee._id).hourData} 
                           margin={{ top: 5, right: 5, bottom: 5, left: 5 }}
                         >
-                          <XAxis dataKey="name" />
-                          <YAxis />
+                          <XAxis dataKey="name" tickMargin={12}/>
+                          <YAxis tickMargin={32}/>
                           <Tooltip />
                           <Bar dataKey="count" fill="#0ea5e9" />
                         </BarChart>

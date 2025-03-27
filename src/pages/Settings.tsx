@@ -270,35 +270,35 @@ const Settings = () => {
           <h2 className="text-2xl font-bold">הגדרות</h2>
         </div>
         
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <Tabs value={activeTab} onValueChange={setActiveTab} style={{display: 'flex', flexDirection: "column", justifyContent: "space-around"}}>
           <TabsList>
-            <TabsTrigger value="medicalApproval">ניהול אישורים רפואיים</TabsTrigger>
-            <TabsTrigger value="departments">ניהול מחלקות</TabsTrigger>
             {admin?.role === 'generalAdmin' && (
               <>
-                <TabsTrigger value="bases">ניהול בסיסים</TabsTrigger>
                 <TabsTrigger value="admins">ניהול מנהלים</TabsTrigger>
+                <TabsTrigger value="bases">ניהול בסיסים</TabsTrigger>
               </>
             )}
+            <TabsTrigger value="departments">ניהול מחלקות</TabsTrigger>
+            <TabsTrigger value="medicalApproval"> אישורים רפואיים</TabsTrigger>
           </TabsList>
           
           {/* Medical Approval Tab */}
           <TabsContent value="medicalApproval" className="pt-6">
             <div className="bg-card shadow-sm rounded-lg border overflow-hidden">
-              <div className="p-4 bg-muted">
-                <h3 className="font-semibold text-lg">ניהול אישורים רפואיים</h3>
-                <p className="text-muted-foreground">צפה במתאמנים ללא אישור רפואי או עם אישור שעומד לפוג</p>
+              <div className="p-4 bg-muted" style={{display: "flex", flexDirection:"column", alignItems: "flex-end"}}>
+                <h3 className="font-semibold text-lg" style={{textAlign: "right"}}>ניהול אישורים רפואיים</h3>
+                <p className="text-muted-foreground" style={{textAlign: "right"}}>צפה במתאמנים ללא אישור רפואי או עם אישור שעומד לפוג</p>
                 
                 <div className="flex space-x-4 mt-4">
                   <button
-                    onClick={() => setMedicalFilter('expired')}
+                    onClick={() => setMedicalFilter('expiringThreeMonths')}
                     className={`px-4 py-2 rounded-md ${
-                      medicalFilter === 'expired' 
+                      medicalFilter === 'expiringThreeMonths' 
                         ? 'bg-primary text-primary-foreground' 
                         : 'bg-secondary text-secondary-foreground'
                     }`}
                   >
-                    ללא אישור תקף
+                    פג תוך 3 חודשים
                   </button>
                   <button
                     onClick={() => setMedicalFilter('expiringOneMonth')}
@@ -311,61 +311,61 @@ const Settings = () => {
                     פג תוך חודש
                   </button>
                   <button
-                    onClick={() => setMedicalFilter('expiringThreeMonths')}
+                    onClick={() => setMedicalFilter('expired')}
                     className={`px-4 py-2 rounded-md ${
-                      medicalFilter === 'expiringThreeMonths' 
+                      medicalFilter === 'expired' 
                         ? 'bg-primary text-primary-foreground' 
                         : 'bg-secondary text-secondary-foreground'
                     }`}
                   >
-                    פג תוך 3 חודשים
+                    ללא אישור תקף
                   </button>
                 </div>
               </div>
               
               <div className="overflow-x-auto">
                 <table className="w-full">
-                  <thead className="bg-muted/50">
+                  <thead className="bg-muted/50" style={{direction: "rtl"}}>
                     <tr>
-                      <th className="px-4 py-3 text-right">שם מתאמן</th>
-                      <th className="px-4 py-3 text-right">מספר אישי</th>
-                      <th className="px-4 py-3 text-right">מחלקה</th>
+                      <th className="px-4 py-3 text-right">פעולות</th>
+                      <th className="px-4 py-3 text-right">סטטוס אישור</th>
                       {admin?.role === 'generalAdmin' && (
                         <th className="px-4 py-3 text-right">בסיס</th>
                       )}
-                      <th className="px-4 py-3 text-right">סטטוס אישור</th>
-                      <th className="px-4 py-3 text-right">פעולות</th>
+                      <th className="px-4 py-3 text-right">מחלקה</th>
+                      <th className="px-4 py-3 text-right">מספר אישי</th>
+                      <th className="px-4 py-3 text-right">שם מתאמן</th>
                     </tr>
                   </thead>
-                  <tbody>
+                  <tbody style={{direction: "rtl"}}>
                     {filteredTrainees.length > 0 ? (
                       filteredTrainees.map((trainee) => (
                         <tr key={trainee._id} className="border-t hover:bg-muted/30">
-                          <td className="px-4 py-3">{trainee.fullName}</td>
-                          <td className="px-4 py-3">{trainee.personalId}</td>
-                          <td className="px-4 py-3">{getDepartmentName(trainee.departmentId)}</td>
-                          {admin?.role === 'generalAdmin' && (
-                            <td className="px-4 py-3">{getBaseName(trainee.baseId)}</td>
-                          )}
+                          <td className="px-4 py-3">
+                            <button
+                              onClick={() => updateMedicalApproval(trainee._id, true)}
+                              className="btn-primary text-sm py-1"
+                              >
+                              אישור לשנה
+                            </button>
+                          </td>
                           <td className="px-4 py-3">
                             <span className={`px-2 py-1 rounded-full text-sm ${
                               trainee.medicalApproval.approved 
-                                ? 'bg-yellow-100 text-yellow-800' 
-                                : 'bg-red-100 text-red-800'
+                              ? 'bg-yellow-100 text-yellow-800' 
+                              : 'bg-red-100 text-red-800'
                             }`}>
                               {trainee.medicalApproval.approved 
                                 ? `פג בתאריך ${new Date(trainee.medicalApproval.expirationDate!).toLocaleDateString()}` 
                                 : 'אין אישור תקף'}
                             </span>
                           </td>
-                          <td className="px-4 py-3">
-                            <button
-                              onClick={() => updateMedicalApproval(trainee._id, true)}
-                              className="btn-primary text-sm py-1"
-                            >
-                              אישור לשנה
-                            </button>
-                          </td>
+                          {admin?.role === 'generalAdmin' && (
+                            <td className="px-4 py-3">{getBaseName(trainee.baseId)}</td>
+                          )}
+                          <td className="px-4 py-3">{getDepartmentName(trainee.departmentId)}</td>
+                          <td className="px-4 py-3">{trainee.personalId}</td>
+                          <td className="px-4 py-3">{trainee.fullName}</td>
                         </tr>
                       ))
                     ) : (
@@ -387,11 +387,40 @@ const Settings = () => {
           {/* Departments Tab */}
           <TabsContent value="departments" className="pt-6">
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+              
+              <div className="bg-card shadow-sm rounded-lg border overflow-hidden">
+                <div className="p-4 bg-muted">
+                  <h3 className="font-semibold text-lg" style={{textAlign: "right"}}>מחלקות קיימות</h3>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-muted/50">
+                      <tr>
+                        <th className="px-4 py-3 text-right">בסיס</th>
+                        <th className="px-4 py-3 text-right">שם המחלקה</th>
+                      </tr>
+                    </thead>
+                    <tbody style={{textAlign: "right"}}>
+                      {departments
+                        .filter(dept => 
+                          admin?.role === 'generalAdmin' || dept.baseId === admin?.baseId
+                        )
+                        .map((department) => (
+                          <tr key={department._id} className="border-t hover:bg-muted/30">
+                            <td className="px-4 py-3">{getBaseName(department.baseId)}</td>
+                            <td className="px-4 py-3">{department.name}</td>
+                          </tr>
+                        ))
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              </div>
               <div className="bg-card shadow-sm rounded-lg border p-6">
-                <h3 className="font-semibold text-lg mb-4">הוספת מחלקה חדשה</h3>
+                <h3 className="font-semibold text-lg mb-4" style={{textAlign: "right"}}>הוספת מחלקה חדשה</h3>
                 <form onSubmit={handleAddDepartment} className="space-y-4">
                   <div>
-                    <label htmlFor="departmentName" className="block text-sm font-medium mb-1">
+                    <label htmlFor="departmentName" className="block text-sm font-medium mb-1" style={{textAlign: "right"}}>
                       שם המחלקה
                     </label>
                     <input
@@ -403,11 +432,12 @@ const Settings = () => {
                       placeholder="הזן שם מחלקה"
                       required
                       autoComplete="off"
+                      style={{textAlign: "right"}}
                     />
                   </div>
                   
                   <div>
-                    <label htmlFor="baseSelect" className="block text-sm font-medium mb-1">
+                    <label htmlFor="baseSelect" className="block text-sm font-medium mb-1" style={{textAlign: "right"}}>
                       בסיס
                     </label>
                     <select
@@ -416,6 +446,7 @@ const Settings = () => {
                       onChange={(e) => setSelectedBaseForDepartment(e.target.value)}
                       className="input-field"
                       required
+                      style={{textAlign: "right"}}
                     >
                       <option value="">בחר בסיס</option>
                       {bases
@@ -436,43 +467,14 @@ const Settings = () => {
                   </button>
                 </form>
               </div>
-              
-              <div className="bg-card shadow-sm rounded-lg border overflow-hidden">
-                <div className="p-4 bg-muted">
-                  <h3 className="font-semibold text-lg">מחלקות קיימות</h3>
-                </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead className="bg-muted/50">
-                      <tr>
-                        <th className="px-4 py-3 text-right">שם המחלקה</th>
-                        <th className="px-4 py-3 text-right">בסיס</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {departments
-                        .filter(dept => 
-                          admin?.role === 'generalAdmin' || dept.baseId === admin?.baseId
-                        )
-                        .map((department) => (
-                          <tr key={department._id} className="border-t hover:bg-muted/30">
-                            <td className="px-4 py-3">{department.name}</td>
-                            <td className="px-4 py-3">{getBaseName(department.baseId)}</td>
-                          </tr>
-                        ))
-                      }
-                    </tbody>
-                  </table>
-                </div>
-              </div>
             </div>
           </TabsContent>
           
           {/* Bases Tab (allBasesAdmin only) */}
           {admin?.role === 'generalAdmin' && (
             <TabsContent value="bases" className="pt-6">
-              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                <div className="bg-card shadow-sm rounded-lg border p-6">
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2" style={{direction: "rtl"}}>
+                <div className="bg-card shadow-sm rounded-lg border p-6" style={{direction: "rtl"}}>
                   <h3 className="font-semibold text-lg mb-4">הוספת בסיס חדש</h3>
                   <form onSubmit={handleAddBase} className="space-y-4">
                     <div>
@@ -514,10 +516,10 @@ const Settings = () => {
                 </div>
                 
                 <div className="bg-card shadow-sm rounded-lg border overflow-hidden">
-                  <div className="p-4 bg-muted">
-                    <h3 className="font-semibold text-lg">בסיסים קיימים</h3>
+                  <div className="p-4 bg-muted" style={{direction: "rtl"}}>
+                    <h3 className="font-semibold text-lg" >בסיסים קיימים</h3>
                   </div>
-                  <div className="overflow-x-auto">
+                  <div className="overflow-x-auto" style={{direction: "rtl"}}>
                     <table className="w-full">
                       <thead className="bg-muted/50">
                         <tr>
@@ -528,7 +530,7 @@ const Settings = () => {
                       </thead>
                       <tbody>
                         {bases.map((base) => (
-                          <tr key={base._id} className="border-t hover:bg-muted/30">
+                          <tr key={base._id} className="border-t hover:bg-muted/30" >
                             <td className="px-4 py-3">{base.name}</td>
                             <td className="px-4 py-3">{base.location}</td>
                             <td className="px-4 py-3">
@@ -546,8 +548,8 @@ const Settings = () => {
           
           {/* Admins Tab (allBasesAdmin only) */}
           {admin?.role === 'generalAdmin' && (
-            <TabsContent value="admins" className="pt-6">
-              <div className="bg-card shadow-sm rounded-lg border p-6">
+            <TabsContent value="admins" className="pt-6" style={{display: "flex",justifyContent: "center"}} >
+              <div className="bg-card shadow-sm rounded-lg border p-6" style={{direction: "rtl", width:"510px", }}>
                 <h3 className="font-semibold text-lg mb-4">הוספת מנהל חדש</h3>
                 <form onSubmit={handleAddAdmin} className="space-y-4 max-w-md">
                   <div>

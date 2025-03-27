@@ -50,6 +50,23 @@ const Registration = () => {
     }
   }, [admin, bases]);
   
+  useEffect(() => {
+    // Replace the current history state to prevent going back
+    window.history.pushState(null, '', window.location.pathname);
+    
+    // Add event listener to handle any attempt to go back
+    const handlePopState = () => {
+      window.history.pushState(null, '', window.location.pathname);
+    };
+    
+    window.addEventListener('popstate', handlePopState);
+    
+    // Clean up the event listener on component unmount
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, []);
+  
   // Handle admin login
   const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -49,7 +49,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, activeTab }
                 {!isAllBasesAdmin && admin?.baseId && ` - בסיס ${getBasisName(admin.baseId)}`}
               </span>
             </div>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2" style={{gap: "1rem"}}>
               <button
                 onClick={handleRegistrationScreen}
                 className="px-4 py-2 bg-white text-gray-800 rounded-md font-medium text-sm hover:bg-gray-100 transition-colors"
@@ -68,15 +68,15 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, activeTab }
       </header>
 
       {/* Navigation */}
-      <div className="container mx-auto px-6 py-4 border-b">
-        <Tabs value={activeTab} className="w-full justify-start">
+      <div className="container mx-auto px-6 py-4 border-b" >
+        <Tabs value={activeTab} className="w-full justify-start" style={{display: 'flex', justifyContent: "space-around"}}>
           <TabsList className="bg-secondary">
             <TabsTrigger 
-              value="entries"
-              onClick={() => navigate('/dashboard')}
+              value="settings"
+              onClick={() => navigate('/dashboard/settings')}
               className="text-base"
             >
-              היסטוריית כניסות
+              הגדרות
             </TabsTrigger>
             <TabsTrigger 
               value="analytics"
@@ -86,11 +86,11 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, activeTab }
               אנליטיקות
             </TabsTrigger>
             <TabsTrigger 
-              value="settings"
-              onClick={() => navigate('/dashboard/settings')}
+              value="entries"
+              onClick={() => navigate('/dashboard')}
               className="text-base"
             >
-              הגדרות
+              היסטוריית כניסות
             </TabsTrigger>
           </TabsList>
         </Tabs>
