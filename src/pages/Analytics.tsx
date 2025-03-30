@@ -1,5 +1,6 @@
+
 import React, { useMemo, useState } from 'react';
-import { format, isWithinInterval, parseISO, addMonths } from 'date-fns';
+import { format, isWithinInterval, parseISO } from 'date-fns';
 import DashboardLayout from '../components/DashboardLayout';
 import { useAdmin } from '../context/AdminContext';
 import { 
@@ -9,11 +10,34 @@ import {
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { CalendarIcon, FilterIcon, X } from 'lucide-react';
+import { CalendarIcon, FilterIcon, X, ChevronsUpDown, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 const Analytics = () => {
   const { admin, entries, trainees, departments, bases } = useAdmin();
@@ -21,10 +45,11 @@ const Analytics = () => {
   // Filtering state
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
-  const [selectedDepartmentId, setSelectedDepartmentId] = useState<string>('all');
+  const [selectedDepartmentIds, setSelectedDepartmentIds] = useState<string[]>([]);
   const [selectedTrainees, setSelectedTrainees] = useState<string[]>([]);
   const [showFilterDialog, setShowFilterDialog] = useState(false);
-
+  const [openDepartmentCommand, setOpenDepartmentCommand] = useState(false);
+  
   // Filter data based on admin role and filters
   const filteredEntries = useMemo(() => {
     let filtered = entries;
@@ -43,8 +68,8 @@ const Analytics = () => {
     }
     
     // Department filter
-    if (selectedDepartmentId && selectedDepartmentId !== 'all') {
-      filtered = filtered.filter(entry => entry.departmentId === selectedDepartmentId);
+    if (selectedDepartmentIds.length > 0) {
+      filtered = filtered.filter(entry => selectedDepartmentIds.includes(entry.departmentId));
     }
     
     // Selected trainees filter
@@ -53,7 +78,7 @@ const Analytics = () => {
     }
     
     return filtered;
-  }, [admin, entries, startDate, endDate, selectedDepartmentId, selectedTrainees]);
+  }, [admin, entries, startDate, endDate, selectedDepartmentIds, selectedTrainees]);
   
   const filteredTrainees = useMemo(() => {
     let filtered = trainees;
@@ -64,8 +89,8 @@ const Analytics = () => {
     }
     
     // Department filter
-    if (selectedDepartmentId && selectedDepartmentId !== 'all') {
-      filtered = filtered.filter(trainee => trainee.departmentId === selectedDepartmentId);
+    if (selectedDepartmentIds.length > 0) {
+      filtered = filtered.filter(trainee => selectedDepartmentIds.includes(trainee.departmentId));
     }
     
     // Selected trainees filter
@@ -74,7 +99,7 @@ const Analytics = () => {
     }
     
     return filtered;
-  }, [admin, trainees, selectedDepartmentId, selectedTrainees]);
+  }, [admin, trainees, selectedDepartmentIds, selectedTrainees]);
   
   // Get available departments for filtering
   const availableDepartments = useMemo(() => {
@@ -93,16 +118,29 @@ const Analytics = () => {
       filtered = filtered.filter(trainee => trainee.baseId === admin.baseId);
     }
     
-    // Department filter
-    if (selectedDepartmentId) {
-      filtered = filtered.filter(trainee => trainee.departmentId === selectedDepartmentId);
-    }
-    
     return filtered;
-  }, [admin, trainees, selectedDepartmentId]);
+  }, [admin, trainees]);
+  
+  // Group trainees by department for the UI
+  const traineesByDepartment = useMemo(() => {
+    const grouped: Record<string, typeof trainees> = {};
+    
+    // Filter trainees by selected departments if any are selected
+    let filteredTrainees = availableTrainees;
+    
+    // Group the trainees by department
+    filteredTrainees.forEach(trainee => {
+      if (!grouped[trainee.departmentId]) {
+        grouped[trainee.departmentId] = [];
+      }
+      grouped[trainee.departmentId].push(trainee);
+    });
+    
+    return grouped;
+  }, [availableTrainees]);
   
   // Check if specific filters are active
-  const hasSpecificFilters = (selectedDepartmentId && selectedDepartmentId !== 'all') || selectedTrainees.length > 0;
+  const hasSpecificFilters = selectedDepartmentIds.length > 0 || selectedTrainees.length > 0;
   
   // Data for days of week chart
   const weekdaysData = useMemo(() => {
@@ -231,7 +269,7 @@ const Analytics = () => {
   const clearFilters = () => {
     setStartDate(undefined);
     setEndDate(undefined);
-    setSelectedDepartmentId('all');
+    setSelectedDepartmentIds([]);
     setSelectedTrainees([]);
   };
   
@@ -244,6 +282,28 @@ const Analytics = () => {
     );
   };
   
+  // Toggle entire department selection
+  const toggleDepartment = (departmentId: string) => {
+    setSelectedDepartmentIds(prev => {
+      if (prev.includes(departmentId)) {
+        // If department is already selected, remove it
+        return prev.filter(id => id !== departmentId);
+      } else {
+        // If department is not selected, add it
+        return [...prev, departmentId];
+      }
+    });
+    
+    // Also update trainee selection based on department toggle
+    const departmentTrainees = traineesByDepartment[departmentId] || [];
+    const traineeIds = departmentTrainees.map(trainee => trainee._id);
+    
+    if (selectedDepartmentIds.includes(departmentId)) {
+      // If department is already selected, remove all its trainees
+      setSelectedTrainees(prev => prev.filter(id => !traineeIds.includes(id)));
+    }
+  };
+  
   // Colors for pie charts
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#A478E8'];
 
@@ -253,7 +313,7 @@ const Analytics = () => {
         <div className="flex justify-between items-center">
           <h2 className="text-2xl font-bold">אנליטיקות</h2>
           <div className="flex items-center gap-2">
-            {(startDate || endDate || (selectedDepartmentId && selectedDepartmentId !== 'all') || selectedTrainees.length > 0) && (
+            {(startDate || endDate || selectedDepartmentIds.length > 0 || selectedTrainees.length > 0) && (
               <Button variant="outline" onClick={clearFilters} className="flex items-center gap-1">
                 <X size={16} />
                 נקה סינון
@@ -331,48 +391,144 @@ const Analytics = () => {
                 </div>
               </div>
               
+              {/* Multiple Department Selection */}
               <div className="space-y-2">
-                <h3 className="font-medium">מחלקה</h3>
-                <Select 
-                  value={selectedDepartmentId} 
-                  onValueChange={setSelectedDepartmentId}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="בחר מחלקה" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">כל המחלקות</SelectItem>
-                    {availableDepartments.map(dept => (
-                      <SelectItem key={dept._id} value={dept._id}>
-                        {dept.name} {admin?.role === 'generalAdmin' && `(${getBaseName(dept.baseId)})`}
-                      </SelectItem>
+                <h3 className="font-medium">בחירת מחלקות</h3>
+                <Popover open={openDepartmentCommand} onOpenChange={setOpenDepartmentCommand}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={openDepartmentCommand}
+                      className="w-full justify-between text-right"
+                    >
+                      {selectedDepartmentIds.length > 0
+                        ? `${selectedDepartmentIds.length} מחלקות נבחרו`
+                        : "בחר מחלקות"}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-full p-0">
+                    <Command>
+                      <CommandInput placeholder="חפש מחלקה..." />
+                      <CommandList>
+                        <CommandEmpty>לא נמצאו מחלקות</CommandEmpty>
+                        <CommandGroup>
+                          {availableDepartments.map((department) => (
+                            <CommandItem
+                              key={department._id}
+                              value={department.name}
+                              onSelect={() => {
+                                toggleDepartment(department._id);
+                              }}
+                            >
+                              <Checkbox
+                                checked={selectedDepartmentIds.includes(department._id)}
+                                className="ml-2"
+                              />
+                              <span>{department.name}</span>
+                              {admin?.role === 'generalAdmin' && (
+                                <span className="mr-auto text-xs text-muted-foreground">
+                                  {getBaseName(department.baseId)}
+                                </span>
+                              )}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+                
+                {selectedDepartmentIds.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {selectedDepartmentIds.map(deptId => (
+                      <div key={deptId} className="bg-muted text-sm rounded-md px-2 py-1 flex items-center gap-1">
+                        {getDepartmentName(deptId)}
+                        <button 
+                          onClick={() => toggleDepartment(deptId)} 
+                          className="hover:text-destructive"
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
                     ))}
-                  </SelectContent>
-                </Select>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => setSelectedDepartmentIds([])}
+                      className="text-xs"
+                    >
+                      נקה הכל
+                    </Button>
+                  </div>
+                )}
               </div>
               
+              {/* Trainees Selection (now organized by department) */}
               <div className="space-y-2">
                 <h3 className="font-medium">בחירת מתאמנים</h3>
-                <div className="max-h-56 overflow-y-auto border rounded-md p-2">
-                  {availableTrainees.length === 0 ? (
+                <div className="max-h-64 overflow-y-auto border rounded-md">
+                  {Object.keys(traineesByDepartment).length === 0 ? (
                     <p className="text-center py-2 text-muted-foreground">אין מתאמנים זמינים</p>
                   ) : (
-                    <div className="space-y-2">
-                      {availableTrainees.map(trainee => (
-                        <div key={trainee._id} className="flex items-center space-x-2 justify-end">
-                          <label htmlFor={`trainee-${trainee._id}`} className="text-sm cursor-pointer mr-2">
-                            {trainee.fullName}
-                          </label>
-                          <Checkbox 
-                            id={`trainee-${trainee._id}`}
-                            checked={selectedTrainees.includes(trainee._id)}
-                            onCheckedChange={() => toggleTrainee(trainee._id)}
-                          />
+                    <div className="divide-y">
+                      {Object.entries(traineesByDepartment).map(([deptId, deptTrainees]) => (
+                        <div key={deptId} className="p-2">
+                          <div className="flex items-center justify-between mb-2">
+                            <h4 className="font-medium text-sm">{getDepartmentName(deptId)}</h4>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="h-6 text-xs"
+                              onClick={() => {
+                                // Get trainee IDs for this department
+                                const traineeIds = deptTrainees.map(t => t._id);
+                                
+                                // Check if all trainees from this department are already selected
+                                const allSelected = traineeIds.every(id => selectedTrainees.includes(id));
+                                
+                                if (allSelected) {
+                                  // If all are selected, remove all
+                                  setSelectedTrainees(prev => 
+                                    prev.filter(id => !traineeIds.includes(id))
+                                  );
+                                } else {
+                                  // If not all are selected, add all
+                                  setSelectedTrainees(prev => {
+                                    const currentSelected = new Set(prev);
+                                    traineeIds.forEach(id => currentSelected.add(id));
+                                    return Array.from(currentSelected);
+                                  });
+                                }
+                              }}
+                            >
+                              {deptTrainees.every(t => selectedTrainees.includes(t._id)) 
+                                ? "בטל בחירת כולם" 
+                                : "בחר הכל"}
+                            </Button>
+                          </div>
+                          
+                          <div className="space-y-1 pl-2">
+                            {deptTrainees.map(trainee => (
+                              <div key={trainee._id} className="flex items-center space-x-2 justify-end">
+                                <label htmlFor={`trainee-${trainee._id}`} className="text-sm cursor-pointer mr-2 flex-1">
+                                  {trainee.fullName}
+                                </label>
+                                <Checkbox 
+                                  id={`trainee-${trainee._id}`}
+                                  checked={selectedTrainees.includes(trainee._id)}
+                                  onCheckedChange={() => toggleTrainee(trainee._id)}
+                                />
+                              </div>
+                            ))}
+                          </div>
                         </div>
                       ))}
                     </div>
                   )}
                 </div>
+                
                 {selectedTrainees.length > 0 && (
                   <div className="flex justify-between items-center">
                     <Button 
@@ -380,7 +536,7 @@ const Analytics = () => {
                       size="sm" 
                       onClick={() => setSelectedTrainees([])}
                     >
-                      נקה בחירה
+                      נקה בחירת מתאמנים
                     </Button>
                     <span className="text-sm text-muted-foreground">
                       {selectedTrainees.length} נבחרו
@@ -401,7 +557,7 @@ const Analytics = () => {
         </Dialog>
         
         {/* Active Filters Display */}
-        {(startDate || endDate || (selectedDepartmentId && selectedDepartmentId !== 'all') || selectedTrainees.length > 0) && (
+        {(startDate || endDate || selectedDepartmentIds.length > 0 || selectedTrainees.length > 0) && (
           <div className="bg-muted p-3 rounded-lg flex flex-wrap gap-2 items-center">
             <span className="font-medium ml-2">סינון פעיל:</span>
             
@@ -417,11 +573,11 @@ const Analytics = () => {
               </div>
             )}
             
-            {selectedDepartmentId && selectedDepartmentId !== 'all' && (
+            {selectedDepartmentIds.length > 0 && (
               <div className="bg-background border rounded-md px-2 py-1 flex items-center gap-1 text-sm">
-                <span>מחלקה: </span>
-                {getDepartmentName(selectedDepartmentId)}
-                <button onClick={() => setSelectedDepartmentId('all')} className="mr-1 hover:text-destructive">
+                <span>מחלקות: </span>
+                {selectedDepartmentIds.length} נבחרו
+                <button onClick={() => setSelectedDepartmentIds([])} className="mr-1 hover:text-destructive">
                   <X size={14} />
                 </button>
               </div>
@@ -520,30 +676,30 @@ const Analytics = () => {
                     </ResponsiveContainer>
                   </div>
                   <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead className="bg-muted">
-                        <tr>
-                          <th className="px-4 py-2 text-right">שם</th>
-                          <th className="px-4 py-2 text-right">מחלקה</th>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="text-right">שם</TableHead>
+                          <TableHead className="text-right">מחלקה</TableHead>
                           {admin?.role === 'generalAdmin' && (
-                            <th className="px-4 py-2 text-right">בסיס</th>
+                            <TableHead className="text-right">בסיס</TableHead>
                           )}
-                          <th className="px-4 py-2 text-right">כניסות</th>
-                        </tr>
-                      </thead>
-                      <tbody>
+                          <TableHead className="text-right">כניסות</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
                         {topTraineesData.map((trainee, index) => (
-                          <tr key={index} className="border-t">
-                            <td className="px-4 py-2">{trainee.name}</td>
-                            <td className="px-4 py-2">{trainee.departmentName}</td>
+                          <TableRow key={index}>
+                            <TableCell>{trainee.name}</TableCell>
+                            <TableCell>{trainee.departmentName}</TableCell>
                             {admin?.role === 'generalAdmin' && (
-                              <td className="px-4 py-2">{trainee.baseName}</td>
+                              <TableCell>{trainee.baseName}</TableCell>
                             )}
-                            <td className="px-4 py-2">{trainee.value}</td>
-                          </tr>
+                            <TableCell>{trainee.value}</TableCell>
+                          </TableRow>
                         ))}
-                      </tbody>
-                    </table>
+                      </TableBody>
+                    </Table>
                   </div>
                 </div>
               ) : (
@@ -567,7 +723,6 @@ const Analytics = () => {
                           outerRadius={80}
                           fill="#8884d8"
                           dataKey="value"
-                          // label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
                         >
                           {topDepartmentsData.map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -578,28 +733,28 @@ const Analytics = () => {
                     </ResponsiveContainer>
                   </div>
                   <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead className="bg-muted">
-                        <tr>
-                          <th className="px-4 py-2 text-right">מחלקה</th>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="text-right">מחלקה</TableHead>
                           {admin?.role === 'generalAdmin' && (
-                            <th className="px-4 py-2 text-right">בסיס</th>
+                            <TableHead className="text-right">בסיס</TableHead>
                           )}
-                          <th className="px-4 py-2 text-right">כניסות</th>
-                        </tr>
-                      </thead>
-                      <tbody>
+                          <TableHead className="text-right">כניסות</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
                         {topDepartmentsData.map((dept, index) => (
-                          <tr key={index} className="border-t">
-                            <td className="px-4 py-2">{dept.name}</td>
+                          <TableRow key={index}>
+                            <TableCell>{dept.name}</TableCell>
                             {admin?.role === 'generalAdmin' && (
-                              <td className="px-4 py-2">{dept.baseName}</td>
+                              <TableCell>{dept.baseName}</TableCell>
                             )}
-                            <td className="px-4 py-2">{dept.value}</td>
-                          </tr>
+                            <TableCell>{dept.value}</TableCell>
+                          </TableRow>
                         ))}
-                      </tbody>
-                    </table>
+                      </TableBody>
+                    </Table>
                   </div>
                 </div>
               ) : (
