@@ -1,9 +1,12 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAdmin } from '../context/AdminContext';
 import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
 import { authService } from '../services/api';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { addMonths, compareAsc, parseISO } from 'date-fns';
 
 const Login = () => {
   const [username, setUsername] = useState('');
@@ -11,7 +14,8 @@ const Login = () => {
   const {
     setAdmin,
     loading,
-    setLoading
+    setLoading,
+    trainees
   } = useAdmin();
   const navigate = useNavigate();
   const {
@@ -28,6 +32,30 @@ const Login = () => {
       
       // Set the admin in context
       setAdmin(admin);
+      localStorage.setItem('admin', JSON.stringify(admin));
+      
+      // Check for trainees with expiring medical approval within a month
+      if (admin?.baseId) {
+        const expiringTrainees = trainees.filter(trainee => {
+          if (trainee.baseId !== admin.baseId || !trainee.medicalClearance) return false;
+          
+          // Check if medical clearance is about to expire within a month
+          if (!trainee.medicalClearanceDate) return false;
+          
+          const expirationDate = addMonths(parseISO(trainee.medicalClearanceDate), 12);
+          const oneMonthFromNow = addMonths(new Date(), 1);
+          
+          return compareAsc(expirationDate, new Date()) >= 0 && compareAsc(expirationDate, oneMonthFromNow) <= 0;
+        });
+        
+        if (expiringTrainees.length > 0) {
+          toast({
+            title: "התראה - אישורים רפואיים פגי תוקף",
+            description: `יש ${expiringTrainees.length} מתאמנים שאישור רפואי שלהם יפוג בחודש הקרוב`,
+            variant: "destructive"
+          });
+        }
+      }
       
       // Navigate to dashboard
       navigate('/dashboard');
