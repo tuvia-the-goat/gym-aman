@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAdmin } from '../context/AdminContext';
 import { Department, Base, Trainee } from '../types';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { 
   baseService, 
   departmentService, 
@@ -174,6 +174,19 @@ const Registration = () => {
     
     setEntryTrainee(trainee);
     setConfirmingEntry(true);
+    
+    if (trainee.medicalApproval.approved && trainee.medicalApproval.expirationDate) {
+      const expirationDate = parseISO(trainee.medicalApproval.expirationDate);
+      const oneMonthFromNow = addMonths(new Date(), 1);
+      
+      if (compareAsc(expirationDate, new Date()) > 0 && compareAsc(expirationDate, oneMonthFromNow) < 0) {
+        setMedicalExpirationWarning(true);
+      } else {
+        setMedicalExpirationWarning(false);
+      }
+    } else {
+      setMedicalExpirationWarning(false);
+    }
   };
 
   const handleEntryConfirmation = async () => {
@@ -500,8 +513,13 @@ const Registration = () => {
                         <p className="text-2xl font-bold">{entryTrainee?.fullName}?</p>
                         
                         {medicalExpirationWarning && (
-                          <div className="mt-2 p-2 bg-red-50 text-red-700 rounded-md border border-red-200 font-medium">
-                            שים לב: האישור הרפואי שלך יפוג בחודש הקרוב
+                          <div className="mt-4 p-3 bg-red-50 text-red-700 rounded-md border border-red-200 font-medium">
+                            <p className="flex items-center gap-2">
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                              </svg>
+                              <span>שים לב: האישור הרפואי שלך יפוג בחודש הקרוב</span>
+                            </p>
                           </div>
                         )}
                       </div>
@@ -529,6 +547,12 @@ const Registration = () => {
                         </ul>
                         <p className="mt-3 text-sm font-medium">לחיצה על כפתור "רישום כניסה" מהווה אישור של ההצהרה הרפואית למעלה</p>
                       </div>
+                      
+                      {medicalExpirationWarning && (
+                        <div className="p-3 bg-red-50 text-red-700 rounded-md border border-red-200 font-medium">
+                          <p className="text-center">נא לחדש את האישור הרפואי שלך ��הקדם האפשרי</p>
+                        </div>
+                      )}
                       
                       <div className="flex space-x-4">
                         <button
