@@ -1,4 +1,3 @@
-
 import React, { useMemo, useState } from 'react';
 import { format, isWithinInterval, parseISO, addMonths } from 'date-fns';
 import DashboardLayout from '../components/DashboardLayout';
@@ -22,7 +21,7 @@ const Analytics = () => {
   // Filtering state
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
-  const [selectedDepartmentId, setSelectedDepartmentId] = useState<string>('');
+  const [selectedDepartmentId, setSelectedDepartmentId] = useState<string>('all');
   const [selectedTrainees, setSelectedTrainees] = useState<string[]>([]);
   const [showFilterDialog, setShowFilterDialog] = useState(false);
 
@@ -44,7 +43,7 @@ const Analytics = () => {
     }
     
     // Department filter
-    if (selectedDepartmentId) {
+    if (selectedDepartmentId && selectedDepartmentId !== 'all') {
       filtered = filtered.filter(entry => entry.departmentId === selectedDepartmentId);
     }
     
@@ -65,7 +64,7 @@ const Analytics = () => {
     }
     
     // Department filter
-    if (selectedDepartmentId) {
+    if (selectedDepartmentId && selectedDepartmentId !== 'all') {
       filtered = filtered.filter(trainee => trainee.departmentId === selectedDepartmentId);
     }
     
@@ -103,7 +102,7 @@ const Analytics = () => {
   }, [admin, trainees, selectedDepartmentId]);
   
   // Check if specific filters are active
-  const hasSpecificFilters = selectedDepartmentId || selectedTrainees.length > 0;
+  const hasSpecificFilters = (selectedDepartmentId && selectedDepartmentId !== 'all') || selectedTrainees.length > 0;
   
   // Data for days of week chart
   const weekdaysData = useMemo(() => {
@@ -232,7 +231,7 @@ const Analytics = () => {
   const clearFilters = () => {
     setStartDate(undefined);
     setEndDate(undefined);
-    setSelectedDepartmentId('');
+    setSelectedDepartmentId('all');
     setSelectedTrainees([]);
   };
   
@@ -254,7 +253,7 @@ const Analytics = () => {
         <div className="flex justify-between items-center">
           <h2 className="text-2xl font-bold">אנליטיקות</h2>
           <div className="flex items-center gap-2">
-            {(startDate || endDate || selectedDepartmentId || selectedTrainees.length > 0) && (
+            {(startDate || endDate || (selectedDepartmentId && selectedDepartmentId !== 'all') || selectedTrainees.length > 0) && (
               <Button variant="outline" onClick={clearFilters} className="flex items-center gap-1">
                 <X size={16} />
                 נקה סינון
@@ -342,7 +341,7 @@ const Analytics = () => {
                     <SelectValue placeholder="בחר מחלקה" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">כל המחלקות</SelectItem>
+                    <SelectItem value="all">כל המחלקות</SelectItem>
                     {availableDepartments.map(dept => (
                       <SelectItem key={dept._id} value={dept._id}>
                         {dept.name} {admin?.role === 'generalAdmin' && `(${getBaseName(dept.baseId)})`}
@@ -402,7 +401,7 @@ const Analytics = () => {
         </Dialog>
         
         {/* Active Filters Display */}
-        {(startDate || endDate || selectedDepartmentId || selectedTrainees.length > 0) && (
+        {(startDate || endDate || (selectedDepartmentId && selectedDepartmentId !== 'all') || selectedTrainees.length > 0) && (
           <div className="bg-muted p-3 rounded-lg flex flex-wrap gap-2 items-center">
             <span className="font-medium ml-2">סינון פעיל:</span>
             
@@ -418,11 +417,11 @@ const Analytics = () => {
               </div>
             )}
             
-            {selectedDepartmentId && (
+            {selectedDepartmentId && selectedDepartmentId !== 'all' && (
               <div className="bg-background border rounded-md px-2 py-1 flex items-center gap-1 text-sm">
                 <span>מחלקה: </span>
                 {getDepartmentName(selectedDepartmentId)}
-                <button onClick={() => setSelectedDepartmentId('')} className="mr-1 hover:text-destructive">
+                <button onClick={() => setSelectedDepartmentId('all')} className="mr-1 hover:text-destructive">
                   <X size={14} />
                 </button>
               </div>
