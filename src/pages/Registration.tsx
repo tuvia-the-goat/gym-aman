@@ -10,35 +10,27 @@ import {
   entryService, 
   authService 
 } from '../services/api';
+import { addMonths, parseISO, compareAsc } from 'date-fns';
 
 const Registration = () => {
   const navigate = useNavigate();
   const { admin, bases, departments, trainees, setTrainees, entries, setEntries } = useAdmin();
   const { toast } = useToast();
   
-  // Selected base for registration
   const [selectedBase, setSelectedBase] = useState<Base | null>(null);
-  
-  // Login/Registration view state
   const [view, setView] = useState<'login' | 'register' | 'entry'>('entry');
-  
-  // Login fields
   const [loginUsername, setLoginUsername] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
-  
-  // Registration fields
   const [personalId, setPersonalId] = useState('');
   const [fullName, setFullName] = useState('');
   const [medicalProfile, setMedicalProfile] = useState<string>('');
   const [departmentId, setDepartmentId] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
-  
-  // Entry fields
   const [entryPersonalId, setEntryPersonalId] = useState('');
   const [confirmingEntry, setConfirmingEntry] = useState(false);
   const [entryTrainee, setEntryTrainee] = useState<Trainee | null>(null);
-  
-  // Initialize the selected base based on the admin role
+  const [medicalExpirationWarning, setMedicalExpirationWarning] = useState<boolean>(false);
+
   useEffect(() => {
     if (admin?.role && admin.baseId) {
       const base = bases.find(b => b._id === admin.baseId);
@@ -46,35 +38,26 @@ const Registration = () => {
         setSelectedBase(base);
       }
     } else if (admin?.role === 'generalAdmin' && bases.length > 0) {
-      setSelectedBase(null); // Require selection for allBasesAdmin
+      setSelectedBase(null);
     }
   }, [admin, bases]);
-  
+
   useEffect(() => {
-    // Replace the current history state to prevent going back
     window.history.pushState(null, '', window.location.pathname);
-    
-    // Add event listener to handle any attempt to go back
     const handlePopState = () => {
       window.history.pushState(null, '', window.location.pathname);
     };
-    
     window.addEventListener('popstate', handlePopState);
-    
-    // Clean up the event listener on component unmount
     return () => {
       window.removeEventListener('popstate', handlePopState);
     };
   }, []);
-  
-  // Handle admin login
+
   const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
     try {
-      // Login using API service
       const admin = await authService.login(loginUsername, loginPassword);
-      
       navigate('/dashboard');
       toast({
         title: "התחברות הצליחה",
@@ -88,18 +71,15 @@ const Registration = () => {
       });
     }
   };
-  
-  // Validate personal ID (7 digits)
+
   const validatePersonalId = (id: string) => {
     return /^\d{7}$/.test(id);
   };
-  
-  // Validate phone number (10 digits starting with 05)
+
   const validatePhoneNumber = (phone: string) => {
     return /^05\d{8}$/.test(phone);
   };
-  
-  // Handle trainee registration
+
   const handleRegistration = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -112,7 +92,6 @@ const Registration = () => {
       return;
     }
     
-    // Validate inputs
     if (!validatePersonalId(personalId)) {
       toast({
         title: "שגיאה",
@@ -131,7 +110,6 @@ const Registration = () => {
       return;
     }
     
-    // Check if personal ID already exists
     const existingTrainee = trainees.find(t => t.personalId === personalId);
     if (existingTrainee) {
       toast({
@@ -143,7 +121,6 @@ const Registration = () => {
     }
     
     try {
-      // Create new trainee via API
       const newTrainee = await traineeService.create({
         personalId,
         fullName,
@@ -153,10 +130,8 @@ const Registration = () => {
         baseId: selectedBase._id
       });
       
-      // Update state with new trainee
       setTrainees([...trainees, newTrainee]);
       
-      // Reset form
       setPersonalId('');
       setFullName('');
       setMedicalProfile('');
@@ -176,8 +151,7 @@ const Registration = () => {
       console.error('Registration error:', error);
     }
   };
-  
-  // Handle personal ID check for entry
+
   const handlePersonalIdCheck = () => {
     if (!validatePersonalId(entryPersonalId)) {
       toast({
@@ -188,7 +162,6 @@ const Registration = () => {
       return;
     }
     
-    // Find trainee by personal ID
     const trainee = trainees.find(t => t.personalId === entryPersonalId);
     if (!trainee) {
       toast({
@@ -202,12 +175,10 @@ const Registration = () => {
     setEntryTrainee(trainee);
     setConfirmingEntry(true);
   };
-  
-  // Handle entry confirmation
+
   const handleEntryConfirmation = async () => {
     if (!entryTrainee || !selectedBase) return;
     
-    // Check if medical approval is valid
     if (!entryTrainee.medicalApproval.approved || 
         (entryTrainee.medicalApproval.expirationDate && 
          new Date(entryTrainee.medicalApproval.expirationDate) < new Date())) {
@@ -223,11 +194,9 @@ const Registration = () => {
     }
     
     try {
-      // Today's date in format YYYY-MM-DD
       const today = new Date().toISOString().split('T')[0];
       const currentTime = new Date().toTimeString().split(' ')[0];
       
-      // Create entry via API
       const newEntry = await entryService.create({
         traineeId: entryTrainee._id,
         entryDate: today,
@@ -238,7 +207,6 @@ const Registration = () => {
         baseId: entryTrainee.baseId
       });
       
-      // Update state with new entry
       setEntries([newEntry, ...entries]);
       
       toast({
@@ -252,21 +220,18 @@ const Registration = () => {
         variant: "destructive",
       });
     } finally {
-      // Reset form
       setConfirmingEntry(false);
       setEntryTrainee(null);
       setEntryPersonalId('');
     }
   };
-  
-  // Filter departments by selected base
+
   const filteredDepartments = departments.filter(
     dept => selectedBase && dept.baseId === selectedBase._id
   );
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      {/* Header */}
       <header className="bg-primary text-primary-foreground shadow-md px-6 py-4">
         <div className="container mx-auto flex justify-between items-center">
           <h1 className="text-2xl font-bold">מערכת אימ"ון</h1>
@@ -281,10 +246,8 @@ const Registration = () => {
         </div>
       </header>
 
-      {/* Main content */}
       <main className="flex-1 container mx-auto px-6 py-8">
         <div className="max-w-4xl mx-auto">
-          {/* Base Selection for allBasesAdmin */}
           {admin?.role === 'generalAdmin' && !selectedBase && (
             <div className="glass p-8 rounded-2xl mb-8 animate-scale-in">
               <h2 className="text-2xl font-bold mb-6 text-center">בחר בסיס לרישום</h2>
@@ -305,7 +268,6 @@ const Registration = () => {
           
           {selectedBase && (
             <div className="space-y-8">
-              {/* Base Info */}
               <div className="text-center">
                 <span className="inline-block px-4 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium mb-2">
                   בסיס: {selectedBase.name}
@@ -313,7 +275,6 @@ const Registration = () => {
                 <h2 className="text-3xl font-bold">מערכת רישום לחדר כושר</h2>
               </div>
               
-              {/* Tabs */}
               <div className="flex justify-center space-x-4 border-b pb-4">
                 <button
                   onClick={() => setView('entry')}
@@ -337,7 +298,6 @@ const Registration = () => {
                 </button>
               </div>
               
-              {/* Login Form */}
               {view === 'login' && (
                 <div className="glass max-w-md mx-auto p-8 rounded-2xl animate-fade-up">
                   <h3 className="text-xl font-bold mb-4 text-center">ט מנהלים</h3>
@@ -385,7 +345,6 @@ const Registration = () => {
                 </div>
               )}
               
-              {/* Registration Form */}
               {view === 'register' && (
                 <div className="glass max-w-xl mx-auto p-8 rounded-2xl animate-fade-up">
                   <h3 className="text-xl font-bold mb-4 text-center">הצטרפות למערכת</h3>
@@ -500,7 +459,6 @@ const Registration = () => {
                 </div>
               )}
               
-              {/* Entry Form */}
               {view === 'entry' && (
                 <div className="glass max-w-xl mx-auto p-8 rounded-2xl animate-fade-up">
                   <h3 className="text-xl font-bold mb-4 text-center">רישום כניסה לחדר כושר</h3>
@@ -540,6 +498,12 @@ const Registration = () => {
                       <div className="text-center mb-6">
                         <p className="text-lg">האם שמך הוא</p>
                         <p className="text-2xl font-bold">{entryTrainee?.fullName}?</p>
+                        
+                        {medicalExpirationWarning && (
+                          <div className="mt-2 p-2 bg-red-50 text-red-700 rounded-md border border-red-200 font-medium">
+                            שים לב: האישור הרפואי שלך יפוג בחודש הקרוב
+                          </div>
+                        )}
                       </div>
                       
                       <div className="p-4 border rounded-lg bg-secondary">
@@ -572,6 +536,7 @@ const Registration = () => {
                             setConfirmingEntry(false);
                             setEntryTrainee(null);
                             setEntryPersonalId('');
+                            setMedicalExpirationWarning(false);
                           }}
                           className="flex-1 bg-secondary text-secondary-foreground py-3 rounded-lg font-medium
                           transition duration-300 hover:bg-secondary/80"
@@ -595,7 +560,6 @@ const Registration = () => {
         </div>
       </main>
 
-      {/* Footer */}
       <footer className="bg-background border-t py-6">
         <div className="container mx-auto px-6 text-center text-muted-foreground">
           <p>© {new Date().getFullYear()}  מערכת אימ"ון </p>
