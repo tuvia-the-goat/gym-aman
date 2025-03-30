@@ -37,12 +37,12 @@ const Login = () => {
       // Check for trainees with expiring medical approval within a month
       if (admin?.baseId) {
         const expiringTrainees = trainees.filter(trainee => {
-          if (trainee.baseId !== admin.baseId || !trainee.medicalClearance) return false;
+          if (trainee.baseId !== admin.baseId || !trainee.medicalApproval.approved) return false;
           
-          // Check if medical clearance is about to expire within a month
-          if (!trainee.medicalClearanceDate) return false;
+          // Check if medical approval is about to expire within a month
+          if (!trainee.medicalApproval.expirationDate) return false;
           
-          const expirationDate = addMonths(parseISO(trainee.medicalClearanceDate), 12);
+          const expirationDate = parseISO(trainee.medicalApproval.expirationDate);
           const oneMonthFromNow = addMonths(new Date(), 1);
           
           return compareAsc(expirationDate, new Date()) >= 0 && compareAsc(expirationDate, oneMonthFromNow) <= 0;
