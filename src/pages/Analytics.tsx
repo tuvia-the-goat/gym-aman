@@ -1,4 +1,3 @@
-
 import React, { useMemo, useState } from 'react';
 import { format, isWithinInterval, parseISO } from 'date-fns';
 import DashboardLayout from '../components/DashboardLayout';
@@ -143,7 +142,7 @@ const Analytics = () => {
   const hasDateFilters = startDate !== undefined || endDate !== undefined;
   const hasSpecificFilters = selectedDepartmentIds.length > 0 || selectedTrainees.length > 0;
   
-  // Data for days of week chart
+  // Data for days of week chart - always visible even with filters
   const weekdaysData = useMemo(() => {
     const dayNames = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
     const dayCounts = [0, 0, 0, 0, 0, 0, 0];
@@ -160,7 +159,7 @@ const Analytics = () => {
     }));
   }, [filteredEntries]);
   
-  // Data for monthly entries
+  // Data for monthly entries - always visible even with filters
   const monthlyData = useMemo(() => {
     const monthNames = [
       'ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני',
@@ -181,31 +180,11 @@ const Analytics = () => {
     }));
   }, [filteredEntries]);
   
-  // Top trainees data - always show top 5 regardless of filters
+  // Top trainees data - now uses filtered entries when specific trainees are selected
   const topTraineesData = useMemo(() => {
-    // Filter entries only by date range if date filters are active
-    let entriesForTopChart = entries;
-    
-    // Apply only date filters and admin role filter for top charts
-    if (admin?.role === 'gymAdmin' && admin.baseId) {
-      entriesForTopChart = entriesForTopChart.filter(entry => entry.baseId === admin.baseId);
-    }
-    
-    if (startDate && endDate) {
-      entriesForTopChart = entriesForTopChart.filter(entry => {
-        const entryDate = parseISO(entry.entryDate);
-        return isWithinInterval(entryDate, { start: startDate, end: endDate });
-      });
-    }
-    
-    // Get trainee counts - use all trainees, not just filtered ones
-    let traineesToCount = trainees;
-    if (admin?.role === 'gymAdmin' && admin.baseId) {
-      traineesToCount = traineesToCount.filter(trainee => trainee.baseId === admin.baseId);
-    }
-    
-    const traineeCounts = traineesToCount.map(trainee => {
-      const count = entriesForTopChart.filter(entry => entry.traineeId === trainee._id).length;
+    // Use filteredTrainees and filteredEntries if specific filters are active
+    const traineeCounts = filteredTrainees.map(trainee => {
+      const count = filteredEntries.filter(entry => entry.traineeId === trainee._id).length;
       return { 
         id: trainee._id, 
         name: trainee.fullName, 
@@ -224,7 +203,7 @@ const Analytics = () => {
         departmentName: getDepartmentName(trainee.departmentId),
         baseName: getBaseName(trainee.baseId)
       }));
-  }, [entries, trainees, admin, startDate, endDate]);
+  }, [filteredEntries, filteredTrainees]);
   
   // Top departments data - always show top 5 regardless of trainee/department filters
   const topDepartmentsData = useMemo(() => {
@@ -660,101 +639,99 @@ const Analytics = () => {
           </div>
         </div>
         
-        {/* Main Charts - only show if no specific filters active */}
-        {!hasSpecificFilters && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Entries by Day of Week */}
-            <div className="bg-card shadow-sm rounded-lg p-6 border">
-              <h3 className="text-lg font-medium mb-4">כניסות לפי ימים בשבוע</h3>
-              <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={weekdaysData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
-                    <YAxis tickMargin={40}/>
-                    <Tooltip />
-                    <Bar dataKey="value" fill="#3b82f6" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-            
-            {/* Monthly Entries */}
-            <div className="bg-card shadow-sm rounded-lg p-6 border">
-              <h3 className="text-lg font-medium mb-4">כניסות לפי חודשים</h3>
-              <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={monthlyData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
-                    <YAxis tickMargin={20}/>
-                    <Tooltip />
-                    <Line 
-                      type="monotone" 
-                      dataKey="value" 
-                      stroke="#8884d8" 
-                      activeDot={{ r: 8 }}
-                      strokeWidth={2} 
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
+        {/* Main Charts - always visible, even with specific filters */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Entries by Day of Week */}
+          <div className="bg-card shadow-sm rounded-lg p-6 border">
+            <h3 className="text-lg font-medium mb-4">כניסות לפי ימים בשבוע</h3>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={weekdaysData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis tickMargin={40}/>
+                  <Tooltip />
+                  <Bar dataKey="value" fill="#3b82f6" />
+                </BarChart>
+              </ResponsiveContainer>
             </div>
           </div>
-        )}
-        
-        {/* Top Trainees and Departments - only show if no specific filters active */}
-        {!hasSpecificFilters && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Top Trainees */}
-            <div className="bg-card shadow-sm rounded-lg p-6 border">
-              <h3 className="text-lg font-medium mb-4">5 המתאמנים המובילים</h3>
-              {topTraineesData.length > 0 ? (
-                <div className="space-y-4">
-                  <div className="h-60">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart layout="vertical" data={topTraineesData}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis type="number"/>
-                        <YAxis dataKey="name" type="category" width={150} tickMargin={100}/>
-                        <Tooltip />
-                        <Bar dataKey="value" fill="#3b82f6" />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="text-right">שם</TableHead>
-                          <TableHead className="text-right">מחלקה</TableHead>
-                          {admin?.role === 'generalAdmin' && (
-                            <TableHead className="text-right">בסיס</TableHead>
-                          )}
-                          <TableHead className="text-right">כניסות</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {topTraineesData.map((trainee, index) => (
-                          <TableRow key={index}>
-                            <TableCell>{trainee.name}</TableCell>
-                            <TableCell>{trainee.departmentName}</TableCell>
-                            {admin?.role === 'generalAdmin' && (
-                              <TableCell>{trainee.baseName}</TableCell>
-                            )}
-                            <TableCell>{trainee.value}</TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                </div>
-              ) : (
-                <p className="text-center py-8 text-muted-foreground">אין נתונים זמינים</p>
-              )}
+          
+          {/* Monthly Entries */}
+          <div className="bg-card shadow-sm rounded-lg p-6 border">
+            <h3 className="text-lg font-medium mb-4">כניסות לפי חודשים</h3>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={monthlyData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis tickMargin={20}/>
+                  <Tooltip />
+                  <Line 
+                    type="monotone" 
+                    dataKey="value" 
+                    stroke="#8884d8" 
+                    activeDot={{ r: 8 }}
+                    strokeWidth={2} 
+                  />
+                </LineChart>
+              </ResponsiveContainer>
             </div>
-            
-            {/* Top Departments */}
+          </div>
+        </div>
+        
+        {/* Top Trainees and Departments - always visible */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Top Trainees */}
+          <div className="bg-card shadow-sm rounded-lg p-6 border">
+            <h3 className="text-lg font-medium mb-4">5 המתאמנים המובילים{hasSpecificFilters ? ' (מבין אלה שנבחרו)' : ''}</h3>
+            {topTraineesData.length > 0 ? (
+              <div className="space-y-4">
+                <div className="h-60">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart layout="vertical" data={topTraineesData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis type="number"/>
+                      <YAxis dataKey="name" type="category" width={150} tickMargin={100}/>
+                      <Tooltip />
+                      <Bar dataKey="value" fill="#3b82f6" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="text-right">שם</TableHead>
+                        <TableHead className="text-right">מחלקה</TableHead>
+                        {admin?.role === 'generalAdmin' && (
+                          <TableHead className="text-right">בסיס</TableHead>
+                        )}
+                        <TableHead className="text-right">כניסות</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {topTraineesData.map((trainee, index) => (
+                        <TableRow key={index}>
+                          <TableCell>{trainee.name}</TableCell>
+                          <TableCell>{trainee.departmentName}</TableCell>
+                          {admin?.role === 'generalAdmin' && (
+                            <TableCell>{trainee.baseName}</TableCell>
+                          )}
+                          <TableCell>{trainee.value}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
+            ) : (
+              <p className="text-center py-8 text-muted-foreground">אין נתונים זמינים</p>
+            )}
+          </div>
+          
+          {/* Top Departments - only show if no specific filters active */}
+          {!hasSpecificFilters && (
             <div className="bg-card shadow-sm rounded-lg p-6 border">
               <h3 className="text-lg font-medium mb-4">5 המחלקות המובילות</h3>
               {topDepartmentsData.length > 0 ? (
@@ -808,8 +785,8 @@ const Analytics = () => {
                 <p className="text-center py-8 text-muted-foreground">אין נתונים זמינים</p>
               )}
             </div>
-          </div>
-        )}
+          )}
+        </div>
         
         {/* Bases Chart (only for allBasesAdmin) and no specific filters */}
         {admin?.role === 'generalAdmin' && !hasSpecificFilters && basesData.length > 0 && (
