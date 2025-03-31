@@ -140,6 +140,7 @@ const Analytics = () => {
   }, [availableTrainees]);
   
   // Check if specific filters are active
+  const hasDateFilters = startDate !== undefined || endDate !== undefined;
   const hasSpecificFilters = selectedDepartmentIds.length > 0 || selectedTrainees.length > 0;
   
   // Data for days of week chart
@@ -180,10 +181,31 @@ const Analytics = () => {
     }));
   }, [filteredEntries]);
   
-  // Top trainees data
+  // Top trainees data - always show top 5 regardless of filters
   const topTraineesData = useMemo(() => {
-    const traineeCounts = filteredTrainees.map(trainee => {
-      const count = filteredEntries.filter(entry => entry.traineeId === trainee._id).length;
+    // Filter entries only by date range if date filters are active
+    let entriesForTopChart = entries;
+    
+    // Apply only date filters and admin role filter for top charts
+    if (admin?.role === 'gymAdmin' && admin.baseId) {
+      entriesForTopChart = entriesForTopChart.filter(entry => entry.baseId === admin.baseId);
+    }
+    
+    if (startDate && endDate) {
+      entriesForTopChart = entriesForTopChart.filter(entry => {
+        const entryDate = parseISO(entry.entryDate);
+        return isWithinInterval(entryDate, { start: startDate, end: endDate });
+      });
+    }
+    
+    // Get trainee counts - use all trainees, not just filtered ones
+    let traineesToCount = trainees;
+    if (admin?.role === 'gymAdmin' && admin.baseId) {
+      traineesToCount = traineesToCount.filter(trainee => trainee.baseId === admin.baseId);
+    }
+    
+    const traineeCounts = traineesToCount.map(trainee => {
+      const count = entriesForTopChart.filter(entry => entry.traineeId === trainee._id).length;
       return { 
         id: trainee._id, 
         name: trainee.fullName, 
@@ -202,13 +224,28 @@ const Analytics = () => {
         departmentName: getDepartmentName(trainee.departmentId),
         baseName: getBaseName(trainee.baseId)
       }));
-  }, [filteredEntries, filteredTrainees]);
+  }, [entries, trainees, admin, startDate, endDate]);
   
-  // Top departments data
+  // Top departments data - always show top 5 regardless of trainee/department filters
   const topDepartmentsData = useMemo(() => {
+    // Filter entries only by date range if date filters are active
+    let entriesForTopChart = entries;
+    
+    // Apply only date filters and admin role filter for top charts
+    if (admin?.role === 'gymAdmin' && admin.baseId) {
+      entriesForTopChart = entriesForTopChart.filter(entry => entry.baseId === admin.baseId);
+    }
+    
+    if (startDate && endDate) {
+      entriesForTopChart = entriesForTopChart.filter(entry => {
+        const entryDate = parseISO(entry.entryDate);
+        return isWithinInterval(entryDate, { start: startDate, end: endDate });
+      });
+    }
+    
     const departmentCounts: { [key: string]: number } = {};
     
-    filteredEntries.forEach(entry => {
+    entriesForTopChart.forEach(entry => {
       const deptId = entry.departmentId;
       departmentCounts[deptId] = (departmentCounts[deptId] || 0) + 1;
     });
@@ -227,15 +264,25 @@ const Analytics = () => {
         value: dept.value,
         baseName: getBaseName(dept.baseId)
       }));
-  }, [filteredEntries, departments]);
+  }, [entries, departments, admin, startDate, endDate]);
   
   // Bases data (only for all bases admin)
   const basesData = useMemo(() => {
     if (admin?.role !== 'generalAdmin') return [];
     
+    // Filter entries only by date range if date filters are active
+    let entriesForChart = entries;
+    
+    if (startDate && endDate) {
+      entriesForChart = entriesForChart.filter(entry => {
+        const entryDate = parseISO(entry.entryDate);
+        return isWithinInterval(entryDate, { start: startDate, end: endDate });
+      });
+    }
+    
     const baseCounts: { [key: string]: number } = {};
     
-    filteredEntries.forEach(entry => {
+    entriesForChart.forEach(entry => {
       const baseId = entry.baseId;
       baseCounts[baseId] = (baseCounts[baseId] || 0) + 1;
     });
@@ -246,7 +293,7 @@ const Analytics = () => {
         value: count,
       }))
       .sort((a, b) => b.value - a.value);
-  }, [admin, filteredEntries]);
+  }, [admin, entries, startDate, endDate]);
   
   // Average entries per trainee
   const avgEntriesPerTrainee = useMemo(() => {
