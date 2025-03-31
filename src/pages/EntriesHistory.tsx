@@ -353,7 +353,7 @@ const EntriesHistory = () => {
                     <div className="text-sm text-muted-foreground">אישור רפואי:</div>
                     <div className={selectedTrainee.medicalApproval.approved ? "text-green-600" : "text-red-600"}>
                       {selectedTrainee.medicalApproval.approved 
-                        ? `בתוקף עד ${new Date(selectedTrainee.medicalApproval.expirationDate!).toLocaleDateString()}` 
+                        ? `בתוקף עד ${new Date(selectedTrainee.medicalApproval.expirationDate!).toLocaleString()}` 
                         : "לא בתוקף"}
                     </div>
                   </div>

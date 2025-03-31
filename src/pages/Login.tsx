@@ -34,29 +34,6 @@ const Login = () => {
       setAdmin(admin);
       localStorage.setItem('admin', JSON.stringify(admin));
       
-      // Check for trainees with expiring medical approval within a month
-      if (admin?.baseId) {
-        const expiringTrainees = trainees.filter(trainee => {
-          if (trainee.baseId !== admin.baseId || !trainee.medicalApproval.approved) return false;
-          
-          // Check if medical approval is about to expire within a month
-          if (!trainee.medicalApproval.expirationDate) return false;
-          
-          const expirationDate = parseISO(trainee.medicalApproval.expirationDate);
-          const oneMonthFromNow = addMonths(new Date(), 1);
-          
-          return compareAsc(expirationDate, new Date()) >= 0 && compareAsc(expirationDate, oneMonthFromNow) <= 0;
-        });
-        
-        if (expiringTrainees.length > 0) {
-          toast({
-            title: "התראה - אישורים רפואיים פגי תוקף",
-            description: `יש ${expiringTrainees.length} מתאמנים שאישור רפואי שלהם יפוג בחודש הקרוב`,
-            variant: "destructive"
-          });
-        }
-      }
-      
       // Navigate to dashboard
       navigate('/dashboard');
       

@@ -10,6 +10,7 @@ import {
   entryService, 
   authService 
 } from '../services/api';
+import { addMonths, compareAsc, parseISO } from 'date-fns';
 
 const Registration = () => {
   const navigate = useNavigate();
@@ -37,6 +38,7 @@ const Registration = () => {
   const [entryPersonalId, setEntryPersonalId] = useState('');
   const [confirmingEntry, setConfirmingEntry] = useState(false);
   const [entryTrainee, setEntryTrainee] = useState<Trainee | null>(null);
+  const [traineeMedicalExpirationDate, setTraineeMedicalExpirationDate] = useState<Date | null>(null);
   
   // Initialize the selected base based on the admin role
   useEffect(() => {
@@ -177,6 +179,13 @@ const Registration = () => {
     }
   };
   
+  const getDateFormat = (dateToFormat : Date) => {
+    const day = dateToFormat.getDate();        // Day (1-31)
+    const month = dateToFormat.getMonth() + 1; // Month (0-11, so add 1)
+    const year = dateToFormat.getFullYear();   // Full year (e.g., 2025)
+    return(`${day}/${month}/${year}`)
+  }
+
   // Handle personal ID check for entry
   const handlePersonalIdCheck = () => {
     if (!validatePersonalId(entryPersonalId)) {
@@ -200,8 +209,14 @@ const Registration = () => {
     }
     
     setEntryTrainee(trainee);
+    setTraineeMedicalExpirationDate(new Date(trainee.medicalApproval.expirationDate))
     setConfirmingEntry(true);
   };
+
+  const isMedicalAboutToExpire = () => {
+    const oneMonthFromNow = addMonths(new Date(), 1);
+    return compareAsc(traineeMedicalExpirationDate, new Date()) >= 0 && compareAsc(traineeMedicalExpirationDate, oneMonthFromNow) <= 0;
+  }
   
   // Handle entry confirmation
   const handleEntryConfirmation = async () => {
@@ -263,6 +278,7 @@ const Registration = () => {
   const filteredDepartments = departments.filter(
     dept => selectedBase && dept.baseId === selectedBase._id
   );
+
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -566,6 +582,14 @@ const Registration = () => {
                         <p className="mt-3 text-sm font-medium">לחיצה על כפתור "רישום כניסה" מהווה אישור של ההצהרה הרפואית למעלה</p>
                       </div>
                       
+                      { isMedicalAboutToExpire() && 
+                      <div className='w-full border-2 border-[rgb(255,141,141)] bg-[rgba(255,141,141,0.44)] text-[rgb(255,141,141)] font-bold text-center p-3 rounded-[8px]'>
+                        שימ/י לב! תוקף האישור הרפואי שלך יפוג ב-
+                      {getDateFormat(traineeMedicalExpirationDate)}
+                      , יש לחדש אותו בהקדם בברקוד הייעודי ולעדכן את צוות חדר הכושר.
+
+                      </div>
+                      }
                       <div className="flex space-x-4">
                         <button
                           onClick={() => {
