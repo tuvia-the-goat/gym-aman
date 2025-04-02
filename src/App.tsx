@@ -1,64 +1,75 @@
 
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { useAdmin } from './context/AdminContext';
-import Login from './pages/Login';
-import NotFound from './pages/NotFound';
-import Analytics from './pages/Analytics';
-import EntriesHistory from './pages/EntriesHistory';
-import Settings from './pages/Settings';
-import Index from './pages/Index';
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { AdminProvider } from "./context/AdminContext";
+import Login from "./pages/Login";
+import EntriesHistory from "./pages/EntriesHistory";
+import Analytics from "./pages/Analytics";
+import Settings from "./pages/Settings";
+import Registration from "./pages/Registration";
+import NotFound from "./pages/NotFound";
+import { useEffect } from "react";
 
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { admin, loading } = useAdmin();
+const queryClient = new QueryClient();
+
+// Protected route component
+const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+  const admin = JSON.parse(localStorage.getItem('admin') || 'null');
   
-  // Show loading state
-  if (loading) {
-    return <div className="flex h-screen items-center justify-center">טוען...</div>;
-  }
-  
-  // Redirect to login if not authenticated
   if (!admin) {
-    return <Navigate to="/login" replace={true} />;
+    return <Navigate to="/login" replace />;
   }
   
-  // Show protected content when authenticated
   return <>{children}</>;
-}
+};
 
-function App() {
+const App = () => {
+  // Set the document title and language
+  useEffect(() => {
+    document.documentElement.lang = 'he';
+    document.documentElement.dir = 'rtl';
+  }, []);
+
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Index />} />
-        <Route path="/login" element={<Login />} />
-        <Route
-          path="/analytics"
-          element={
-            <ProtectedRoute>
-              <Analytics />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/entries"
-          element={
-            <ProtectedRoute>
-              <EntriesHistory />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/settings"
-          element={
-            <ProtectedRoute>
-              <Settings />
-            </ProtectedRoute>
-          }
-        />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </BrowserRouter>
+    <QueryClientProvider client={queryClient}>
+      <AdminProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Navigate to="/login" replace />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/registration" element={<Registration />} />
+              
+              {/* Protected Routes */}
+              <Route path="/dashboard" element={
+                <ProtectedRoute>
+                  <EntriesHistory />
+                </ProtectedRoute>
+              } />
+              <Route path="/dashboard/analytics" element={
+                <ProtectedRoute>
+                  <Analytics />
+                </ProtectedRoute>
+              } />
+              <Route path="/dashboard/settings" element={
+                <ProtectedRoute>
+                  <Settings />
+                </ProtectedRoute>
+              } />
+              
+              {/* Catch-all route */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </AdminProvider>
+    </QueryClientProvider>
   );
-}
+};
 
 export default App;

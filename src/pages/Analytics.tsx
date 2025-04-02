@@ -1,3 +1,4 @@
+
 import React, { useMemo, useState } from 'react';
 import { isWithinInterval, parseISO } from 'date-fns';
 import DashboardLayout from '../components/DashboardLayout';
@@ -13,7 +14,6 @@ import MonthlyChart from '../components/analytics/MonthlyChart';
 import TopTraineesChart from '../components/analytics/TopTraineesChart';
 import TopDepartmentsChart from '../components/analytics/TopDepartmentsChart';
 import BasesChart from '../components/analytics/BasesChart';
-import HourlyDistributionChart from '../components/analytics/HourlyDistributionChart';
 
 const Analytics = () => {
   const { admin, entries, trainees, departments, bases } = useAdmin();
@@ -372,9 +372,6 @@ const Analytics = () => {
           traineesCount={filteredTrainees.length}
           avgEntriesPerTrainee={avgEntriesPerTrainee}
         />
-        
-        {/* New Hourly Distribution Chart */}
-        <HourlyDistributionChart entries={filteredEntries} />
         
         {/* Main Charts - always visible, even with specific filters */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
