@@ -11,10 +11,8 @@ import {
   authService 
 } from '../services/api';
 import { addMonths, compareAsc, parseISO } from 'date-fns';
-import DashboardLayout from '../components/DashboardLayout';
 
-
-const Registration = () => {
+const TraineeEntering = () => {
   const navigate = useNavigate();
   const { admin, bases, departments, trainees, setTrainees, entries, setEntries } = useAdmin();
   const { toast } = useToast();
@@ -283,7 +281,24 @@ const Registration = () => {
 
 
   return (
-    <DashboardLayout activeTab="registration">
+    <div className="min-h-screen flex flex-col bg-background">
+      {/* Header */}
+      <header className="bg-primary text-primary-foreground shadow-md px-6 py-4">
+        <div className="container mx-auto flex justify-between items-center">
+          <h1 className="text-2xl font-bold">מערכת אימ"ון</h1>
+          <div className="flex items-center">
+            <button
+              onClick={() => navigate('/login')}
+              className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-md transition-colors"
+            >
+              התחברות מנהלים
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {/* Main content */}
+      <main className="flex-1 container mx-auto px-6 py-8">
         <div className="max-w-4xl mx-auto">
           {/* Base Selection for allBasesAdmin */}
           {admin?.role === 'generalAdmin' && !selectedBase && (
@@ -311,27 +326,29 @@ const Registration = () => {
                 <span className="inline-block px-4 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium mb-2">
                   בסיס: {selectedBase.name}
                 </span>
-                <h2 className="text-3xl font-bold">רישום מתאמנים</h2>
+                <h2 className="text-3xl font-bold">מערכת רישום לחדר כושר</h2>
               </div>
+            
               
-              
-              {/* Registration Form */}
+              {/* Entry Form */}
+              {view === 'entry' && (
                 <div className="glass max-w-xl mx-auto p-8 rounded-2xl animate-fade-up">
-                  <h3 className="text-xl font-bold mb-4 text-center">הצטרפות למערכת</h3>
-                  <form onSubmit={handleRegistration} className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <h3 className="text-xl font-bold mb-4 text-center">רישום כניסה לחדר כושר</h3>
+                  
+                  {!confirmingEntry ? (
+                    <div className="space-y-6">
                       <div className="space-y-2">
-                        <label htmlFor="personalId" className="block text-sm font-medium">
+                        <label htmlFor="entryPersonalId" className="block text-sm font-medium">
                           מספר אישי (7 ספרות)
                         </label>
                         <input
-                          id="personalId"
+                          id="entryPersonalId"
                           type="text"
                           inputMode="numeric"
-                          value={personalId}
+                          value={entryPersonalId}
                           onChange={(e) => {
                             const value = e.target.value.replace(/\D/g, '').slice(0, 7);
-                            setPersonalId(value);
+                            setEntryPersonalId(value);
                           }}
                           className="input-field"
                           placeholder="1234567"
@@ -340,98 +357,90 @@ const Registration = () => {
                         />
                       </div>
                       
-                      <div className="space-y-2">
-                        <label htmlFor="fullName" className="block text-sm font-medium">
-                          שם מלא
-                        </label>
-                        <input
-                          id="fullName"
-                          type="text"
-                          value={fullName}
-                          onChange={(e) => setFullName(e.target.value)}
-                          className="input-field"
-                          placeholder="שם פרטי ומשפחה"
-                          required
-                          autoComplete="off"
-                        />
+                      <button
+                        onClick={handlePersonalIdCheck}
+                        className="w-full bg-primary text-primary-foreground py-3 rounded-lg font-medium shadow-md
+                        transition duration-300 hover:bg-primary/90 hover:shadow-lg"
+                      >
+                        בדוק
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-6">
+                      <div className="text-center mb-6">
+                        <p className="text-lg">האם שמך הוא</p>
+                        <p className="text-2xl font-bold">{entryTrainee?.fullName}?</p>
                       </div>
                       
-                      <div className="space-y-2">
-                        <label htmlFor="medicalProfile" className="block text-sm font-medium">
-                          פרופיל רפואי
-                        </label>
-                        <select
-                          id="medicalProfile"
-                          value={medicalProfile}
-                          onChange={(e) => setMedicalProfile(e.target.value)}
-                          className="input-field"
-                          required
-                        >
-                          <option value="">בחר פרופיל</option>
-                          <option value="97">97</option>
-                          <option value="82">82</option>
-                          <option value="72">72</option>
-                          <option value="64">64</option>
-                          <option value="45">45</option>
-                          <option value="25">25</option>
-                        </select>
+                      <div className="p-4 border rounded-lg bg-secondary">
+                        <h4 className="font-semibold text-lg mb-2">הצהרת בריאות</h4>
+                        <p className="mb-2">אני מצהיר/ה בזאת כי:</p>
+                        <ul className="list-inside space-y-1 text-sm">
+                          <li className="flex items-start">
+                            <span className="ml-2">•</span>
+                            <span>המספר האישי והשם הנ"ל שייכים לי.</span>
+                          </li>
+                          <li className="flex items-start">
+                            <span className="ml-2">•</span>
+                            <span>אני בריא/ה ואין לי מגבלות רפואיות המונעות ממני להתאמן בחדר כושר.</span>
+                          </li>
+                          <li className="flex items-start">
+                            <span className="ml-2">•</span>
+                            <span>אני מודע/ת לכך שהשימוש במתקני חדר הכושר הינו באחריותי הבלעדית.</span>
+                          </li>
+                          <li className="flex items-start">
+                            <span className="ml-2">•</span>
+                            <span>התייעצתי עם רופא לגבי פעילות גופנית אם יש לי בעיות בריאותיות.</span>
+                          </li>
+                        </ul>
+                        <p className="mt-3 text-sm font-medium">לחיצה על כפתור "רישום כניסה" מהווה אישור של ההצהרה הרפואית למעלה</p>
                       </div>
                       
-                      <div className="space-y-2">
-                        <label htmlFor="department" className="block text-sm font-medium">
-                          מחלקה
-                        </label>
-                        <select
-                          id="department"
-                          value={departmentId}
-                          onChange={(e) => setDepartmentId(e.target.value)}
-                          className="input-field"
-                          required
-                        >
-                          <option value="">בחר מחלקה</option>
-                          {filteredDepartments.map((dept) => (
-                            <option key={dept._id} value={dept._id}>
-                              {dept.name}
-                            </option>
-                          ))}
-                        </select>
+                      { isMedicalAboutToExpire() && 
+                      <div className='w-full border-2 border-[rgb(255,141,141)] bg-[rgba(255,141,141,0.44)] text-[rgb(255,141,141)] font-bold text-center p-3 rounded-[8px]'>
+                        שימ/י לב! תוקף האישור הרפואי שלך יפוג ב-
+                      {getDateFormat(traineeMedicalExpirationDate)}
+                      , יש לחדש אותו בהקדם בברקוד הייעודי ולעדכן את צוות חדר הכושר.
+
                       </div>
-                      
-                      <div className="space-y-2 md:col-span-2">
-                        <label htmlFor="phoneNumber" className="block text-sm font-medium">
-                          מספר טלפון (10 ספרות, מתחיל ב-05)
-                        </label>
-                        <input
-                          id="phoneNumber"
-                          type="text"
-                          inputMode="numeric"
-                          value={phoneNumber}
-                          onChange={(e) => {
-                            const value = e.target.value.replace(/\D/g, '').slice(0, 10);
-                            setPhoneNumber(value);
+                      }
+                      <div className="flex space-x-4">
+                        <button
+                          onClick={() => {
+                            setConfirmingEntry(false);
+                            setEntryTrainee(null);
+                            setEntryPersonalId('');
                           }}
-                          className="input-field"
-                          placeholder="05XXXXXXXX"
-                          required
-                          autoComplete="off"
-                        />
+                          className="flex-1 bg-secondary text-secondary-foreground py-3 rounded-lg font-medium
+                          transition duration-300 hover:bg-secondary/80"
+                        >
+                          ביטול
+                        </button>
+                        <button
+                          onClick={handleEntryConfirmation}
+                          className="flex-1 bg-primary text-primary-foreground py-3 rounded-lg font-medium shadow-md
+                          transition duration-300 hover:bg-primary/90 hover:shadow-lg"
+                        >
+                          רישום כניסה
+                        </button>
                       </div>
                     </div>
-                    
-                    <button
-                      type="submit"
-                      className="w-full bg-primary text-primary-foreground py-3 rounded-lg font-medium shadow-md
-                      transition duration-300 hover:bg-primary/90 hover:shadow-lg"
-                    >
-                      הצטרף
-                    </button>
-                  </form>
+                  )}
                 </div>
+              )}
             </div>
           )}
         </div>
-    </DashboardLayout>
+      </main>
+
+      {/* Footer */}
+      <footer className="bg-background border-t py-6">
+        <div className="container mx-auto px-6 text-center text-muted-foreground">
+          <p>© {new Date().getFullYear()}  מערכת אימ"ון </p>
+        </div>
+      </footer>
+    </div>
   );
 };
 
-export default Registration;
+export default TraineeEntering;

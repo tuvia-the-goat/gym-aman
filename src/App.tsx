@@ -12,6 +12,7 @@ import Settings from "./pages/Settings";
 import Registration from "./pages/Registration";
 import NotFound from "./pages/NotFound";
 import { useEffect } from "react";
+import TraineeEntering from "./pages/TraineeEntering";
 
 const queryClient = new QueryClient();
 
@@ -43,12 +44,17 @@ const App = () => {
             <Routes>
               <Route path="/" element={<Navigate to="/login" replace />} />
               <Route path="/login" element={<Login />} />
-              <Route path="/registration" element={<Registration />} />
+              <Route path="/registration" element={<TraineeEntering />} />
               
               {/* Protected Routes */}
               <Route path="/dashboard" element={
                 <ProtectedRoute>
                   <EntriesHistory />
+                </ProtectedRoute>
+              } />
+              <Route path="/dashboard/registration" element={
+                <ProtectedRoute>
+                  <Registration />
                 </ProtectedRoute>
               } />
               <Route path="/dashboard/analytics" element={

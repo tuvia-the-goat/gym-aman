@@ -86,6 +86,13 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, activeTab }
               אנליטיקות
             </TabsTrigger>
             <TabsTrigger 
+              value="registration"
+              onClick={() => navigate('/dashboard/registration')}
+              className="text-base"
+            >
+              הוספת מתאמנים
+            </TabsTrigger>
+            <TabsTrigger 
               value="entries"
               onClick={() => navigate('/dashboard')}
               className="text-base"
