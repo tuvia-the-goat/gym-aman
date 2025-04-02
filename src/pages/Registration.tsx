@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link } from "react-router-dom";
 import { z } from "zod";
@@ -89,13 +88,18 @@ const Registration = () => {
 
     try {
       const traineeData = {
-        ...data,
-        profileSection: data.medicalProfile === "97" ? "notApplicable" : data.profileSection,
-        // Include birthDate in ISO format
+        personalId: data.personalId,
+        fullName: data.fullName,
+        medicalProfile: data.medicalProfile as "97" | "82" | "72" | "64" | "45" | "25",
+        departmentId: data.departmentId,
+        phoneNumber: data.phoneNumber,
+        baseId: data.baseId,
+        gender: data.gender,
         birthDate: data.birthDate.toISOString(),
+        profileSection: data.medicalProfile === "97" ? "notApplicable" : data.profileSection,
+        physicalQuestionnaireScore: data.physicalQuestionnaireScore
       };
       
-      // Changed from register to create to match the API service method name
       await traineeService.create(traineeData);
       
       toast({
