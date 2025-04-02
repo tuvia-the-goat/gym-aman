@@ -1,3 +1,4 @@
+
 // src/services/api.ts
 import axios from 'axios';
 import { Admin, Base, Department, Trainee, Entry } from '../types';
@@ -111,15 +112,26 @@ export const traineeService = {
     gender?: 'male' | 'female',
     birthDate?: string,
     profileSection?: 'orthopedic' | 'otherMedical' | 'notSharing' | 'notApplicable',
-    physicalQuestionnaireScore?: '100' | 'below100' | 'notNeeded' | 'otherQuestionnaire'
+    physicalQuestionnaireScore?: '100' | 'below100' | 'notNeeded' | 'otherQuestionnaire',
+    doctorApprovalPresented?: boolean,
+    medicalLimitation?: string
   }): Promise<Trainee> => {
     const response = await api.post('/trainees', traineeData);
     return response.data;
   },
   
+  // Get trainee by personal ID
+  getByPersonalId: async (personalId: string): Promise<Trainee> => {
+    const response = await api.get(`/trainees/personalId/${personalId}`);
+    return response.data;
+  },
+  
   // Update trainee medical approval
-  updateMedicalApproval: async (traineeId: string, approved: boolean): Promise<Trainee> => {
-    const response = await api.put(`/trainees/${traineeId}/medical-approval`, { approved });
+  updateMedicalApproval: async (traineeId: string, approved: boolean, doctorApprovalPresented?: boolean): Promise<Trainee> => {
+    const response = await api.put(`/trainees/${traineeId}/medical-approval`, { 
+      approved, 
+      doctorApprovalPresented
+    });
     return response.data;
   }
 };
