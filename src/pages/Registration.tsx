@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft, UserCheck, AlertTriangle } from "lucide-react";
-import { traineeService } from '../services/api';
+import { traineeService, entryService } from '../services/api';
 import { useToast } from '@/components/ui/use-toast';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -65,7 +65,7 @@ const Registration = () => {
         baseId: trainee.baseId
       };
       
-      await traineeService.create(entryData);
+      await entryService.create(entryData);
       
       toast({
         title: "כניסה נרשמה בהצלחה",

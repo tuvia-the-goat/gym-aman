@@ -33,6 +33,12 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, activeTab }
     navigate('/registration');
   };
 
+  // Helper function to get basis name
+  const getBasisName = (baseId: string) => {   
+    const base = bases.find((b) => b._id === baseId);    
+    return base ? base.name : '';
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       {/* Header */}
@@ -107,12 +113,6 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, activeTab }
       </footer>
     </div>
   );
-
-  // Helper function to get basis name
-  function getBasisName(baseId: string) {   
-    const base = bases.find((b) => b._id === baseId);    
-    return base ? base.name : '';
-  }
 };
 
 export default DashboardLayout;
