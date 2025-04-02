@@ -11,43 +11,24 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-import { isWithinInterval, parseISO } from 'date-fns';
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Button } from '@/components/ui/button';
-import { CalendarIcon, FileSpreadsheet } from 'lucide-react';
-import { format } from 'date-fns';
-import { cn } from '@/lib/utils';
-import * as XLSX from 'xlsx';
 
 const EntriesHistory = () => {
   const { admin, entries, trainees, departments, bases } = useAdmin();
   const [filteredEntries, setFilteredEntries] = useState<Entry[]>([]);
-  const [displayedEntries, setDisplayedEntries] = useState<Entry[]>([]);
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDepartment, setSelectedDepartment] = useState('');
   const [selectedBase, setSelectedBase] = useState('');
   const [selectedProfile, setSelectedProfile] = useState('');
-  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
-  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
+  const [selectedDate, setSelectedDate] = useState('');
   const [selectedTrainee, setSelectedTrainee] = useState<Trainee | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  
-  const [currentPage, setCurrentPage] = useState(1);
-  const entriesPerPage = 20;
 
+  // Filter entries based on admin role
   useEffect(() => {
     let filtered = [...entries];
     
+    // Filter by base if the admin is a gym admin
     if (admin?.role === 'gymAdmin' && admin.baseId) {
       filtered = filtered.filter(entry => entry.baseId === admin.baseId);
     }
@@ -55,27 +36,33 @@ const EntriesHistory = () => {
     setFilteredEntries(filtered);
   }, [admin, entries]);
 
+  // Apply filters
   useEffect(() => {
     let filtered = [...entries];
     
+    // Filter by base if the admin is a gym admin
     if (admin?.role === 'gymAdmin' && admin.baseId) {
       filtered = filtered.filter(entry => entry.baseId === admin.baseId);
     }
     
+    // Apply search filter
     if (searchTerm) {
       filtered = filtered.filter(entry =>
         entry.traineeFullName.includes(searchTerm)
       );
     }
     
+    // Apply department filter
     if (selectedDepartment) {
       filtered = filtered.filter(entry => entry.departmentId === selectedDepartment);
     }
     
+    // Apply base filter (only for all bases admin)
     if (admin?.role === 'generalAdmin' && selectedBase) {
       filtered = filtered.filter(entry => entry.baseId === selectedBase);
     }
     
+    // Apply profile filter
     if (selectedProfile) {
       const traineesWithProfile = trainees.filter(
         trainee => trainee.medicalProfile === selectedProfile
@@ -86,26 +73,13 @@ const EntriesHistory = () => {
       );
     }
     
-    if (startDate && endDate) {
-      filtered = filtered.filter(entry => {
-        const entryDate = parseISO(entry.entryDate);
-        return isWithinInterval(entryDate, { start: startDate, end: endDate });
-      });
+    // Apply date filter
+    if (selectedDate) {
+      filtered = filtered.filter(entry => entry.entryDate === selectedDate);
     }
     
     setFilteredEntries(filtered);
-    setCurrentPage(1);
-  }, [admin, entries, searchTerm, selectedDepartment, selectedBase, selectedProfile, startDate, endDate, trainees]);
-
-  useEffect(() => {
-    const startIndex = (currentPage - 1) * entriesPerPage;
-    const endIndex = startIndex + entriesPerPage;
-    setDisplayedEntries(filteredEntries.slice(startIndex, endIndex));
-  }, [filteredEntries, currentPage]);
-
-  const getTotalPages = () => {
-    return Math.ceil(filteredEntries.length / entriesPerPage);
-  };
+  }, [admin, entries, searchTerm, selectedDepartment, selectedBase, selectedProfile, selectedDate, trainees]);
 
   const getDepartmentName = (id: string) => {
     const department = departments.find(dept => dept._id === id);
@@ -125,9 +99,11 @@ const EntriesHistory = () => {
     }
   };
 
+  // Prepare data for trainee analytics
   const getTraineeAnalytics = (traineeId: string) => {
     const traineeEntries = entries.filter(entry => entry.traineeId === traineeId);
     
+    // Entry times distribution
     const hourCounts: { [key: string]: number } = {};
     traineeEntries.forEach(entry => {
       const hour = entry.entryTime.split(':')[0];
@@ -139,6 +115,7 @@ const EntriesHistory = () => {
       count: hourCounts[hour],
     })).sort((a, b) => parseInt(a.name) - parseInt(b.name));
     
+    // Day of week distribution
     const dayNames = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
     const dayCounts: { [key: string]: number } = {};
     
@@ -153,9 +130,11 @@ const EntriesHistory = () => {
       count: dayCounts[day] || 0,
     }));
     
+    // Average entries per month
     const monthlyAverage = traineeEntries.length / 
       (new Set(traineeEntries.map(e => e.entryDate.substring(0, 7))).size || 1);
     
+    // Percentile among all trainees
     const allTraineeEntryCounts = trainees.map(t => {
       const count = entries.filter(e => e.traineeId === t._id).length;
       return { traineeId: t._id, count };
@@ -177,11 +156,13 @@ const EntriesHistory = () => {
     if (!selectedTrainee) return;
     
     try {
+      // Update medical approval via API
       const updatedTrainee = await traineeService.updateMedicalApproval(
         selectedTrainee._id, 
         approved
       );
       
+      // Update the selected trainee state
       setSelectedTrainee(updatedTrainee);
       
       toast({
@@ -200,86 +181,14 @@ const EntriesHistory = () => {
     }
   };
 
-  const goToPage = (page: number) => {
-    setCurrentPage(page);
-  };
-
-  const exportToExcel = () => {
-    const entriesData = filteredEntries.map(entry => ({
-      'שם מתאמן': entry.traineeFullName,
-      'מספר אישי': entry.traineePersonalId,
-      'מחלקה': getDepartmentName(entry.departmentId),
-      'בסיס': getBaseName(entry.baseId),
-      'תאריך': entry.entryDate,
-      'שעה': entry.entryTime,
-    }));
-
-    const traineeEntryCountMap = new Map<string, number>();
-    filteredEntries.forEach(entry => {
-      const count = traineeEntryCountMap.get(entry.traineeId) || 0;
-      traineeEntryCountMap.set(entry.traineeId, count + 1);
-    });
-
-    const uniqueTraineeIds = Array.from(new Set(filteredEntries.map(entry => entry.traineeId)));
-    
-    const traineesData = uniqueTraineeIds.map(traineeId => {
-      const trainee = trainees.find(t => t._id === traineeId);
-      const entryCount = traineeEntryCountMap.get(traineeId) || 0;
-      
-      if (!trainee) {
-        return {
-          'שם מתאמן': 'לא ידוע',
-          'מספר אישי': 'לא ידוע',
-          'מחלקה': 'לא ידוע',
-          'בסיס': 'לא ידוע',
-          'פרופיל רפואי': 'לא ידוע',
-          'מספר כניסות': entryCount,
-        };
-      }
-      
-      return {
-        'שם מתאמן': trainee.fullName,
-        'מספר אישי': trainee.personalId,
-        'מחלקה': getDepartmentName(trainee.departmentId),
-        'בסיס': getBaseName(trainee.baseId),
-        'פרופיל רפואי': trainee.medicalProfile,
-        'מספר כניסות': entryCount,
-      };
-    }).sort((a, b) => b['מספר כניסות'] - a['מספר כניסות']);
-    
-    const wb = XLSX.utils.book_new();
-    
-    const entriesSheet = XLSX.utils.json_to_sheet(entriesData, {
-      header: ['שם מתאמן', 'מספר אישי', 'מחלקה', 'בסיס', 'תאריך', 'שעה']
-    });
-    XLSX.utils.book_append_sheet(wb, entriesSheet, 'היסטוריית כניסות');
-    
-    const traineesSheet = XLSX.utils.json_to_sheet(traineesData, {
-      header: ['שם מתאמן', 'מספר אישי', 'מחלקה', 'בסיס', 'פרופיל רפואי', 'מספר כניסות']
-    });
-    XLSX.utils.book_append_sheet(wb, traineesSheet, 'סטטיסטיקות מתאמנים');
-    
-    const fileName = `היסטוריית_כניסות_${format(new Date(), 'yyyy-MM-dd')}.xlsx`;
-    
-    XLSX.writeFile(wb, fileName);
-    
-    toast({
-      title: "ייצוא הושלם בהצלחה",
-      description: `הקובץ ${fileName} נשמר בהצלחה`,
-    });
-  };
-
   return (
     <DashboardLayout activeTab="entries">
       <div className="space-y-6 animate-fade-up">
         <div className="flex justify-between items-center">
           <h2 className="text-2xl font-bold">היסטוריית כניסות</h2>
-          <Button onClick={exportToExcel} className="flex items-center gap-2">
-            <FileSpreadsheet size={18} />
-            <span>ייצוא לאקסל</span>
-          </Button>
         </div>
 
+        {/* Filters */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4 p-4 bg-secondary rounded-lg">
           <div>
             <label htmlFor="search" className="block text-sm font-medium mb-1">חיפוש לפי שם</label>
@@ -355,64 +264,19 @@ const EntriesHistory = () => {
             </select>
           </div>
           
-          <div className="xl:col-span-2">
-            <label className="block text-sm font-medium mb-1">טווח תאריכים</label>
-            <div className="flex items-center gap-2">
-              <div className="grid gap-2">
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant={"outline"}
-                      className={cn(
-                        "w-[180px] justify-start text-right",
-                        !startDate && "text-muted-foreground"
-                      )}
-                    >
-                      <CalendarIcon className="ml-2 h-4 w-4" />
-                      {startDate ? format(startDate, "yyyy-MM-dd") : "תאריך התחלה"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={startDate}
-                      onSelect={setStartDate}
-                      initialFocus
-                      className={cn("p-3 pointer-events-auto")}
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-              <span>עד</span>
-              <div className="grid gap-2">
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant={"outline"}
-                      className={cn(
-                        "w-[180px] justify-start text-right",
-                        !endDate && "text-muted-foreground"
-                      )}
-                    >
-                      <CalendarIcon className="ml-2 h-4 w-4" />
-                      {endDate ? format(endDate, "yyyy-MM-dd") : "תאריך סיום"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={endDate}
-                      onSelect={setEndDate}
-                      initialFocus
-                      className={cn("p-3 pointer-events-auto")}
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-            </div>
+          <div>
+            <label htmlFor="date" className="block text-sm font-medium mb-1">סינון לפי תאריך</label>
+            <input
+              id="date"
+              type="date"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              className="input-field"
+            />
           </div>
         </div>
 
+        {/* Entries Table */}
         <div className="bg-card rounded-lg shadow-sm border overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -429,8 +293,8 @@ const EntriesHistory = () => {
                 </tr>
               </thead>
               <tbody>
-                {displayedEntries.length > 0 ? (
-                  displayedEntries.map((entry) => (
+                {filteredEntries.length > 0 ? (
+                  filteredEntries.map((entry) => (
                     <tr 
                       key={entry._id} 
                       className="border-t hover:bg-muted/50 cursor-pointer transition-colors"
@@ -456,75 +320,10 @@ const EntriesHistory = () => {
               </tbody>
             </table>
           </div>
-          
-          {filteredEntries.length > 0 && (
-            <div className="py-4 px-2 border-t">
-              <Pagination>
-                <PaginationContent>
-                  {currentPage > 1 && (
-                    <PaginationItem>
-                      <PaginationPrevious onClick={() => goToPage(currentPage - 1)} />
-                    </PaginationItem>
-                  )}
-                  
-                  {currentPage > 3 && (
-                    <PaginationItem>
-                      <PaginationLink onClick={() => goToPage(1)}>1</PaginationLink>
-                    </PaginationItem>
-                  )}
-                  
-                  {currentPage > 4 && (
-                    <PaginationItem>
-                      <span className="px-2">...</span>
-                    </PaginationItem>
-                  )}
-                  
-                  {currentPage > 1 && (
-                    <PaginationItem>
-                      <PaginationLink onClick={() => goToPage(currentPage - 1)}>
-                        {currentPage - 1}
-                      </PaginationLink>
-                    </PaginationItem>
-                  )}
-                  
-                  <PaginationItem>
-                    <PaginationLink isActive>{currentPage}</PaginationLink>
-                  </PaginationItem>
-                  
-                  {currentPage < getTotalPages() && (
-                    <PaginationItem>
-                      <PaginationLink onClick={() => goToPage(currentPage + 1)}>
-                        {currentPage + 1}
-                      </PaginationLink>
-                    </PaginationItem>
-                  )}
-                  
-                  {currentPage < getTotalPages() - 3 && (
-                    <PaginationItem>
-                      <span className="px-2">...</span>
-                    </PaginationItem>
-                  )}
-                  
-                  {currentPage < getTotalPages() - 2 && getTotalPages() > 1 && (
-                    <PaginationItem>
-                      <PaginationLink onClick={() => goToPage(getTotalPages())}>
-                        {getTotalPages()}
-                      </PaginationLink>
-                    </PaginationItem>
-                  )}
-                  
-                  {currentPage < getTotalPages() && (
-                    <PaginationItem>
-                      <PaginationNext onClick={() => goToPage(currentPage + 1)} />
-                    </PaginationItem>
-                  )}
-                </PaginationContent>
-              </Pagination>
-            </div>
-          )}
         </div>
       </div>
       
+      {/* Trainee Details Dialog */}
       {selectedTrainee && (
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogContent className="max-w-3xl" style={{direction:"rtl"}}>

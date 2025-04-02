@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import DashboardLayout from '../components/DashboardLayout';
 import { useAdmin } from '../context/AdminContext';
@@ -11,7 +10,6 @@ import {
   traineeService, 
   adminService 
 } from '../services/api';
-import TraineeRegistration from '@/components/TraineeRegistration';
 
 const Settings = () => {
   const { admin, bases, setBases, departments, setDepartments, trainees, setTrainees } = useAdmin();
@@ -34,9 +32,6 @@ const Settings = () => {
   const [newAdminPassword, setNewAdminPassword] = useState('');
   const [newAdminRole, setNewAdminRole] = useState<'generalAdmin' | 'gymAdmin'>('gymAdmin');
   const [selectedBaseForAdmin, setSelectedBaseForAdmin] = useState('');
-  
-  // Medical approval update
-  const [doctorApprovalPresented, setDoctorApprovalPresented] = useState<Record<string, boolean>>({});
   
   // Filter trainees based on medical approval status
   const filteredTrainees = useMemo(() => {
@@ -92,46 +87,32 @@ const Settings = () => {
     return base ? base.name : '';
   };
   
-  // Initialize doctorApprovalPresented state for each trainee
-  useEffect(() => {
-    const initialValues: Record<string, boolean> = {};
-    trainees.forEach(trainee => {
-      initialValues[trainee._id] = !!trainee.medicalApproval.doctorApprovalPresented;
-    });
-    setDoctorApprovalPresented(initialValues);
-  }, [trainees]);
-  
   // Handle medical approval update
   const updateMedicalApproval = async (traineeId: string, approved: boolean) => {
     try {
-      // Update medical approval via API including doctor approval state
-      await traineeService.updateMedicalApproval(
-        traineeId, 
-        approved,
-        doctorApprovalPresented[traineeId]
-      );
+      // Update medical approval via API
+      await traineeService.updateMedicalApproval(traineeId, approved);
       
-      // Update local state to reflect the change
-      const updatedTrainees = trainees.map(trainee => {
-        if (trainee._id === traineeId) {
-          // Create a new expiration date (1 year from now)
-          const expirationDate = new Date();
-          expirationDate.setFullYear(expirationDate.getFullYear() + 1);
-          
-          return {
-            ...trainee,
-            medicalApproval: {
-              approved: approved,
-              expirationDate: expirationDate.toISOString(),
-              doctorApprovalPresented: doctorApprovalPresented[traineeId]
-            }
-          };
-        }
-        return trainee;
-      });
-      
-      // Update the state with the modified trainees array
-      setTrainees(updatedTrainees);
+    // Update local state to reflect the change
+    const updatedTrainees = trainees.map(trainee => {
+      if (trainee._id === traineeId) {
+        // Create a new expiration date (1 year from now)
+        const expirationDate = new Date();
+        expirationDate.setFullYear(expirationDate.getFullYear() + 1);
+        
+        return {
+          ...trainee,
+          medicalApproval: {
+            approved: approved,
+            expirationDate: expirationDate.toISOString()
+          }
+        };
+      }
+      return trainee;
+    });
+    
+    // Update the state with the modified trainees array
+    setTrainees(updatedTrainees);
       toast({
         title: approved ? "אישור רפואי עודכן" : "אישור רפואי בוטל",
         description: approved 
@@ -146,14 +127,6 @@ const Settings = () => {
         variant: "destructive",
       });
     }
-  };
-  
-  // Handle doctor approval change
-  const handleDoctorApprovalChange = (traineeId: string, value: boolean) => {
-    setDoctorApprovalPresented(prev => ({
-      ...prev,
-      [traineeId]: value
-    }));
   };
   
   // Handle adding a new base
@@ -297,8 +270,8 @@ const Settings = () => {
           <h2 className="text-2xl font-bold">הגדרות</h2>
         </div>
         
-        <Tabs value={activeTab} onValueChange={setActiveTab} style={{display: 'flex', flexDirection: "column"}}>
-          <TabsList className="mb-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} style={{display: 'flex', flexDirection: "column", justifyContent: "space-around"}}>
+          <TabsList>
             {admin?.role === 'generalAdmin' && (
               <>
                 <TabsTrigger value="admins">ניהול מנהלים</TabsTrigger>
@@ -306,17 +279,11 @@ const Settings = () => {
               </>
             )}
             <TabsTrigger value="departments">ניהול מחלקות</TabsTrigger>
-            <TabsTrigger value="medicalApproval">אישורים רפואיים</TabsTrigger>
-            <TabsTrigger value="traineeRegistration">רישום מתאמנים</TabsTrigger>
+            <TabsTrigger value="medicalApproval"> אישורים רפואיים</TabsTrigger>
           </TabsList>
           
-          {/* Trainee Registration Tab */}
-          <TabsContent value="traineeRegistration">
-            <TraineeRegistration />
-          </TabsContent>
-          
           {/* Medical Approval Tab */}
-          <TabsContent value="medicalApproval">
+          <TabsContent value="medicalApproval" className="pt-6">
             <div className="bg-card shadow-sm rounded-lg border overflow-hidden">
               <div className="p-4 bg-muted" style={{display: "flex", flexDirection:"column", alignItems: "flex-end"}}>
                 <h3 className="font-semibold text-lg" style={{textAlign: "right"}}>ניהול אישורים רפואיים</h3>
@@ -361,7 +328,6 @@ const Settings = () => {
                   <thead className="bg-muted/50" style={{direction: "rtl"}}>
                     <tr>
                       <th className="px-4 py-3 text-right">פעולות</th>
-                      <th className="px-4 py-3 text-right">הוצג אישור רופא</th>
                       <th className="px-4 py-3 text-right">סטטוס אישור</th>
                       {admin?.role === 'generalAdmin' && (
                         <th className="px-4 py-3 text-right">בסיס</th>
@@ -379,21 +345,9 @@ const Settings = () => {
                             <button
                               onClick={() => updateMedicalApproval(trainee._id, true)}
                               className="btn-primary text-sm py-1"
-                            >
+                              >
                               אישור לשנה
                             </button>
-                          </td>
-                          <td className="px-4 py-3">
-                            <select
-                              value={doctorApprovalPresented[trainee._id] ? "true" : "false"}
-                              onChange={(e) => handleDoctorApprovalChange(
-                                trainee._id, e.target.value === "true"
-                              )}
-                              className="p-1 border rounded"
-                            >
-                              <option value="true">כן</option>
-                              <option value="false">לא</option>
-                            </select>
                           </td>
                           <td className="px-4 py-3">
                             <span className={`px-2 py-1 rounded-full text-sm ${
@@ -417,7 +371,7 @@ const Settings = () => {
                     ) : (
                       <tr>
                         <td 
-                          colSpan={admin?.role === 'generalAdmin' ? 7 : 6} 
+                          colSpan={admin?.role === 'generalAdmin' ? 6 : 5} 
                           className="px-4 py-8 text-center text-muted-foreground"
                         >
                           לא נמצאו רשומות מתאימות

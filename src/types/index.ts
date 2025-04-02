@@ -1,6 +1,5 @@
-
 export type UserRole = 'generalAdmin' | 'gymAdmin';
-
+//allaaaaa
 export interface Admin {
   _id: string;
   username: string;
@@ -31,14 +30,8 @@ export interface Trainee {
   medicalApproval: {
     approved: boolean;
     expirationDate: string | null;
-    doctorApprovalPresented?: boolean;
   };
   baseId: string;
-  gender?: 'male' | 'female';
-  birthDate?: string;
-  profileSection?: 'orthopedic' | 'otherMedical' | 'notSharing' | 'notApplicable';
-  physicalQuestionnaireScore?: '100' | 'below100' | 'notNeeded' | 'otherQuestionnaire';
-  medicalLimitation?: string;
 }
 
 export interface Entry {

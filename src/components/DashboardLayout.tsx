@@ -4,6 +4,9 @@ import { useNavigate } from 'react-router-dom';
 import { useAdmin } from '../context/AdminContext';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/components/ui/use-toast';
+import { baseService } from '@/services/api';
+import { Base } from '@/types';
+import { log } from 'console';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -21,7 +24,6 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, activeTab }
   const handleLogout = () => {
     setAdmin(null);
     localStorage.removeItem('admin');
-    localStorage.removeItem('token');
     navigate('/login');
     toast({
       title: "התנתקת בהצלחה",
@@ -31,12 +33,6 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, activeTab }
 
   const handleRegistrationScreen = () => {
     navigate('/registration');
-  };
-
-  // Helper function to get basis name
-  const getBasisName = (baseId: string) => {   
-    const base = bases.find((b) => b._id === baseId);    
-    return base ? base.name : '';
   };
 
   return (
@@ -58,7 +54,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, activeTab }
                 onClick={handleRegistrationScreen}
                 className="px-4 py-2 bg-white text-gray-800 rounded-md font-medium text-sm hover:bg-gray-100 transition-colors"
               >
-                מסך רישום כניסה
+                מסך הרשמה
               </button>
               <button
                 onClick={handleLogout}
@@ -72,7 +68,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, activeTab }
       </header>
 
       {/* Navigation */}
-      <div className="container mx-auto px-6 py-4 border-b">
+      <div className="container mx-auto px-6 py-4 border-b" >
         <Tabs value={activeTab} className="w-full justify-start" style={{display: 'flex', justifyContent: "space-around"}}>
           <TabsList className="bg-secondary">
             <TabsTrigger 
@@ -113,6 +109,12 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, activeTab }
       </footer>
     </div>
   );
+
+  // Helper function to get basis name
+   function getBasisName(baseId: string){   
+    const base = bases.find((b: any) => b._id === baseId);    
+    return base ? base.name : '';
+  }
 };
 
 export default DashboardLayout;
