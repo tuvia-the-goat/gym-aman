@@ -115,7 +115,7 @@ const Analytics = () => {
   }, [availableTrainees]);
   
   // Check if specific filters are active
-  const hasDateFilters = startDate !== undefined || endDate !== undefined;
+  const hasDateFilters = Boolean(startDate || endDate);
   const hasSpecificFilters = selectedDepartmentIds.length > 0 || selectedTrainees.length > 0;
   
   // Data for days of week chart - always visible even with filters
@@ -320,7 +320,7 @@ const Analytics = () => {
     }
   };
 
-  const hasActiveFilters = startDate || endDate || selectedDepartmentIds.length > 0 || selectedTrainees.length > 0;
+  const hasActiveFilters = Boolean(startDate || endDate || selectedDepartmentIds.length > 0 || selectedTrainees.length > 0);
   const isGeneralAdmin = admin?.role === 'generalAdmin';
 
   return (

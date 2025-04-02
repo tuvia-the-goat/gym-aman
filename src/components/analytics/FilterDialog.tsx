@@ -234,16 +234,17 @@ const FilterDialog: React.FC<FilterDialogProps> = ({
                             
                             if (allSelected) {
                               // If all are selected, remove all
-                              setSelectedTrainees(prev => 
-                                prev.filter(id => !traineeIds.includes(id))
-                              );
+                              const newSelection = selectedTrainees.filter(id => !traineeIds.includes(id));
+                              setSelectedTrainees(newSelection);
                             } else {
                               // If not all are selected, add all
-                              setSelectedTrainees(prev => {
-                                const currentSelected = new Set(prev);
-                                traineeIds.forEach(id => currentSelected.add(id));
-                                return Array.from(currentSelected);
+                              const newSelection = [...selectedTrainees];
+                              traineeIds.forEach(id => {
+                                if (!newSelection.includes(id)) {
+                                  newSelection.push(id);
+                                }
                               });
+                              setSelectedTrainees(newSelection);
                             }
                           }}
                         >
