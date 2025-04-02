@@ -95,7 +95,8 @@ const Registration = () => {
         birthDate: data.birthDate.toISOString(),
       };
       
-      await traineeService.register(traineeData);
+      // Changed from register to create to match the API service method name
+      await traineeService.create(traineeData);
       
       toast({
         title: "הרשמה בוצעה בהצלחה",
