@@ -33,6 +33,14 @@ const Settings = () => {
   const [newAdminRole, setNewAdminRole] = useState<'generalAdmin' | 'gymAdmin'>('gymAdmin');
   const [selectedBaseForAdmin, setSelectedBaseForAdmin] = useState('');
   
+  // New trainee (moved from Registration page)
+  const [personalId, setPersonalId] = useState('');
+  const [fullName, setFullName] = useState('');
+  const [medicalProfile, setMedicalProfile] = useState<'97' | '82' | '72' | '64' | '45' | '25'>('97');
+  const [departmentId, setDepartmentId] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [baseId, setBaseId] = useState('');
+  
   // Filter trainees based on medical approval status
   const filteredTrainees = useMemo(() => {
     let filtered = [...trainees];
@@ -93,26 +101,26 @@ const Settings = () => {
       // Update medical approval via API
       await traineeService.updateMedicalApproval(traineeId, approved);
       
-    // Update local state to reflect the change
-    const updatedTrainees = trainees.map(trainee => {
-      if (trainee._id === traineeId) {
-        // Create a new expiration date (1 year from now)
-        const expirationDate = new Date();
-        expirationDate.setFullYear(expirationDate.getFullYear() + 1);
-        
-        return {
-          ...trainee,
-          medicalApproval: {
-            approved: approved,
-            expirationDate: expirationDate.toISOString()
-          }
-        };
-      }
-      return trainee;
-    });
-    
-    // Update the state with the modified trainees array
-    setTrainees(updatedTrainees);
+      // Update local state to reflect the change
+      const updatedTrainees = trainees.map(trainee => {
+        if (trainee._id === traineeId) {
+          // Create a new expiration date (1 year from now)
+          const expirationDate = new Date();
+          expirationDate.setFullYear(expirationDate.getFullYear() + 1);
+          
+          return {
+            ...trainee,
+            medicalApproval: {
+              approved: approved,
+              expirationDate: expirationDate.toISOString()
+            }
+          };
+        }
+        return trainee;
+      });
+      
+      // Update the state with the modified trainees array
+      setTrainees(updatedTrainees);
       toast({
         title: approved ? "אישור רפואי עודכן" : "אישור רפואי בוטל",
         description: approved 
@@ -256,6 +264,82 @@ const Settings = () => {
     }
   };
   
+  // Handle adding a new trainee (moved from Registration page)
+  const handleAddTrainee = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Validate form fields
+    if (!personalId || !fullName || !phoneNumber || !departmentId || 
+        (admin?.role === 'generalAdmin' && !baseId)) {
+      toast({
+        title: "שגיאה",
+        description: "יש למלא את כל השדות",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Validate phone number format (10 digits)
+    const phoneRegex = /^\d{10}$/;
+    if (!phoneRegex.test(phoneNumber)) {
+      toast({
+        title: "שגיאה",
+        description: "מספר טלפון לא תקין, יש להזין 10 ספרות",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    try {
+      // Use baseId from selected value or admin's baseId
+      const traineeBaseId = admin?.role === 'generalAdmin' ? baseId : admin?.baseId;
+      
+      if (!traineeBaseId) {
+        toast({
+          title: "שגיאה",
+          description: "לא נבחר בסיס",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Create trainee via API
+      const newTrainee = await traineeService.create({
+        personalId,
+        fullName,
+        medicalProfile,
+        departmentId,
+        phoneNumber,
+        baseId: traineeBaseId
+      });
+      
+      // Update trainees state
+      setTrainees([...trainees, newTrainee]);
+      
+      // Reset form
+      setPersonalId('');
+      setFullName('');
+      setMedicalProfile('97');
+      setDepartmentId('');
+      setPhoneNumber('');
+      if (admin?.role === 'generalAdmin') {
+        setBaseId('');
+      }
+      
+      toast({
+        title: "מתאמן חדש נוסף",
+        description: `${fullName} נוסף בהצלחה`,
+      });
+    } catch (error) {
+      console.error('Error adding trainee:', error);
+      toast({
+        title: "שגיאה",
+        description: "אירעה שגיאה בעת הוספת המתאמן",
+        variant: "destructive",
+      });
+    }
+  };
+  
   // Default tab selection based on admin role
   useEffect(() => {
     if (admin?.role === 'gymAdmin') {
@@ -278,6 +362,7 @@ const Settings = () => {
                 <TabsTrigger value="bases">ניהול בסיסים</TabsTrigger>
               </>
             )}
+            <TabsTrigger value="trainees">רישום מתאמנים</TabsTrigger>
             <TabsTrigger value="departments">ניהול מחלקות</TabsTrigger>
             <TabsTrigger value="medicalApproval"> אישורים רפואיים</TabsTrigger>
           </TabsList>
@@ -464,6 +549,137 @@ const Settings = () => {
                   
                   <button type="submit" className="btn-primary w-full">
                     הוסף מחלקה
+                  </button>
+                </form>
+              </div>
+            </div>
+          </TabsContent>
+          
+          {/* Trainees Registration Tab (new) */}
+          <TabsContent value="trainees" className="pt-6">
+            <div className="grid grid-cols-1 gap-6">
+              <div className="bg-card shadow-sm rounded-lg border p-6" style={{direction: "rtl"}}>
+                <h3 className="font-semibold text-lg mb-4">רישום מתאמן חדש</h3>
+                <form onSubmit={handleAddTrainee} className="space-y-4 max-w-md">
+                  <div>
+                    <label htmlFor="personalId" className="block text-sm font-medium mb-1">
+                      מספר אישי
+                    </label>
+                    <input
+                      id="personalId"
+                      type="text"
+                      value={personalId}
+                      onChange={(e) => setPersonalId(e.target.value)}
+                      placeholder="מספר אישי"
+                      className="input-field"
+                      required
+                    />
+                  </div>
+                  
+                  <div>
+                    <label htmlFor="fullName" className="block text-sm font-medium mb-1">
+                      שם מלא
+                    </label>
+                    <input
+                      id="fullName"
+                      type="text"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      placeholder="שם מלא"
+                      className="input-field"
+                      required
+                    />
+                  </div>
+                  
+                  <div>
+                    <label htmlFor="phoneNumber" className="block text-sm font-medium mb-1">
+                      מספר טלפון
+                    </label>
+                    <input
+                      id="phoneNumber"
+                      type="tel"
+                      value={phoneNumber}
+                      onChange={(e) => setPhoneNumber(e.target.value)}
+                      placeholder="מספר טלפון (10 ספרות)"
+                      className="input-field"
+                      required
+                    />
+                  </div>
+                  
+                  <div>
+                    <label htmlFor="medicalProfile" className="block text-sm font-medium mb-1">
+                      פרופיל רפואי
+                    </label>
+                    <select
+                      id="medicalProfile"
+                      value={medicalProfile}
+                      onChange={(e) => setMedicalProfile(e.target.value as any)}
+                      className="input-field"
+                      required
+                    >
+                      <option value="97">97</option>
+                      <option value="82">82</option>
+                      <option value="72">72</option>
+                      <option value="64">64</option>
+                      <option value="45">45</option>
+                      <option value="25">25</option>
+                    </select>
+                  </div>
+                  
+                  {/* Base selection (only for general admin) */}
+                  {admin?.role === 'generalAdmin' && (
+                    <div>
+                      <label htmlFor="baseSelect" className="block text-sm font-medium mb-1">
+                        בסיס
+                      </label>
+                      <select
+                        id="baseSelect"
+                        value={baseId}
+                        onChange={(e) => {
+                          setBaseId(e.target.value);
+                          setDepartmentId(''); // Reset department when base changes
+                        }}
+                        className="input-field"
+                        required
+                      >
+                        <option value="">בחר בסיס</option>
+                        {bases.map(base => (
+                          <option key={base._id} value={base._id}>
+                            {base.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                  
+                  <div>
+                    <label htmlFor="departmentSelect" className="block text-sm font-medium mb-1">
+                      מחלקה
+                    </label>
+                    <select
+                      id="departmentSelect"
+                      value={departmentId}
+                      onChange={(e) => setDepartmentId(e.target.value)}
+                      className="input-field"
+                      required
+                    >
+                      <option value="">בחר מחלקה</option>
+                      {departments
+                        .filter(dept => 
+                          (admin?.role === 'generalAdmin' && baseId 
+                            ? dept.baseId === baseId 
+                            : dept.baseId === admin?.baseId)
+                        )
+                        .map(dept => (
+                          <option key={dept._id} value={dept._id}>
+                            {dept.name}
+                          </option>
+                        ))}
+                    </select>
+                  </div>
+                  
+                  <button type="submit" className="btn-primary w-full">
+                    הוסף מתאמן
                   </button>
                 </form>
               </div>

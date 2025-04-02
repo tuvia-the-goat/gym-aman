@@ -10,19 +10,31 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { format } from "date-fns";
+import { CalendarIcon } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { Calendar } from "@/components/ui/calendar";
+import { isWithinInterval, parseISO } from "date-fns";
+
+const PAGE_SIZE = 20;
 
 const EntriesHistory = () => {
   const { admin, entries, trainees, departments, bases } = useAdmin();
   const [filteredEntries, setFilteredEntries] = useState<Entry[]>([]);
+  const [displayedEntries, setDisplayedEntries] = useState<Entry[]>([]);
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDepartment, setSelectedDepartment] = useState('');
   const [selectedBase, setSelectedBase] = useState('');
   const [selectedProfile, setSelectedProfile] = useState('');
-  const [selectedDate, setSelectedDate] = useState('');
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
   const [selectedTrainee, setSelectedTrainee] = useState<Trainee | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
 
   // Filter entries based on admin role
   useEffect(() => {
@@ -34,6 +46,7 @@ const EntriesHistory = () => {
     }
     
     setFilteredEntries(filtered);
+    setCurrentPage(1); // Reset to first page when filters change
   }, [admin, entries]);
 
   // Apply filters
@@ -73,13 +86,24 @@ const EntriesHistory = () => {
       );
     }
     
-    // Apply date filter
-    if (selectedDate) {
-      filtered = filtered.filter(entry => entry.entryDate === selectedDate);
+    // Apply date range filter
+    if (startDate && endDate) {
+      filtered = filtered.filter(entry => {
+        const entryDate = parseISO(entry.entryDate);
+        return isWithinInterval(entryDate, { start: startDate, end: endDate });
+      });
     }
     
     setFilteredEntries(filtered);
-  }, [admin, entries, searchTerm, selectedDepartment, selectedBase, selectedProfile, selectedDate, trainees]);
+    setCurrentPage(1); // Reset to first page when filters change
+  }, [admin, entries, searchTerm, selectedDepartment, selectedBase, selectedProfile, startDate, endDate, trainees]);
+
+  // Apply pagination
+  useEffect(() => {
+    const start = (currentPage - 1) * PAGE_SIZE;
+    const end = start + PAGE_SIZE;
+    setDisplayedEntries(filteredEntries.slice(start, end));
+  }, [filteredEntries, currentPage]);
 
   const getDepartmentName = (id: string) => {
     const department = departments.find(dept => dept._id === id);
@@ -181,6 +205,104 @@ const EntriesHistory = () => {
     }
   };
 
+  // Calculate total number of pages
+  const totalPages = Math.ceil(filteredEntries.length / PAGE_SIZE);
+
+  // Generate pagination controls
+  const paginationControls = () => {
+    const pages = [];
+    const maxVisiblePages = 5;
+    
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+    
+    if (endPage - startPage + 1 < maxVisiblePages) {
+      startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+    
+    if (currentPage > 1) {
+      pages.push(
+        <Button 
+          key="prev" 
+          variant="outline" 
+          onClick={() => setCurrentPage(currentPage - 1)}
+          className="h-8 w-8 p-0"
+        >
+          &lt;
+        </Button>
+      );
+    }
+    
+    if (startPage > 1) {
+      pages.push(
+        <Button 
+          key="1" 
+          variant={currentPage === 1 ? "default" : "outline"} 
+          onClick={() => setCurrentPage(1)}
+          className="h-8 w-8 p-0"
+        >
+          1
+        </Button>
+      );
+      if (startPage > 2) {
+        pages.push(
+          <span key="ellipsis1" className="px-2">...</span>
+        );
+      }
+    }
+    
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(
+        <Button 
+          key={i} 
+          variant={currentPage === i ? "default" : "outline"} 
+          onClick={() => setCurrentPage(i)}
+          className="h-8 w-8 p-0"
+        >
+          {i}
+        </Button>
+      );
+    }
+    
+    if (endPage < totalPages) {
+      if (endPage < totalPages - 1) {
+        pages.push(
+          <span key="ellipsis2" className="px-2">...</span>
+        );
+      }
+      pages.push(
+        <Button 
+          key={totalPages} 
+          variant={currentPage === totalPages ? "default" : "outline"} 
+          onClick={() => setCurrentPage(totalPages)}
+          className="h-8 w-8 p-0"
+        >
+          {totalPages}
+        </Button>
+      );
+    }
+    
+    if (currentPage < totalPages) {
+      pages.push(
+        <Button 
+          key="next" 
+          variant="outline" 
+          onClick={() => setCurrentPage(currentPage + 1)}
+          className="h-8 w-8 p-0"
+        >
+          &gt;
+        </Button>
+      );
+    }
+    
+    return pages;
+  };
+
+  const clearDateRange = () => {
+    setStartDate(undefined);
+    setEndDate(undefined);
+  };
+
   return (
     <DashboardLayout activeTab="entries">
       <div className="space-y-6 animate-fade-up">
@@ -264,15 +386,71 @@ const EntriesHistory = () => {
             </select>
           </div>
           
-          <div>
-            <label htmlFor="date" className="block text-sm font-medium mb-1">סינון לפי תאריך</label>
-            <input
-              id="date"
-              type="date"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              className="input-field"
-            />
+          <div className="xl:col-span-2">
+            <label className="block text-sm font-medium mb-1">סינון לפי טווח תאריכים</label>
+            <div className="flex space-x-2">
+              <div className="w-1/2">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant={"outline"}
+                      className={cn(
+                        "w-full justify-start text-right",
+                        !startDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="ml-2 h-4 w-4" />
+                      {startDate ? format(startDate, "dd/MM/yyyy") : "מתאריך"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={startDate}
+                      onSelect={setStartDate}
+                      initialFocus
+                      className="p-3 pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              
+              <div className="w-1/2">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant={"outline"}
+                      className={cn(
+                        "w-full justify-start text-right",
+                        !endDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="ml-2 h-4 w-4" />
+                      {endDate ? format(endDate, "dd/MM/yyyy") : "עד תאריך"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={endDate}
+                      onSelect={setEndDate}
+                      initialFocus
+                      className="p-3 pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              
+              {(startDate || endDate) && (
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={clearDateRange}
+                >
+                  &times;
+                </Button>
+              )}
+            </div>
           </div>
         </div>
 
@@ -293,8 +471,8 @@ const EntriesHistory = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredEntries.length > 0 ? (
-                  filteredEntries.map((entry) => (
+                {displayedEntries.length > 0 ? (
+                  displayedEntries.map((entry) => (
                     <tr 
                       key={entry._id} 
                       className="border-t hover:bg-muted/50 cursor-pointer transition-colors"
@@ -320,6 +498,18 @@ const EntriesHistory = () => {
               </tbody>
             </table>
           </div>
+          
+          {/* Pagination */}
+          {filteredEntries.length > 0 && (
+            <div className="flex justify-center items-center p-4 border-t">
+              <div className="flex items-center space-x-1 rtl:space-x-reverse">
+                {paginationControls()}
+              </div>
+              <div className="text-sm text-muted-foreground mr-4">
+                מציג {Math.min((currentPage - 1) * PAGE_SIZE + 1, filteredEntries.length)}-{Math.min(currentPage * PAGE_SIZE, filteredEntries.length)} מתוך {filteredEntries.length} רשומות
+              </div>
+            </div>
+          )}
         </div>
       </div>
       
