@@ -23,9 +23,10 @@ import {
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
-import { CalendarIcon } from 'lucide-react';
+import { CalendarIcon, FileSpreadsheet } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import * as XLSX from 'xlsx';
 
 const EntriesHistory = () => {
   const { admin, entries, trainees, departments, bases } = useAdmin();
@@ -203,11 +204,80 @@ const EntriesHistory = () => {
     setCurrentPage(page);
   };
 
+  const exportToExcel = () => {
+    const entriesData = filteredEntries.map(entry => ({
+      'שם מתאמן': entry.traineeFullName,
+      'מספר אישי': entry.traineePersonalId,
+      'מחלקה': getDepartmentName(entry.departmentId),
+      'בסיס': getBaseName(entry.baseId),
+      'תאריך': entry.entryDate,
+      'שעה': entry.entryTime,
+    }));
+
+    const traineeEntryCountMap = new Map<string, number>();
+    filteredEntries.forEach(entry => {
+      const count = traineeEntryCountMap.get(entry.traineeId) || 0;
+      traineeEntryCountMap.set(entry.traineeId, count + 1);
+    });
+
+    const uniqueTraineeIds = Array.from(new Set(filteredEntries.map(entry => entry.traineeId)));
+    
+    const traineesData = uniqueTraineeIds.map(traineeId => {
+      const trainee = trainees.find(t => t._id === traineeId);
+      const entryCount = traineeEntryCountMap.get(traineeId) || 0;
+      
+      if (!trainee) {
+        return {
+          'שם מתאמן': 'לא ידוע',
+          'מספר אישי': 'לא ידוע',
+          'מחלקה': 'לא ידוע',
+          'בסיס': 'לא ידוע',
+          'פרופיל רפואי': 'לא ידוע',
+          'מספר כניסות': entryCount,
+        };
+      }
+      
+      return {
+        'שם מתאמן': trainee.fullName,
+        'מספר אישי': trainee.personalId,
+        'מחלקה': getDepartmentName(trainee.departmentId),
+        'בסיס': getBaseName(trainee.baseId),
+        'פרופיל רפואי': trainee.medicalProfile,
+        'מספר כניסות': entryCount,
+      };
+    }).sort((a, b) => b['מספר כניסות'] - a['מספר כניסות']);
+    
+    const wb = XLSX.utils.book_new();
+    
+    const entriesSheet = XLSX.utils.json_to_sheet(entriesData, {
+      header: ['שם מתאמן', 'מספר אישי', 'מחלקה', 'בסיס', 'תאריך', 'שעה']
+    });
+    XLSX.utils.book_append_sheet(wb, entriesSheet, 'היסטוריית כניסות');
+    
+    const traineesSheet = XLSX.utils.json_to_sheet(traineesData, {
+      header: ['שם מתאמן', 'מספר אישי', 'מחלקה', 'בסיס', 'פרופיל רפואי', 'מספר כניסות']
+    });
+    XLSX.utils.book_append_sheet(wb, traineesSheet, 'סטטיסטיקות מתאמנים');
+    
+    const fileName = `היסטוריית_כניסות_${format(new Date(), 'yyyy-MM-dd')}.xlsx`;
+    
+    XLSX.writeFile(wb, fileName);
+    
+    toast({
+      title: "ייצוא הושלם בהצלחה",
+      description: `הקובץ ${fileName} נשמר בהצלחה`,
+    });
+  };
+
   return (
     <DashboardLayout activeTab="entries">
       <div className="space-y-6 animate-fade-up">
         <div className="flex justify-between items-center">
           <h2 className="text-2xl font-bold">היסטוריית כניסות</h2>
+          <Button onClick={exportToExcel} className="flex items-center gap-2">
+            <FileSpreadsheet size={18} />
+            <span>ייצוא לאקסל</span>
+          </Button>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4 p-4 bg-secondary rounded-lg">
