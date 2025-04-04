@@ -22,7 +22,7 @@ const MonthlyChart: React.FC<MonthlyChartProps> = ({ data }) => {
             onCheckedChange={setShowAverage}
           />
           <Label htmlFor="monthly-display-mode" className="text-sm">
-            {showAverage ? "הצג ממוצע" : "הצג סה״כ"}
+            {showAverage ? "הצג ממוצע שנתי" : "הצג סה״כ"}
           </Label>
         </div>
       </div>
@@ -34,8 +34,8 @@ const MonthlyChart: React.FC<MonthlyChartProps> = ({ data }) => {
             <YAxis tickMargin={20}/>
             <Tooltip 
               formatter={(value) => [
-                `${value} ${showAverage ? 'כניסות (ממוצע)' : 'כניסות (סה״כ)'}`, 
-                showAverage ? 'ממוצע כניסות' : 'סה״כ כניסות'
+                `${value} ${showAverage ? 'כניסות (ממוצע שנתי)' : 'כניסות (סה״כ)'}`, 
+                showAverage ? 'ממוצע כניסות שנתי' : 'סה״כ כניסות'
               ]} 
             />
             <Line 
