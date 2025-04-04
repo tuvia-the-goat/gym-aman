@@ -1,11 +1,13 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAdmin } from '../context/AdminContext';
-import { Department, Base, Trainee } from '../types';
+import { PrimaryFramework, SecondaryFramework, Base, Trainee } from '../types';
 import { useToast } from '@/components/ui/use-toast';
 import { 
   baseService, 
-  departmentService, 
+  primaryFrameworkService,
+  secondaryFrameworkService,
   traineeService, 
   entryService, 
   authService 
@@ -13,27 +15,29 @@ import {
 import { addMonths, compareAsc, parseISO } from 'date-fns';
 import DashboardLayout from '../components/DashboardLayout';
 
-
 const Registration = () => {
   const navigate = useNavigate();
-  const { admin, bases, departments, trainees, setTrainees, entries, setEntries } = useAdmin();
+  const { 
+    admin, 
+    bases, 
+    primaryFrameworks, 
+    secondaryFrameworks, 
+    trainees, 
+    setTrainees, 
+    entries, 
+    setEntries 
+  } = useAdmin();
   const { toast } = useToast();
   
   // Selected base for registration
   const [selectedBase, setSelectedBase] = useState<Base | null>(null);
   
-  // Login/Registration view state
-  const [view, setView] = useState<'login' | 'register' | 'entry'>('entry');
-  
-  // Login fields
-  const [loginUsername, setLoginUsername] = useState('');
-  const [loginPassword, setLoginPassword] = useState('');
-  
   // Registration fields
   const [personalId, setPersonalId] = useState('');
   const [fullName, setFullName] = useState('');
   const [medicalProfile, setMedicalProfile] = useState<string>('');
-  const [departmentId, setDepartmentId] = useState('');
+  const [primaryFrameworkId, setPrimaryFrameworkId] = useState('');
+  const [secondaryFrameworkId, setSecondaryFrameworkId] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   
   // Entry fields
@@ -71,27 +75,10 @@ const Registration = () => {
     };
   }, []);
   
-  // Handle admin login
-  const handleAdminLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    try {
-      // Login using API service
-      const admin = await authService.login(loginUsername, loginPassword);
-      
-      navigate('/dashboard');
-      toast({
-        title: "התחברות הצליחה",
-        description: `ברוך הבא, ${loginUsername}!`,
-      });
-    } catch (error) {
-      toast({
-        title: "התחברות נכשלה",
-        description: "שם משתמש או סיסמה שגויים",
-        variant: "destructive",
-      });
-    }
-  };
+  // Reset secondary framework when primary framework changes
+  useEffect(() => {
+    setSecondaryFrameworkId('');
+  }, [primaryFrameworkId]);
   
   // Validate personal ID (7 digits)
   const validatePersonalId = (id: string) => {
@@ -152,7 +139,8 @@ const Registration = () => {
         personalId,
         fullName,
         medicalProfile: medicalProfile as '97' | '82' | '72' | '64' | '45' | '25',
-        departmentId,
+        primaryFrameworkId,
+        secondaryFrameworkId,
         phoneNumber,
         baseId: selectedBase._id
       });
@@ -164,7 +152,8 @@ const Registration = () => {
       setPersonalId('');
       setFullName('');
       setMedicalProfile('');
-      setDepartmentId('');
+      setPrimaryFrameworkId('');
+      setSecondaryFrameworkId('');
       setPhoneNumber('');
       
       toast({
@@ -251,7 +240,8 @@ const Registration = () => {
         entryTime: currentTime,
         traineeFullName: entryTrainee.fullName,
         traineePersonalId: entryTrainee.personalId,
-        departmentId: entryTrainee.departmentId,
+        primaryFrameworkId: entryTrainee.primaryFrameworkId,
+        secondaryFrameworkId: entryTrainee.secondaryFrameworkId,
         baseId: entryTrainee.baseId
       });
       
@@ -276,11 +266,75 @@ const Registration = () => {
     }
   };
   
-  // Filter departments by selected base
-  const filteredDepartments = departments.filter(
-    dept => selectedBase && dept.baseId === selectedBase._id
+  // Filter primary frameworks by selected base
+  const filteredPrimaryFrameworks = primaryFrameworks.filter(
+    framework => selectedBase && framework.baseId === selectedBase._id
   );
-
+  
+  // Filter secondary frameworks by selected primary framework
+  const filteredSecondaryFrameworks = secondaryFrameworks.filter(
+    framework => framework.primaryFrameworkId === primaryFrameworkId
+  );
+  
+  // Handle creation of a new primary framework
+  const handleAddPrimaryFramework = async () => {
+    if (!selectedBase) return;
+    
+    const frameworkName = prompt("הזן שם למסגרת ראשית חדשה:");
+    if (!frameworkName || frameworkName.trim() === "") return;
+    
+    try {
+      const newFramework = await primaryFrameworkService.create({
+        name: frameworkName.trim(),
+        baseId: selectedBase._id
+      });
+      
+      toast({
+        title: "מסגרת ראשית נוספה בהצלחה",
+        description: `${frameworkName} נוסף/ה בהצלחה`,
+      });
+    } catch (error) {
+      toast({
+        title: "שגיאה",
+        description: "אירעה שגיאה בעת הוספת המסגרת הראשית",
+        variant: "destructive",
+      });
+    }
+  };
+  
+  // Handle creation of a new secondary framework
+  const handleAddSecondaryFramework = async () => {
+    if (!selectedBase || !primaryFrameworkId) {
+      toast({
+        title: "שגיאה",
+        description: "יש לבחור מסגרת ראשית תחילה",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    const frameworkName = prompt("הזן שם למסגרת משנית חדשה:");
+    if (!frameworkName || frameworkName.trim() === "") return;
+    
+    try {
+      const newFramework = await secondaryFrameworkService.create({
+        name: frameworkName.trim(),
+        primaryFrameworkId,
+        baseId: selectedBase._id
+      });
+      
+      toast({
+        title: "מסגרת משנית נוספה בהצלחה",
+        description: `${frameworkName} נוסף/ה בהצלחה`,
+      });
+    } catch (error) {
+      toast({
+        title: "שגיאה",
+        description: "אירעה שגיאה בעת הוספת המסגרת המשנית",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <DashboardLayout activeTab="registration">
@@ -314,6 +368,31 @@ const Registration = () => {
                 <h2 className="text-3xl font-bold">רישום מתאמנים</h2>
               </div>
               
+              {/* Framework Management */}
+              <div className="glass max-w-xl mx-auto p-8 rounded-2xl animate-fade-up">
+                <h3 className="text-xl font-bold mb-4 text-center">ניהול מסגרות</h3>
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <h4 className="text-lg font-medium">מסגרות ראשיות</h4>
+                    <button 
+                      onClick={handleAddPrimaryFramework}
+                      className="bg-primary/20 text-primary px-3 py-1 rounded-lg text-sm hover:bg-primary/30 transition-colors"
+                    >
+                      הוסף מסגרת ראשית
+                    </button>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <h4 className="text-lg font-medium">מסגרות משניות</h4>
+                    <button 
+                      onClick={handleAddSecondaryFramework}
+                      className="bg-primary/20 text-primary px-3 py-1 rounded-lg text-sm hover:bg-primary/30 transition-colors"
+                      disabled={!primaryFrameworkId}
+                    >
+                      הוסף מסגרת משנית
+                    </button>
+                  </div>
+                </div>
+              </div>
               
               {/* Registration Form */}
                 <div className="glass max-w-xl mx-auto p-8 rounded-2xl animate-fade-up">
@@ -378,20 +457,41 @@ const Registration = () => {
                       </div>
                       
                       <div className="space-y-2">
-                        <label htmlFor="department" className="block text-sm font-medium">
-                          מחלקה
+                        <label htmlFor="primaryFramework" className="block text-sm font-medium">
+                          מסגרת ראשית
                         </label>
                         <select
-                          id="department"
-                          value={departmentId}
-                          onChange={(e) => setDepartmentId(e.target.value)}
+                          id="primaryFramework"
+                          value={primaryFrameworkId}
+                          onChange={(e) => setPrimaryFrameworkId(e.target.value)}
                           className="input-field"
                           required
                         >
-                          <option value="">בחר מחלקה</option>
-                          {filteredDepartments.map((dept) => (
-                            <option key={dept._id} value={dept._id}>
-                              {dept.name}
+                          <option value="">בחר מסגרת ראשית</option>
+                          {filteredPrimaryFrameworks.map((framework) => (
+                            <option key={framework._id} value={framework._id}>
+                              {framework.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <label htmlFor="secondaryFramework" className="block text-sm font-medium">
+                          מסגרת משנית
+                        </label>
+                        <select
+                          id="secondaryFramework"
+                          value={secondaryFrameworkId}
+                          onChange={(e) => setSecondaryFrameworkId(e.target.value)}
+                          className="input-field"
+                          required
+                          disabled={!primaryFrameworkId}
+                        >
+                          <option value="">בחר מסגרת משנית</option>
+                          {filteredSecondaryFrameworks.map((framework) => (
+                            <option key={framework._id} value={framework._id}>
+                              {framework.name}
                             </option>
                           ))}
                         </select>

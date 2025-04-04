@@ -1,6 +1,7 @@
+
 // src/services/api.ts
 import axios from 'axios';
-import { Admin, Base, Department, Trainee, Entry } from '../types';
+import { Admin, Base, PrimaryFramework, SecondaryFramework, Trainee, Entry } from '../types';
 
 const API_URL = 'http://localhost:3000/api';
 
@@ -77,17 +78,36 @@ export const baseService = {
   }
 };
 
-// Department Services
-export const departmentService = {
-  // Get all departments
-  getAll: async (): Promise<Department[]> => {
-    const response = await api.get('/departments');
+// Primary Framework Services (previously Department)
+export const primaryFrameworkService = {
+  // Get all primary frameworks
+  getAll: async (): Promise<PrimaryFramework[]> => {
+    const response = await api.get('/primary-frameworks');
     return response.data;
   },
   
-  // Create new department
-  create: async (departmentData: { name: string, baseId: string }): Promise<Department> => {
-    const response = await api.post('/departments', departmentData);
+  // Create new primary framework
+  create: async (frameworkData: { name: string, baseId: string }): Promise<PrimaryFramework> => {
+    const response = await api.post('/primary-frameworks', frameworkData);
+    return response.data;
+  }
+};
+
+// Secondary Framework Services (new)
+export const secondaryFrameworkService = {
+  // Get all secondary frameworks
+  getAll: async (): Promise<SecondaryFramework[]> => {
+    const response = await api.get('/secondary-frameworks');
+    return response.data;
+  },
+  
+  // Create new secondary framework
+  create: async (frameworkData: { 
+    name: string, 
+    primaryFrameworkId: string,
+    baseId: string 
+  }): Promise<SecondaryFramework> => {
+    const response = await api.post('/secondary-frameworks', frameworkData);
     return response.data;
   }
 };
@@ -105,7 +125,8 @@ export const traineeService = {
     personalId: string,
     fullName: string,
     medicalProfile: '97' | '82' | '72' | '64' | '45' | '25',
-    departmentId: string,
+    primaryFrameworkId: string,
+    secondaryFrameworkId: string,
     phoneNumber: string,
     baseId: string
   }): Promise<Trainee> => {
@@ -135,7 +156,8 @@ export const entryService = {
     entryTime: string,
     traineeFullName: string,
     traineePersonalId: string,
-    departmentId: string,
+    primaryFrameworkId: string,
+    secondaryFrameworkId: string,
     baseId: string
   }): Promise<Entry> => {
     const response = await api.post('/entries', entryData);
