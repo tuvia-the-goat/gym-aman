@@ -1,4 +1,3 @@
-
 export type UserRole = 'generalAdmin' | 'gymAdmin';
 //allaaaaa
 export interface Admin {
@@ -15,18 +14,9 @@ export interface Base {
   location: string;
 }
 
-// Renamed from Department to PrimaryFramework
-export interface PrimaryFramework {
+export interface Department {
   _id: string;
   name: string;
-  baseId: string;
-}
-
-// New type for secondary frameworks
-export interface SecondaryFramework {
-  _id: string;
-  name: string;
-  primaryFrameworkId: string;
   baseId: string;
 }
 
@@ -35,8 +25,7 @@ export interface Trainee {
   personalId: string; // 7 digits
   fullName: string;
   medicalProfile: '97' | '82' | '72' | '64' | '45' | '25';
-  primaryFrameworkId: string; // Changed from departmentId
-  secondaryFrameworkId: string; // New field
+  departmentId: string;
   phoneNumber: string; // 10 digits, starting with 05
   medicalApproval: {
     approved: boolean;
@@ -52,8 +41,7 @@ export interface Entry {
   entryTime: string;
   traineeFullName: string;
   traineePersonalId: string;
-  primaryFrameworkId: string; // Changed from departmentId
-  secondaryFrameworkId: string; // New field
+  departmentId: string;
   baseId: string;
   createdAt?: string; // From MongoDB timestamp
 }
@@ -73,10 +61,8 @@ export interface AdminContextType {
   setAdmin: (admin: Admin | null) => void;
   bases: Base[];
   setBases: (bases: Base[]) => void;
-  primaryFrameworks: PrimaryFramework[]; // Changed from departments
-  setPrimaryFrameworks: (primaryFrameworks: PrimaryFramework[]) => void;
-  secondaryFrameworks: SecondaryFramework[]; // New field
-  setSecondaryFrameworks: (secondaryFrameworks: SecondaryFramework[]) => void;
+  departments: Department[];
+  setDepartments: (departments: Department[]) => void;
   trainees: Trainee[];
   setTrainees: (trainees: Trainee[]) => void;
   entries: Entry[];

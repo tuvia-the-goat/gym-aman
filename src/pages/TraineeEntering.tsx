@@ -1,13 +1,11 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAdmin } from '../context/AdminContext';
-import { PrimaryFramework, SecondaryFramework, Base, Trainee } from '../types';
+import { Department, Base, Trainee } from '../types';
 import { useToast } from '@/components/ui/use-toast';
 import { 
   baseService, 
-  primaryFrameworkService,
-  secondaryFrameworkService,
+  departmentService, 
   traineeService, 
   entryService, 
   authService 
@@ -16,16 +14,7 @@ import { addMonths, compareAsc, parseISO } from 'date-fns';
 
 const TraineeEntering = () => {
   const navigate = useNavigate();
-  const { 
-    admin, 
-    bases, 
-    primaryFrameworks, 
-    secondaryFrameworks, 
-    trainees, 
-    setTrainees, 
-    entries, 
-    setEntries 
-  } = useAdmin();
+  const { admin, bases, departments, trainees, setTrainees, entries, setEntries } = useAdmin();
   const { toast } = useToast();
   
   // Selected base for registration
@@ -42,8 +31,7 @@ const TraineeEntering = () => {
   const [personalId, setPersonalId] = useState('');
   const [fullName, setFullName] = useState('');
   const [medicalProfile, setMedicalProfile] = useState<string>('');
-  const [primaryFrameworkId, setPrimaryFrameworkId] = useState('');
-  const [secondaryFrameworkId, setSecondaryFrameworkId] = useState('');
+  const [departmentId, setDepartmentId] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   
   // Entry fields
@@ -80,11 +68,6 @@ const TraineeEntering = () => {
       window.removeEventListener('popstate', handlePopState);
     };
   }, []);
-  
-  // Reset secondary framework when primary framework changes
-  useEffect(() => {
-    setSecondaryFrameworkId('');
-  }, [primaryFrameworkId]);
   
   // Handle admin login
   const handleAdminLogin = async (e: React.FormEvent) => {
@@ -167,8 +150,7 @@ const TraineeEntering = () => {
         personalId,
         fullName,
         medicalProfile: medicalProfile as '97' | '82' | '72' | '64' | '45' | '25',
-        primaryFrameworkId,
-        secondaryFrameworkId,
+        departmentId,
         phoneNumber,
         baseId: selectedBase._id
       });
@@ -180,8 +162,7 @@ const TraineeEntering = () => {
       setPersonalId('');
       setFullName('');
       setMedicalProfile('');
-      setPrimaryFrameworkId('');
-      setSecondaryFrameworkId('');
+      setDepartmentId('');
       setPhoneNumber('');
       
       toast({
@@ -268,8 +249,7 @@ const TraineeEntering = () => {
         entryTime: currentTime,
         traineeFullName: entryTrainee.fullName,
         traineePersonalId: entryTrainee.personalId,
-        primaryFrameworkId: entryTrainee.primaryFrameworkId,
-        secondaryFrameworkId: entryTrainee.secondaryFrameworkId,
+        departmentId: entryTrainee.departmentId,
         baseId: entryTrainee.baseId
       });
       
@@ -294,15 +274,11 @@ const TraineeEntering = () => {
     }
   };
   
-  // Filter primary frameworks by selected base
-  const filteredPrimaryFrameworks = primaryFrameworks.filter(
-    framework => selectedBase && framework.baseId === selectedBase._id
+  // Filter departments by selected base
+  const filteredDepartments = departments.filter(
+    dept => selectedBase && dept.baseId === selectedBase._id
   );
-  
-  // Filter secondary frameworks by selected primary framework
-  const filteredSecondaryFrameworks = secondaryFrameworks.filter(
-    framework => framework.primaryFrameworkId === primaryFrameworkId
-  );
+
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -353,6 +329,7 @@ const TraineeEntering = () => {
                 <h2 className="text-3xl font-bold">מערכת רישום לחדר כושר</h2>
               </div>
             
+              
               {/* Entry Form */}
               {view === 'entry' && (
                 <div className="glass max-w-xl mx-auto p-8 rounded-2xl animate-fade-up">

@@ -1,11 +1,9 @@
-
 import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
-import { Admin, Base, PrimaryFramework, SecondaryFramework, Trainee, Entry, AdminContextType } from '../types';
+import { Admin, Base, Department, Trainee, Entry, AdminContextType } from '../types';
 import { 
   authService, 
   baseService, 
-  primaryFrameworkService, 
-  secondaryFrameworkService,
+  departmentService, 
   traineeService, 
   entryService,
   initializeSystem
@@ -16,8 +14,7 @@ const AdminContext = createContext<AdminContextType | undefined>(undefined);
 export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [admin, setAdmin] = useState<Admin | null>(null);
   const [bases, setBases] = useState<Base[]>([]);
-  const [primaryFrameworks, setPrimaryFrameworks] = useState<PrimaryFramework[]>([]);
-  const [secondaryFrameworks, setSecondaryFrameworks] = useState<SecondaryFramework[]>([]);
+  const [departments, setDepartments] = useState<Department[]>([]);
   const [trainees, setTrainees] = useState<Trainee[]>([]);
   const [entries, setEntries] = useState<Entry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -46,17 +43,15 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         }
         
         // Fetch initial data
-        const [basesData, primaryFrameworksData, secondaryFrameworksData, traineesData, entriesData] = await Promise.all([
+        const [basesData, departmentsData, traineesData, entriesData] = await Promise.all([
           baseService.getAll(),
-          primaryFrameworkService.getAll(),
-          secondaryFrameworkService.getAll(),
+          departmentService.getAll(),
           traineeService.getAll(),
           entryService.getAll()
         ]);
         
         setBases(basesData);
-        setPrimaryFrameworks(primaryFrameworksData);
-        setSecondaryFrameworks(secondaryFrameworksData);
+        setDepartments(departmentsData);
         setTrainees(traineesData);
         setEntries(entriesData);
       } catch (error) {
@@ -83,10 +78,8 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         setAdmin,
         bases,
         setBases,
-        primaryFrameworks,
-        setPrimaryFrameworks,
-        secondaryFrameworks,
-        setSecondaryFrameworks,
+        departments,
+        setDepartments,
         trainees,
         setTrainees,
         entries,
