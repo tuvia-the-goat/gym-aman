@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
   BarChart,
   Bar,
@@ -10,6 +10,8 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import ChartCard from './ChartCard';
 
 interface HourlyDistributionChartProps {
@@ -20,6 +22,7 @@ const dayNames = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמיש�
 
 const HourlyDistributionChart: React.FC<HourlyDistributionChartProps> = ({ entries }) => {
   const [selectedDay, setSelectedDay] = React.useState('כל הימים');
+  const [showAverage, setShowAverage] = useState(true);
 
   // Generate hourly data based on selected day
   const hourlyData = React.useMemo(() => {
@@ -76,24 +79,38 @@ const HourlyDistributionChart: React.FC<HourlyDistributionChartProps> = ({ entri
 
   return (
     <ChartCard 
-      title="ממוצע כניסות לפי שעות" 
+      title="כניסות לפי שעות" 
       className="col-span-1 lg:col-span-2"
     >
       <div className="flex flex-row-reverse justify-between items-center mb-4">
-        <Select value={selectedDay} onValueChange={setSelectedDay}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="בחר יום" />
-          </SelectTrigger>
-          <SelectContent>
-            {dayNames.map(day => (
-              <SelectItem key={day} value={day}>
-                {day}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="flex items-center gap-3">
+          <Select value={selectedDay} onValueChange={setSelectedDay}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="בחר יום" />
+            </SelectTrigger>
+            <SelectContent>
+              {dayNames.map(day => (
+                <SelectItem key={day} value={day}>
+                  {day}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          
+          <div className="flex items-center gap-2">
+            <Switch
+              id="hourly-display-mode"
+              checked={showAverage}
+              onCheckedChange={setShowAverage}
+            />
+            <Label htmlFor="hourly-display-mode" className="text-sm">
+              {showAverage ? "הצג ממוצע" : "הצג סה״כ"}
+            </Label>
+          </div>
+        </div>
+        
         <div className="text-sm text-muted-foreground">
-          בחר יום להצגת ממוצע כניסות:
+          בחר יום להצגת נתוני כניסות:
         </div>
       </div>
       
@@ -113,13 +130,16 @@ const HourlyDistributionChart: React.FC<HourlyDistributionChartProps> = ({ entri
             tickMargin={10}
           />
           <Tooltip 
-            formatter={(value) => [`${value} כניסות (ממוצע)`, 'ממוצע כניסות']}
+            formatter={(value) => [
+              `${value} ${showAverage ? 'כניסות (ממוצע)' : 'כניסות (סה״כ)'}`, 
+              showAverage ? 'ממוצע כניסות' : 'סה״כ כניסות'
+            ]}
             labelFormatter={(label) => `שעה: ${label}`}
           />
           <Bar 
-            dataKey="average" 
+            dataKey={showAverage ? "average" : "count"} 
             fill="#4f46e5" 
-            name="ממוצע כניסות"
+            name={showAverage ? "ממוצע כניסות" : "סה״כ כניסות"}
             radius={[4, 4, 0, 0]} 
           />
         </BarChart>
