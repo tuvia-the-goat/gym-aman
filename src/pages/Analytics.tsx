@@ -1,4 +1,3 @@
-
 import React, { useMemo, useState } from 'react';
 import { isWithinInterval, parseISO } from 'date-fns';
 import DashboardLayout from '../components/DashboardLayout';
@@ -119,24 +118,37 @@ const Analytics = () => {
   const hasDateFilters = Boolean(startDate || endDate);
   const hasSpecificFilters = selectedDepartmentIds.length > 0 || selectedTrainees.length > 0;
   
-  // Data for days of week chart - always visible even with filters
+  // Data for days of week chart - now calculates averages
   const weekdaysData = useMemo(() => {
     const dayNames = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
     const dayCounts = [0, 0, 0, 0, 0, 0, 0];
+    
+    // Track unique dates for each day of the week
+    const dayDateTracker: Record<number, Set<string>> = {
+      0: new Set(), 1: new Set(), 2: new Set(), 
+      3: new Set(), 4: new Set(), 5: new Set(), 6: new Set()
+    };
     
     filteredEntries.forEach(entry => {
       const date = new Date(entry.entryDate);
       const dayIndex = date.getDay();
       dayCounts[dayIndex]++;
+      dayDateTracker[dayIndex].add(entry.entryDate);
     });
     
-    return dayNames.map((day, index) => ({
-      name: day,
-      value: dayCounts[index],
-    }));
+    return dayNames.map((day, index) => {
+      const uniqueDatesCount = dayDateTracker[index].size;
+      return {
+        name: day,
+        value: dayCounts[index],
+        average: uniqueDatesCount > 0 
+          ? parseFloat((dayCounts[index] / uniqueDatesCount).toFixed(1)) 
+          : 0
+      };
+    });
   }, [filteredEntries]);
   
-  // Data for monthly entries - always visible even with filters
+  // Data for monthly entries - now calculates averages
   const monthlyData = useMemo(() => {
     const monthNames = [
       'ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני',
@@ -144,17 +156,29 @@ const Analytics = () => {
     ];
     
     const monthCounts = Array(12).fill(0);
+    // Track unique dates (days) for each month to calculate averages
+    const monthDateTracker: Record<number, Set<string>> = {};
+    for (let i = 0; i < 12; i++) {
+      monthDateTracker[i] = new Set();
+    }
     
     filteredEntries.forEach(entry => {
       const date = new Date(entry.entryDate);
       const monthIndex = date.getMonth();
       monthCounts[monthIndex]++;
+      monthDateTracker[monthIndex].add(entry.entryDate);
     });
     
-    return monthNames.map((month, index) => ({
-      name: month,
-      value: monthCounts[index],
-    }));
+    return monthNames.map((month, index) => {
+      const uniqueDatesCount = monthDateTracker[index].size;
+      return {
+        name: month,
+        value: monthCounts[index],
+        average: uniqueDatesCount > 0 
+          ? parseFloat((monthCounts[index] / uniqueDatesCount).toFixed(1)) 
+          : 0
+      };
+    });
   }, [filteredEntries]);
   
   // Top trainees data - now uses filtered entries when specific trainees are selected

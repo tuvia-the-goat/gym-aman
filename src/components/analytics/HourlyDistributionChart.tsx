@@ -28,7 +28,14 @@ const HourlyDistributionChart: React.FC<HourlyDistributionChartProps> = ({ entri
       hour: i,
       name: `${i}:00`,
       count: 0,
+      average: 0,
     }));
+
+    // Count entries for each hour and track unique dates for averages
+    const hourlyDateTracker: Record<number, Set<string>> = {};
+    for (let i = 0; i < 24; i++) {
+      hourlyDateTracker[i] = new Set<string>();
+    }
 
     // Filter entries based on selected day
     const filteredEntries = entries.filter(entry => {
@@ -41,16 +48,25 @@ const HourlyDistributionChart: React.FC<HourlyDistributionChartProps> = ({ entri
       return dayNames[dayIndex] === selectedDay;
     });
 
-    // Count entries for each hour
+    // Count entries for each hour and track unique dates
     filteredEntries.forEach(entry => {
       const hourMatch = entry.entryTime.match(/^(\d{1,2}):/);
       if (hourMatch) {
         const hour = parseInt(hourMatch[1], 10);
         if (hour >= 0 && hour < 24) {
           hours[hour].count++;
+          hourlyDateTracker[hour].add(entry.entryDate);
         }
       }
     });
+
+    // Calculate averages based on unique dates
+    for (let i = 0; i < 24; i++) {
+      const uniqueDatesCount = hourlyDateTracker[i].size;
+      hours[i].average = uniqueDatesCount > 0 
+        ? parseFloat((hours[i].count / uniqueDatesCount).toFixed(1)) 
+        : 0;
+    }
 
     // Return only hours with data and between 5:00 and 22:00
     return hours
@@ -60,7 +76,7 @@ const HourlyDistributionChart: React.FC<HourlyDistributionChartProps> = ({ entri
 
   return (
     <ChartCard 
-      title="התפלגות לפי שעות" 
+      title="ממוצע כניסות לפי שעות" 
       className="col-span-1 lg:col-span-2"
     >
       <div className="flex flex-row-reverse justify-between items-center mb-4">
@@ -77,7 +93,7 @@ const HourlyDistributionChart: React.FC<HourlyDistributionChartProps> = ({ entri
           </SelectContent>
         </Select>
         <div className="text-sm text-muted-foreground">
-          בחר יום להצגת התפלגות שעות:
+          בחר יום להצגת ממוצע כניסות:
         </div>
       </div>
       
@@ -97,13 +113,13 @@ const HourlyDistributionChart: React.FC<HourlyDistributionChartProps> = ({ entri
             tickMargin={10}
           />
           <Tooltip 
-            formatter={(value) => [`${value} כניסות`, 'כניסות']}
+            formatter={(value) => [`${value} כניסות (ממוצע)`, 'ממוצע כניסות']}
             labelFormatter={(label) => `שעה: ${label}`}
           />
           <Bar 
-            dataKey="count" 
+            dataKey="average" 
             fill="#4f46e5" 
-            name="כניסות"
+            name="ממוצע כניסות"
             radius={[4, 4, 0, 0]} 
           />
         </BarChart>
