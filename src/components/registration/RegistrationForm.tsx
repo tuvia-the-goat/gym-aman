@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Department, Base } from '../../types';
+import { Department, Base, MedicalFormScore } from '../../types';
 import { useToast } from '@/components/ui/use-toast';
 import { traineeService } from '../../services/api';
 import { Calendar } from '@/components/ui/calendar';
@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { Textarea } from '@/components/ui/textarea';
 
 interface RegistrationFormProps {
   selectedBase: Base;
@@ -30,6 +31,11 @@ const RegistrationForm = ({ selectedBase, departments, onRegistrationSuccess }: 
   const [gender, setGender] = useState<'male' | 'female' | ''>('');
   const [birthDate, setBirthDate] = useState<Date | undefined>(undefined);
   const [orthopedicCondition, setOrthopedicCondition] = useState(false);
+  
+  // Additional new fields
+  const [medicalFormScore, setMedicalFormScore] = useState<MedicalFormScore | ''>('');
+  const [medicalCertificateProvided, setMedicalCertificateProvided] = useState(false);
+  const [medicalLimitation, setMedicalLimitation] = useState('');
   
   // Validate personal ID (7 digits)
   const validatePersonalId = (id: string) => {
@@ -72,6 +78,25 @@ const RegistrationForm = ({ selectedBase, departments, onRegistrationSuccess }: 
       return;
     }
     
+    if (!medicalFormScore) {
+      toast({
+        title: "שגיאה",
+        description: "יש לבחור ציון שאלון א\"ס",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Validate medical certificate if partial score
+    if (medicalFormScore === 'partialScore' && !medicalCertificateProvided) {
+      toast({
+        title: "שגיאה",
+        description: "יש לציין האם הוצג אישור רפואי",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     // Validate inputs
     if (!validatePersonalId(personalId)) {
       toast({
@@ -105,7 +130,10 @@ const RegistrationForm = ({ selectedBase, departments, onRegistrationSuccess }: 
         baseId: selectedBase._id,
         gender: gender as 'male' | 'female',
         birthDate: formattedBirthDate,
-        orthopedicCondition
+        orthopedicCondition,
+        medicalFormScore: medicalFormScore as MedicalFormScore,
+        ...(medicalFormScore === 'partialScore' && { medicalCertificateProvided }),
+        ...(medicalLimitation && { medicalLimitation })
       });
       
       // Update state with new trainee through callback
@@ -120,6 +148,9 @@ const RegistrationForm = ({ selectedBase, departments, onRegistrationSuccess }: 
       setGender('');
       setBirthDate(undefined);
       setOrthopedicCondition(false);
+      setMedicalFormScore('');
+      setMedicalCertificateProvided(false);
+      setMedicalLimitation('');
       
       toast({
         title: "הרשמה הצליחה",
@@ -291,6 +322,77 @@ const RegistrationForm = ({ selectedBase, departments, onRegistrationSuccess }: 
               placeholder="05XXXXXXXX"
               required
               autoComplete="off"
+            />
+          </div>
+          
+          {/* New field: Medical Form Score */}
+          <div className="space-y-2">
+            <label htmlFor="medicalFormScore" className="block text-sm font-medium">
+              ציון שאלון א"ס
+            </label>
+            <select
+              id="medicalFormScore"
+              value={medicalFormScore}
+              onChange={(e) => setMedicalFormScore(e.target.value as MedicalFormScore | '')}
+              className="input-field"
+              required
+            >
+              <option value="">בחר ציון</option>
+              <option value="notRequired">לא נזקק למילוי שאלון</option>
+              <option value="fullScore">100 נקודות</option>
+              <option value="partialScore">פחות מ-100 נקודות</option>
+              <option value="reserve">מיל' או אע"צ</option>
+            </select>
+          </div>
+          
+          {/* Conditional field: Medical Certificate */}
+          {medicalFormScore === 'partialScore' && (
+            <div className="space-y-2">
+              <label htmlFor="medicalCertificateProvided" className="block text-sm font-medium">
+                האם הוצג אישור רפואי?
+              </label>
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center ml-4">
+                  <input
+                    type="radio"
+                    id="certificateYes"
+                    name="medicalCertificate"
+                    checked={medicalCertificateProvided}
+                    onChange={() => setMedicalCertificateProvided(true)}
+                    className="ml-2"
+                  />
+                  <label htmlFor="certificateYes" className="text-sm">
+                    כן
+                  </label>
+                </div>
+                <div className="flex items-center">
+                  <input
+                    type="radio"
+                    id="certificateNo"
+                    name="medicalCertificate"
+                    checked={!medicalCertificateProvided}
+                    onChange={() => setMedicalCertificateProvided(false)}
+                    className="ml-2"
+                  />
+                  <label htmlFor="certificateNo" className="text-sm">
+                    לא
+                  </label>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {/* New field: Medical Limitation */}
+          <div className="space-y-2 md:col-span-2">
+            <label htmlFor="medicalLimitation" className="block text-sm font-medium">
+              מגבלה רפואית
+            </label>
+            <Textarea
+              id="medicalLimitation"
+              value={medicalLimitation}
+              onChange={(e) => setMedicalLimitation(e.target.value)}
+              className="input-field min-h-[80px]"
+              placeholder="הזן מגבלות רפואיות אם קיימות"
             />
           </div>
           
