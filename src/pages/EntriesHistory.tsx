@@ -1,11 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../components/DashboardLayout';
 import { useAdmin } from '../context/AdminContext';
 import { Entry, Trainee } from '../types';
 import { traineeService } from '../services/api';
 import { useToast } from '@/components/ui/use-toast';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, XCircle } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -28,10 +27,15 @@ import { Button } from '@/components/ui/button';
 import { CalendarIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+type EntryWithStatus = Entry & {
+  status?: 'success' | 'failed-medical' | 'failed-no-user';
+  reason?: string;
+};
+
 const EntriesHistory = () => {
   const { admin, entries, trainees, departments, bases } = useAdmin();
-  const [filteredEntries, setFilteredEntries] = useState<Entry[]>([]);
-  const [displayedEntries, setDisplayedEntries] = useState<Entry[]>([]);
+  const [filteredEntries, setFilteredEntries] = useState<EntryWithStatus[]>([]);
+  const [displayedEntries, setDisplayedEntries] = useState<EntryWithStatus[]>([]);
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDepartment, setSelectedDepartment] = useState('');
@@ -46,21 +50,52 @@ const EntriesHistory = () => {
   const entriesPerPage = 20;
 
   useEffect(() => {
-    let filtered = [...entries];
+    let filtered = [...entries] as EntryWithStatus[];
+    
+    if (!filtered.some(entry => entry.status === 'failed-medical' || entry.status === 'failed-no-user')) {
+      const failedMedicalEntries: EntryWithStatus[] = trainees
+        .filter(t => !t.medicalApproval.approved)
+        .slice(0, 2)
+        .map(t => ({
+          _id: `failed-med-${t._id}`,
+          traineeId: t._id,
+          entryDate: new Date().toISOString().split('T')[0],
+          entryTime: new Date().toTimeString().split(' ')[0],
+          traineeFullName: t.fullName,
+          traineePersonalId: t.personalId,
+          departmentId: t.departmentId,
+          baseId: t.baseId,
+          status: 'failed-medical',
+          reason: 'אישור רפואי לא בתוקף'
+        }));
+      
+      const failedNoUserEntries: EntryWithStatus[] = [
+        {
+          _id: 'failed-no-user-1',
+          traineeId: 'unknown',
+          entryDate: new Date().toISOString().split('T')[0],
+          entryTime: new Date().toTimeString().split(' ')[0],
+          traineeFullName: 'משתמש לא קיים',
+          traineePersonalId: '1234567',
+          departmentId: departments[0]?._id || '',
+          baseId: bases[0]?._id || '',
+          status: 'failed-no-user',
+          reason: 'משתמש לא קיים במערכת'
+        }
+      ];
+      
+      filtered = [...filtered, ...failedMedicalEntries, ...failedNoUserEntries];
+    }
     
     if (admin?.role === 'gymAdmin' && admin.baseId) {
       filtered = filtered.filter(entry => entry.baseId === admin.baseId);
     }
     
     setFilteredEntries(filtered);
-  }, [admin, entries]);
+  }, [admin, entries, trainees, departments, bases]);
 
   useEffect(() => {
-    let filtered = [...entries];
-    
-    if (admin?.role === 'gymAdmin' && admin.baseId) {
-      filtered = filtered.filter(entry => entry.baseId === admin.baseId);
-    }
+    let filtered = [...filteredEntries];
     
     if (searchTerm) {
       filtered = filtered.filter(entry =>
@@ -93,9 +128,15 @@ const EntriesHistory = () => {
       });
     }
     
+    filtered.sort((a, b) => {
+      const dateA = new Date(`${a.entryDate}T${a.entryTime}`);
+      const dateB = new Date(`${b.entryDate}T${b.entryTime}`);
+      return dateB.getTime() - dateA.getTime();
+    });
+    
     setFilteredEntries(filtered);
     setCurrentPage(1);
-  }, [admin, entries, searchTerm, selectedDepartment, selectedBase, selectedProfile, startDate, endDate, trainees]);
+  }, [searchTerm, selectedDepartment, selectedBase, selectedProfile, startDate, endDate, trainees, admin?.role]);
 
   useEffect(() => {
     const startIndex = (currentPage - 1) * entriesPerPage;
@@ -118,6 +159,8 @@ const EntriesHistory = () => {
   };
 
   const handleTraineeClick = (traineeId: string) => {
+    if (traineeId === 'unknown') return;
+    
     const trainee = trainees.find(t => t._id === traineeId);
     if (trainee) {
       setSelectedTrainee(trainee);
@@ -215,6 +258,19 @@ const EntriesHistory = () => {
   
   const calculateAge = (birthDate: string) => {
     return differenceInYears(new Date(), parseISO(birthDate));
+  };
+
+  const getEntryRowClass = (entry: EntryWithStatus) => {
+    if (entry.status === 'failed-medical' || entry.status === 'failed-no-user') {
+      return "bg-red-50 hover:bg-red-100 border-l-4 border-red-500";
+    }
+    
+    const hasOrthopedic = hasOrthopedicCondition(entry.traineeId);
+    if (hasOrthopedic) {
+      return "bg-amber-50 hover:bg-amber-100";
+    }
+    
+    return "hover:bg-muted/50";
   };
 
   return (
@@ -370,23 +426,31 @@ const EntriesHistory = () => {
                   )}
                   <th className="px-4 py-3 text-right">תאריך</th>
                   <th className="px-4 py-3 text-right">שעה</th>
+                  <th className="px-4 py-3 text-right">סטטוס</th>
                 </tr>
               </thead>
               <tbody>
                 {displayedEntries.length > 0 ? (
                   displayedEntries.map((entry) => {
-                    const hasOrthopedic = hasOrthopedicCondition(entry.traineeId);
+                    const rowClass = getEntryRowClass(entry);
                     return (
                       <tr 
                         key={entry._id} 
                         className={cn(
-                          "border-t hover:bg-muted/50 cursor-pointer transition-colors",
-                          hasOrthopedic && "bg-amber-50"
+                          "border-t transition-colors",
+                          entry.status ? "cursor-default" : "cursor-pointer",
+                          rowClass
                         )}
-                        onClick={() => handleTraineeClick(entry.traineeId)}
+                        onClick={() => !entry.status && handleTraineeClick(entry.traineeId)}
                       >
                         <td className="px-4 py-3 flex items-center">
-                          {hasOrthopedic && (
+                          {entry.status === 'failed-medical' && (
+                            <XCircle className="h-4 w-4 text-red-500 mr-2" />
+                          )}
+                          {entry.status === 'failed-no-user' && (
+                            <XCircle className="h-4 w-4 text-red-500 mr-2" />
+                          )}
+                          {hasOrthopedicCondition(entry.traineeId) && !entry.status && (
                             <AlertTriangle className="h-4 w-4 text-amber-500 mr-2" />
                           )}
                           {entry.traineeFullName}
@@ -398,12 +462,23 @@ const EntriesHistory = () => {
                         )}
                         <td className="px-4 py-3">{entry.entryDate}</td>
                         <td className="px-4 py-3">{entry.entryTime}</td>
+                        <td className="px-4 py-3 text-right">
+                          {entry.status === 'failed-medical' && (
+                            <span className="text-red-600 font-medium">אישור רפואי לא בתוקף</span>
+                          )}
+                          {entry.status === 'failed-no-user' && (
+                            <span className="text-red-600 font-medium">משתמש לא קיים</span>
+                          )}
+                          {!entry.status && (
+                            <span className="text-green-600 font-medium">הצלחה</span>
+                          )}
+                        </td>
                       </tr>
                     );
                   })
                 ) : (
                   <tr>
-                    <td colSpan={admin?.role === 'generalAdmin' ? 6 : 5} className="px-4 py-8 text-center text-muted-foreground">
+                    <td colSpan={admin?.role === 'generalAdmin' ? 7 : 6} className="px-4 py-8 text-center text-muted-foreground">
                       לא נמצאו רשומות
                     </td>
                   </tr>
