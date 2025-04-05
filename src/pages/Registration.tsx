@@ -40,8 +40,9 @@ const Registration = () => {
   const [medicalProfile, setMedicalProfile] = useState<string>('');
   const [departmentId, setDepartmentId] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
+  
   // New fields
-  const [gender, setGender] = useState<'male' | 'female'>('male');
+  const [gender, setGender] = useState<'male' | 'female' | ''>('');
   const [birthDate, setBirthDate] = useState<Date | undefined>(undefined);
   const [orthopedicCondition, setOrthopedicCondition] = useState(false);
   
@@ -134,6 +135,15 @@ const Registration = () => {
       return;
     }
     
+    if (!gender) {
+      toast({
+        title: "שגיאה",
+        description: "יש לבחור מין",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     // Validate inputs
     if (!validatePersonalId(personalId)) {
       toast({
@@ -176,7 +186,7 @@ const Registration = () => {
         departmentId,
         phoneNumber,
         baseId: selectedBase._id,
-        gender,
+        gender: gender as 'male' | 'female',
         birthDate: formattedBirthDate,
         orthopedicCondition
       });
@@ -190,7 +200,7 @@ const Registration = () => {
       setMedicalProfile('');
       setDepartmentId('');
       setPhoneNumber('');
-      setGender('male');
+      setGender('');
       setBirthDate(undefined);
       setOrthopedicCondition(false);
       
@@ -390,10 +400,11 @@ const Registration = () => {
                         <select
                           id="gender"
                           value={gender}
-                          onChange={(e) => setGender(e.target.value as 'male' | 'female')}
+                          onChange={(e) => setGender(e.target.value as 'male' | 'female' | '')}
                           className="input-field"
                           required
                         >
+                          <option value="">בחר מין</option>
                           <option value="male">זכר</option>
                           <option value="female">נקבה</option>
                         </select>
@@ -427,6 +438,8 @@ const Registration = () => {
                                 return date > new Date();
                               }}
                               className={cn("p-3 pointer-events-auto")}
+                              fromYear={1940}
+                              toYear={new Date().getFullYear()}
                             />
                           </PopoverContent>
                         </Popover>
