@@ -34,6 +34,11 @@ const TraineeEntering = () => {
   const [departmentId, setDepartmentId] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   
+  // New fields
+  const [gender, setGender] = useState<'male' | 'female'>('male');
+  const [birthDate, setBirthDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [orthopedicCondition, setOrthopedicCondition] = useState(false);
+  
   // Entry fields
   const [entryPersonalId, setEntryPersonalId] = useState('');
   const [confirmingEntry, setConfirmingEntry] = useState(false);
@@ -145,14 +150,17 @@ const TraineeEntering = () => {
     }
     
     try {
-      // Create new trainee via API
+      // Create new trainee via API with the new required fields
       const newTrainee = await traineeService.create({
         personalId,
         fullName,
         medicalProfile: medicalProfile as '97' | '82' | '72' | '64' | '45' | '25',
         departmentId,
         phoneNumber,
-        baseId: selectedBase._id
+        baseId: selectedBase._id,
+        gender,
+        birthDate,
+        orthopedicCondition
       });
       
       // Update state with new trainee
@@ -164,6 +172,9 @@ const TraineeEntering = () => {
       setMedicalProfile('');
       setDepartmentId('');
       setPhoneNumber('');
+      setGender('male');
+      setBirthDate(new Date().toISOString().split('T')[0]);
+      setOrthopedicCondition(false);
       
       toast({
         title: "הרשמה הצליחה",
@@ -278,7 +289,6 @@ const TraineeEntering = () => {
   const filteredDepartments = departments.filter(
     dept => selectedBase && dept.baseId === selectedBase._id
   );
-
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
