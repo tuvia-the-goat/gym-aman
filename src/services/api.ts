@@ -107,7 +107,10 @@ export const traineeService = {
     medicalProfile: '97' | '82' | '72' | '64' | '45' | '25',
     departmentId: string,
     phoneNumber: string,
-    baseId: string
+    baseId: string,
+    gender: 'male' | 'female',
+    birthDate: string,
+    orthopedicCondition: boolean
   }): Promise<Trainee> => {
     const response = await api.post('/trainees', traineeData);
     return response.data;

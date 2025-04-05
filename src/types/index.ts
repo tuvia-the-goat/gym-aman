@@ -1,5 +1,6 @@
+
 export type UserRole = 'generalAdmin' | 'gymAdmin';
-//allaaaaa
+
 export interface Admin {
   _id: string;
   username: string;
@@ -32,6 +33,10 @@ export interface Trainee {
     expirationDate: string | null;
   };
   baseId: string;
+  // New fields
+  gender: 'male' | 'female';
+  birthDate: string;
+  orthopedicCondition: boolean;
 }
 
 export interface Entry {

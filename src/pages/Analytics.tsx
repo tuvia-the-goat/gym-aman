@@ -15,6 +15,9 @@ import TopTraineesChart from '../components/analytics/TopTraineesChart';
 import TopDepartmentsChart from '../components/analytics/TopDepartmentsChart';
 import BasesChart from '../components/analytics/BasesChart';
 import HourlyDistributionChart from '../components/analytics/HourlyDistributionChart';
+// Import new chart components
+import GenderDistributionChart from '../components/analytics/GenderDistributionChart';
+import AgeDistributionChart from '../components/analytics/AgeDistributionChart';
 
 const Analytics = () => {
   const {
@@ -48,6 +51,8 @@ const Analytics = () => {
     topTraineesData,
     topDepartmentsData,
     basesData,
+    genderDistributionData,
+    ageDistributionData,
     avgEntriesPerTrainee,
     isGeneralAdmin,
     getDepartmentName,
@@ -109,6 +114,12 @@ const Analytics = () => {
           traineesCount={filteredTrainees.length}
           avgEntriesPerTrainee={avgEntriesPerTrainee}
         />
+        
+        {/* New Charts - Gender and Age Distribution */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <GenderDistributionChart data={genderDistributionData} />
+          <AgeDistributionChart data={ageDistributionData} />
+        </div>
         
         {/* New Chart - Hourly Distribution */}
         <HourlyDistributionChart entries={filteredEntries} />
