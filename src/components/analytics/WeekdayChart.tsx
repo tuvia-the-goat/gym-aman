@@ -22,7 +22,7 @@ const WeekdayChart: React.FC<WeekdayChartProps> = ({ data }) => {
             onCheckedChange={setShowAverage}
           />
           <Label htmlFor="weekday-display-mode" className="text-sm">
-            {showAverage ? "הצג ממוצע שבועי" : "הצג סה״כ"}
+            {showAverage ? "תצוגת ממוצע" : "תצוגת כמות כניסות"}
           </Label>
         </div>
       </div>
@@ -34,7 +34,7 @@ const WeekdayChart: React.FC<WeekdayChartProps> = ({ data }) => {
             <YAxis tickMargin={40}/>
             <Tooltip 
               formatter={(value) => [
-                `${value} ${showAverage ? 'כניסות (ממוצע שבועי)' : 'כניסות (סה״כ)'}`, 
+                `${value} כניסות`, 
                 showAverage ? 'ממוצע כניסות שבועי' : 'סה״כ כניסות'
               ]} 
             />

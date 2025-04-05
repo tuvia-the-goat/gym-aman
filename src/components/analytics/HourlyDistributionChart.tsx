@@ -104,7 +104,7 @@ const HourlyDistributionChart: React.FC<HourlyDistributionChartProps> = ({ entri
               onCheckedChange={setShowAverage}
             />
             <Label htmlFor="hourly-display-mode" className="text-sm">
-              {showAverage ? "הצג ממוצע יומי" : "הצג סה״כ"}
+              {showAverage ? "תצוגת ממוצע" : "תצוגת כמות כניסות"}
             </Label>
           </div>
         </div>
@@ -131,7 +131,7 @@ const HourlyDistributionChart: React.FC<HourlyDistributionChartProps> = ({ entri
           />
           <Tooltip 
             formatter={(value) => [
-              `${value} ${showAverage ? 'כניסות (ממוצע יומי)' : 'כניסות (סה״כ)'}`, 
+              `${value} כניסות`, 
               showAverage ? 'ממוצע כניסות יומי' : 'סה״כ כניסות'
             ]}
             labelFormatter={(label) => `שעה: ${label}`}
