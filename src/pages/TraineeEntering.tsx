@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAdmin } from '../context/AdminContext';
@@ -237,9 +238,6 @@ const TraineeEntering = () => {
     // Find trainee by personal ID
     const trainee = trainees.find(t => t.personalId === entryPersonalId);
     if (!trainee) {
-      // Record failed entry for non-existent user
-      recordFailedEntry('failed-no-user', 'משתמש לא קיים במערכת');
-      
       toast({
         title: "מתאמן לא נמצא",
         description: "המתאמן אינו רשום במערכת",
@@ -251,53 +249,6 @@ const TraineeEntering = () => {
     setEntryTrainee(trainee);
     setTraineeMedicalExpirationDate(new Date(trainee.medicalApproval.expirationDate))
     setConfirmingEntry(true);
-  };
-
-  // Record a failed entry attempt
-  const recordFailedEntry = async (status: 'failed-medical' | 'failed-no-user', reason: string) => {
-    if (!selectedBase) return;
-    
-    try {
-      // Today's date in format YYYY-MM-DD
-      const today = new Date().toISOString().split('T')[0];
-      const currentTime = new Date().toTimeString().split(' ')[0];
-      
-      // For non-existent users, create a dummy entry
-      if (status === 'failed-no-user') {
-        // In a real app, you'd send this to the backend to record
-        console.log('Failed entry recorded:', {
-          traineeId: 'unknown',
-          entryDate: today,
-          entryTime: currentTime,
-          traineeFullName: 'משתמש לא קיים',
-          traineePersonalId: entryPersonalId,
-          departmentId: departments[0]?._id || '',
-          baseId: selectedBase._id,
-          status,
-          reason
-        });
-        setEntryPersonalId('');
-        return;
-      }
-      
-      // For medical approval issues
-      if (status === 'failed-medical' && entryTrainee) {
-        // In a real app, you'd send this to the backend to record
-        console.log('Failed entry recorded:', {
-          traineeId: entryTrainee._id,
-          entryDate: today,
-          entryTime: currentTime,
-          traineeFullName: entryTrainee.fullName,
-          traineePersonalId: entryTrainee.personalId,
-          departmentId: entryTrainee.departmentId,
-          baseId: entryTrainee.baseId,
-          status,
-          reason
-        });
-      }
-    } catch (error) {
-      console.error('Error recording failed entry:', error);
-    }
   };
 
   const isMedicalAboutToExpire = () => {
@@ -313,10 +264,6 @@ const TraineeEntering = () => {
     if (!entryTrainee.medicalApproval.approved || 
         (entryTrainee.medicalApproval.expirationDate && 
          new Date(entryTrainee.medicalApproval.expirationDate) < new Date())) {
-      
-      // Record the failed entry attempt
-      recordFailedEntry('failed-medical', 'אישור רפואי לא בתוקף');
-         
       toast({
         title: "אישור רפואי נדרש",
         description: "לא ניתן לרשום כניסה ללא אישור רפואי בתוקף",
