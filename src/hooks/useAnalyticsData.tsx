@@ -1,6 +1,6 @@
 
 import { useMemo } from 'react';
-import { isWithinInterval, parseISO } from 'date-fns';
+import { isWithinInterval, parseISO, differenceInYears } from 'date-fns';
 import { useAdmin } from '../context/AdminContext';
 
 export const useAnalyticsData = (
@@ -75,6 +75,47 @@ export const useAnalyticsData = (
       };
     });
   }, [filteredEntries]);
+  
+  // Gender distribution data
+  const genderDistributionData = useMemo(() => {
+    const maleFemaleCount = {
+      male: 0,
+      female: 0
+    };
+    
+    filteredTrainees.forEach(trainee => {
+      if (trainee.gender === 'male') {
+        maleFemaleCount.male++;
+      } else if (trainee.gender === 'female') {
+        maleFemaleCount.female++;
+      }
+    });
+    
+    return [
+      { name: 'זכר', value: maleFemaleCount.male, color: '#3b82f6' },
+      { name: 'נקבה', value: maleFemaleCount.female, color: '#ec4899' }
+    ];
+  }, [filteredTrainees]);
+  
+  // Age distribution data
+  const ageDistributionData = useMemo(() => {
+    const today = new Date();
+    const ageMap = new Map<number, number>();
+    
+    filteredTrainees.forEach(trainee => {
+      if (trainee.birthDate) {
+        const birthDate = parseISO(trainee.birthDate);
+        const age = differenceInYears(today, birthDate);
+        
+        ageMap.set(age, (ageMap.get(age) || 0) + 1);
+      }
+    });
+    
+    return Array.from(ageMap.entries()).map(([age, count]) => ({
+      age,
+      count
+    }));
+  }, [filteredTrainees]);
   
   // Top trainees data - now uses filtered entries when specific trainees are selected
   const topTraineesData = useMemo(() => {
@@ -193,6 +234,8 @@ export const useAnalyticsData = (
     topTraineesData,
     topDepartmentsData,
     basesData,
+    genderDistributionData,
+    ageDistributionData,
     avgEntriesPerTrainee,
     isGeneralAdmin,
     getDepartmentName,

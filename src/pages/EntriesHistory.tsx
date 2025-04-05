@@ -1,9 +1,11 @@
+
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../components/DashboardLayout';
 import { useAdmin } from '../context/AdminContext';
 import { Entry, Trainee } from '../types';
 import { traineeService } from '../services/api';
 import { useToast } from '@/components/ui/use-toast';
+import { AlertTriangle } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -11,7 +13,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-import { isWithinInterval, parseISO } from 'date-fns';
+import { isWithinInterval, parseISO, format, differenceInYears } from 'date-fns';
 import {
   Pagination,
   PaginationContent,
@@ -24,7 +26,6 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import { CalendarIcon } from 'lucide-react';
-import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 
 const EntriesHistory = () => {
@@ -123,6 +124,15 @@ const EntriesHistory = () => {
       setIsDialogOpen(true);
     }
   };
+  
+  const getTraineeForEntry = (traineeId: string) => {
+    return trainees.find(t => t._id === traineeId) || null;
+  };
+
+  const hasOrthopedicCondition = (traineeId: string) => {
+    const trainee = trainees.find(t => t._id === traineeId);
+    return trainee?.orthopedicCondition || false;
+  };
 
   const getTraineeAnalytics = (traineeId: string) => {
     const traineeEntries = entries.filter(entry => entry.traineeId === traineeId);
@@ -201,6 +211,10 @@ const EntriesHistory = () => {
 
   const goToPage = (page: number) => {
     setCurrentPage(page);
+  };
+  
+  const calculateAge = (birthDate: string) => {
+    return differenceInYears(new Date(), parseISO(birthDate));
   };
 
   return (
@@ -360,22 +374,33 @@ const EntriesHistory = () => {
               </thead>
               <tbody>
                 {displayedEntries.length > 0 ? (
-                  displayedEntries.map((entry) => (
-                    <tr 
-                      key={entry._id} 
-                      className="border-t hover:bg-muted/50 cursor-pointer transition-colors"
-                      onClick={() => handleTraineeClick(entry.traineeId)}
-                    >
-                      <td className="px-4 py-3">{entry.traineeFullName}</td>
-                      <td className="px-4 py-3">{entry.traineePersonalId}</td>
-                      <td className="px-4 py-3">{getDepartmentName(entry.departmentId)}</td>
-                      {admin?.role === 'generalAdmin' && (
-                        <td className="px-4 py-3">{getBaseName(entry.baseId)}</td>
-                      )}
-                      <td className="px-4 py-3">{entry.entryDate}</td>
-                      <td className="px-4 py-3">{entry.entryTime}</td>
-                    </tr>
-                  ))
+                  displayedEntries.map((entry) => {
+                    const hasOrthopedic = hasOrthopedicCondition(entry.traineeId);
+                    return (
+                      <tr 
+                        key={entry._id} 
+                        className={cn(
+                          "border-t hover:bg-muted/50 cursor-pointer transition-colors",
+                          hasOrthopedic && "bg-amber-50"
+                        )}
+                        onClick={() => handleTraineeClick(entry.traineeId)}
+                      >
+                        <td className="px-4 py-3 flex items-center">
+                          {hasOrthopedic && (
+                            <AlertTriangle className="h-4 w-4 text-amber-500 mr-2" />
+                          )}
+                          {entry.traineeFullName}
+                        </td>
+                        <td className="px-4 py-3">{entry.traineePersonalId}</td>
+                        <td className="px-4 py-3">{getDepartmentName(entry.departmentId)}</td>
+                        {admin?.role === 'generalAdmin' && (
+                          <td className="px-4 py-3">{getBaseName(entry.baseId)}</td>
+                        )}
+                        <td className="px-4 py-3">{entry.entryDate}</td>
+                        <td className="px-4 py-3">{entry.entryTime}</td>
+                      </tr>
+                    );
+                  })
                 ) : (
                   <tr>
                     <td colSpan={admin?.role === 'generalAdmin' ? 6 : 5} className="px-4 py-8 text-center text-muted-foreground">
@@ -459,7 +484,15 @@ const EntriesHistory = () => {
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogContent className="max-w-3xl" style={{direction:"rtl"}}>
             <DialogHeader style={{textAlign:"right"}}>
-              <DialogTitle className="text-2xl">{selectedTrainee.fullName}</DialogTitle>
+              <DialogTitle className="text-2xl">
+                {selectedTrainee.fullName}
+                {selectedTrainee.orthopedicCondition && (
+                  <span className="inline-flex items-center ml-2 px-2 py-1 bg-amber-100 text-amber-800 text-xs rounded-md">
+                    <AlertTriangle className="h-3 w-3 mr-1" />
+                    סעיף אורטופדי
+                  </span>
+                )}
+              </DialogTitle>
             </DialogHeader>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4" >
               <div>
@@ -478,14 +511,31 @@ const EntriesHistory = () => {
                     <div className="text-sm text-muted-foreground">פרופיל רפואי:</div>
                     <div>{selectedTrainee.medicalProfile}</div>
                     
+                    <div className="text-sm text-muted-foreground">מין:</div>
+                    <div>{selectedTrainee.gender === 'male' ? 'זכר' : 'נקבה'}</div>
+                    
+                    <div className="text-sm text-muted-foreground">גיל:</div>
+                    <div>
+                      {selectedTrainee.birthDate ? 
+                        calculateAge(selectedTrainee.birthDate) : 'לא זמין'}
+                    </div>
+                    
                     <div className="text-sm text-muted-foreground">מספר טלפון:</div>
                     <div>{selectedTrainee.phoneNumber}</div>
                     
                     <div className="text-sm text-muted-foreground">אישור רפואי:</div>
                     <div className={selectedTrainee.medicalApproval.approved ? "text-green-600" : "text-red-600"}>
                       {selectedTrainee.medicalApproval.approved 
-                        ? `בתוקף עד ${new Date(selectedTrainee.medicalApproval.expirationDate!).toLocaleString()}` 
+                        ? `בתוקף עד ${selectedTrainee.medicalApproval.expirationDate ? 
+                            format(new Date(selectedTrainee.medicalApproval.expirationDate), 'yyyy-MM-dd') : 
+                            'לא ידוע'
+                          }` 
                         : "לא בתוקף"}
+                    </div>
+                    
+                    <div className="text-sm text-muted-foreground">סעיף אורטופדי:</div>
+                    <div className={selectedTrainee.orthopedicCondition ? "text-amber-600" : ""}>
+                      {selectedTrainee.orthopedicCondition ? "יש" : "אין"}
                     </div>
                   </div>
                   
