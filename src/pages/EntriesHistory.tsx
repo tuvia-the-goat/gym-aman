@@ -216,6 +216,13 @@ const EntriesHistory = () => {
     return differenceInYears(new Date(), parseISO(birthDate));
   };
 
+  const getDateFormat = (dateToFormat : Date) => {
+    const day = dateToFormat.getDate();
+    const month = dateToFormat.getMonth() + 1;
+    const year = dateToFormat.getFullYear();
+    return(`${day}/${month}/${year}`)
+  }
+  
   const getEntryStatusDisplay = (status: EntryStatus) => {
     switch (status) {
       case 'success':
@@ -421,14 +428,14 @@ const EntriesHistory = () => {
                           {hasOrthopedic && (
                             <AlertTriangle className="h-4 w-4 text-amber-500 ml-2" />
                           )}
-                          {entry.traineeFullName || 'משתמש לא רשום'}
+                          {entry.traineeFullName ||'-'}
                         </td>
                         <td className="px-4 py-3">{entry.traineePersonalId}</td>
                         <td className="px-4 py-3">{entry.departmentId ? getDepartmentName(entry.departmentId) : '-'}</td>
                         {admin?.role === 'generalAdmin' && (
                           <td className="px-4 py-3">{getBaseName(entry.baseId)}</td>
                         )}
-                        <td className="px-4 py-3">{entry.entryDate}</td>
+                        <td className="px-4 py-3">{getDateFormat(new Date(entry.entryDate))}</td>
                         <td className="px-4 py-3">{entry.entryTime}</td>
                         <td className={`px-4 py-3 flex items-center ${statusDisplay.textClass}`}>
                           {statusDisplay.icon}

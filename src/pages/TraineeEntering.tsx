@@ -213,6 +213,8 @@ const TraineeEntering = () => {
         baseId: selectedBase._id,
         status: 'notRegistered'
       });
+      console.log("fewefef");
+      
       setEntries([newEntry, ...entries]);
       toast({
         title: "משתמש לא רשום",
@@ -241,19 +243,21 @@ const TraineeEntering = () => {
     if (!entryTrainee.medicalApproval.approved || 
         (entryTrainee.medicalApproval.expirationDate && 
          new Date(entryTrainee.medicalApproval.expirationDate) < new Date())) {
-      try {
-        const today = new Date().toISOString().split('T')[0];
-        const currentTime = new Date().toTimeString().split(' ')[0];
-        const newEntry = await entryService.create({
-          traineeId: entryTrainee._id,
-          entryDate: today,
-          entryTime: currentTime,
-          traineeFullName: entryTrainee.fullName,
-          traineePersonalId: entryTrainee.personalId,
-          departmentId: entryTrainee.departmentId,
-          baseId: entryTrainee.baseId,
-          status: 'noMedicalApproval'
-        });
+           try {
+             const today = new Date().toISOString().split('T')[0];
+             const currentTime = new Date().toTimeString().split(' ')[0];
+             console.log("ewrwer");
+             const newEntry = await entryService.create({
+              traineeId: entryTrainee._id,
+              entryDate: today,
+              entryTime: currentTime,
+              traineeFullName: entryTrainee.fullName,
+              traineePersonalId: entryTrainee.personalId,
+              departmentId: entryTrainee.departmentId,
+              baseId: entryTrainee.baseId,
+              status: 'noMedicalApproval'
+            });
+        
         setEntries([newEntry, ...entries]);
         toast({
           title: "אישור רפואי נדרש",
@@ -600,14 +604,14 @@ const TraineeEntering = () => {
                       </div>
                       
                       { isMedicalAboutToExpire() && 
-                      <div className='w-full border-2 border-[rgb(255,141,141)] bg-[rgba(255,141,141,0.44)] text-[rgb(255,141,141)] font-bold text-center p-3 rounded-[8px]'>
+                      <div className='w-full border-2 border-[rgb(255,220,5)] bg-[rgba(255,255,141,0.44)] text-[rgb(255,220,5)] font-bold text-center p-3 rounded-[8px]'>
                         שימ/י לב! תוקף האישור הרפואי שלך יפוג ב-
                       {getDateFormat(traineeMedicalExpirationDate)}
-                      , יש לחדש אותו בהקדם בברקוד הייעודי ולעדכן את צ��ות חדר הכושר.
+                      , יש לחדש אותו בהקדם בברקוד הייעודי ולעדכן את צוות חדר הכושר.
 
                       </div>
                       }
-                      <div className="flex space-x-4">
+                      <div className="flex space-x-4 gap-10">
                         <button
                           onClick={() => {
                             setConfirmingEntry(false);

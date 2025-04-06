@@ -82,8 +82,18 @@ const HourlyDistributionChart: React.FC<HourlyDistributionChartProps> = ({ entri
       title="כניסות לפי שעות" 
       className="col-span-1 lg:col-span-2"
     >
-      <div className="flex flex-row-reverse justify-between items-center mb-4">
+      <div className="flex flex-row-reverse justify-between items-center ml-16 mb-4">
         <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <Label htmlFor="hourly-display-mode" className="text-sm">
+              {showAverage ? "תצוגת ממוצע" : "תצוגת כמות כניסות"}
+            </Label>
+            <Switch
+              id="hourly-display-mode"
+              checked={showAverage}
+              onCheckedChange={setShowAverage}
+            />
+          </div>
           <Select value={selectedDay} onValueChange={setSelectedDay}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="בחר יום" />
@@ -97,16 +107,6 @@ const HourlyDistributionChart: React.FC<HourlyDistributionChartProps> = ({ entri
             </SelectContent>
           </Select>
           
-          <div className="flex items-center gap-2">
-            <Switch
-              id="hourly-display-mode"
-              checked={showAverage}
-              onCheckedChange={setShowAverage}
-            />
-            <Label htmlFor="hourly-display-mode" className="text-sm">
-              {showAverage ? "תצוגת ממוצע" : "תצוגת כמות כניסות"}
-            </Label>
-          </div>
         </div>
         
         <div className="text-sm text-muted-foreground">

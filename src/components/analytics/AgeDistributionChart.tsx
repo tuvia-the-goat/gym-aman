@@ -39,7 +39,6 @@ const AgeDistributionChart: React.FC<AgeDistributionProps> = ({ data }) => {
                 type="number" 
                 dataKey="count" 
                 name="כמות" 
-                unit=" מתאמנים"
               />
               <Tooltip cursor={{ strokeDasharray: '3 3' }} />
               <Scatter name="מתאמנים" data={data} fill="#8884d8" />
