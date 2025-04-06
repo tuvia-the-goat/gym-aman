@@ -1,7 +1,6 @@
-
 // src/services/api.ts
 import axios from 'axios';
-import { Admin, Base, Department, Trainee, Entry, MedicalFormScore, EntryStatus } from '../types';
+import { Admin, Base, Department, Trainee, Entry, MedicalFormScore } from '../types';
 
 const API_URL = 'http://localhost:3000/api';
 
@@ -143,8 +142,7 @@ export const entryService = {
     traineeFullName: string,
     traineePersonalId: string,
     departmentId: string,
-    baseId: string,
-    status: EntryStatus
+    baseId: string
   }): Promise<Entry> => {
     const response = await api.post('/entries', entryData);
     return response.data;
