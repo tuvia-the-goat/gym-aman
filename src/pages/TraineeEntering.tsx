@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAdmin } from '../context/AdminContext';
-import { Department, Base, Trainee } from '../types';
+import { Department, Base, Trainee, MedicalFormScore } from '../types';
 import { useToast } from '@/components/ui/use-toast';
 import { 
   baseService, 
@@ -187,7 +187,8 @@ const TraineeEntering = () => {
         baseId: selectedBase._id,
         gender: gender as 'male' | 'female',
         birthDate: formattedBirthDate,
-        orthopedicCondition
+        orthopedicCondition,
+        medicalFormScore: 'notRequired' as MedicalFormScore // Default value
       });
       
       // Update state with new trainee
