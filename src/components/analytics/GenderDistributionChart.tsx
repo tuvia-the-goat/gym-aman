@@ -27,13 +27,12 @@ const GenderDistributionChart: React.FC<GenderChartProps> = ({ data }) => {
                 fill="#8884d8"
                 dataKey="value"
                 nameKey="name"
-                label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
               >
                 {data.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.color} />
                 ))}
               </Pie>
-              <Tooltip formatter={(value) => [`${value} מתאמנים`, 'כמות']} />
+              <Tooltip/>
               <Legend verticalAlign="bottom" height={36} />
             </PieChart>
           </ResponsiveContainer>

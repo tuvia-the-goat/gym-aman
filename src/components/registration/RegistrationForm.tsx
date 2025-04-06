@@ -170,12 +170,12 @@ const RegistrationForm = ({ selectedBase, departments, onRegistrationSuccess }: 
   const filteredDepartments = departments.filter(
     dept => selectedBase && dept.baseId === selectedBase._id
   );
-
+  
   return (
     <div className="glass max-w-xl mx-auto p-8 rounded-2xl animate-fade-up">
-      <h3 className="text-xl font-bold mb-4 text-center">הצטרפות למערכת</h3>
-      <form onSubmit={handleRegistration} className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <form onSubmit={handleRegistration} className="space-y-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-2 font-bold md:col-span-2">פרטים אישיים</div>
           <div className="space-y-2">
             <label htmlFor="personalId" className="block text-sm font-medium">
               מספר אישי (7 ספרות)
@@ -264,26 +264,6 @@ const RegistrationForm = ({ selectedBase, departments, onRegistrationSuccess }: 
             </Popover>
           </div>
           
-          <div className="space-y-2">
-            <label htmlFor="medicalProfile" className="block text-sm font-medium">
-              פרופיל רפואי
-            </label>
-            <select
-              id="medicalProfile"
-              value={medicalProfile}
-              onChange={(e) => setMedicalProfile(e.target.value)}
-              className="input-field"
-              required
-            >
-              <option value="">בחר פרופיל</option>
-              <option value="97">97</option>
-              <option value="82">82</option>
-              <option value="72">72</option>
-              <option value="64">64</option>
-              <option value="45">45</option>
-              <option value="25">25</option>
-            </select>
-          </div>
           
           <div className="space-y-2">
             <label htmlFor="department" className="block text-sm font-medium">
@@ -324,7 +304,33 @@ const RegistrationForm = ({ selectedBase, departments, onRegistrationSuccess }: 
               autoComplete="off"
             />
           </div>
+
+
+          <div className="md:col-span-2"> </div>
+          <div className="md:col-span-2"> </div>
+          <div className="space-y-2 font-bold md:col-span-2">פרטים רפואיים</div>
           
+          
+          <div className="space-y-2">
+            <label htmlFor="medicalProfile" className="block text-sm font-medium">
+              פרופיל רפואי
+            </label>
+            <select
+              id="medicalProfile"
+              value={medicalProfile}
+              onChange={(e) => setMedicalProfile(e.target.value)}
+              className="input-field"
+              required
+            >
+              <option value="">בחר פרופיל</option>
+              <option value="97">97</option>
+              <option value="82">82</option>
+              <option value="72">72</option>
+              <option value="64">64</option>
+              <option value="45">45</option>
+              <option value="25">25</option>
+            </select>
+          </div>
           {/* New field: Medical Form Score */}
           <div className="space-y-2">
             <label htmlFor="medicalFormScore" className="block text-sm font-medium">
@@ -338,10 +344,10 @@ const RegistrationForm = ({ selectedBase, departments, onRegistrationSuccess }: 
               required
             >
               <option value="">בחר ציון</option>
-              <option value="notRequired">לא נזקק למילוי שאלון</option>
+              <option value="notRequired">לא נזקק/ה למילוי שאלון</option>
               <option value="fullScore">100 נקודות</option>
               <option value="partialScore">פחות מ-100 נקודות</option>
-              <option value="reserve">מיל' או אע"צ</option>
+              <option value="reserve">מיל' או אע"צ, מילא/ה שאלון נפרד</option>
             </select>
           </div>
           
@@ -382,6 +388,21 @@ const RegistrationForm = ({ selectedBase, departments, onRegistrationSuccess }: 
             </div>
           )}
           
+          <div className="space-y-2 md:col-span-2">
+            <div className="flex items-center">
+              <input
+                id="orthopedicCondition"
+                type="checkbox"
+                checked={orthopedicCondition}
+                onChange={(e) => setOrthopedicCondition(e.target.checked)}
+                className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+              />
+              <label htmlFor="orthopedicCondition" className="text-sm font-medium mr-2">
+                מעוניין להצהיר על כך שקיים סעיף פרופיל אורטופדי
+              </label>
+            </div>
+          </div>
+
           {/* New field: Medical Limitation */}
           <div className="space-y-2 md:col-span-2">
             <label htmlFor="medicalLimitation" className="block text-sm font-medium">
@@ -396,20 +417,6 @@ const RegistrationForm = ({ selectedBase, departments, onRegistrationSuccess }: 
             />
           </div>
           
-          <div className="space-y-2 md:col-span-2">
-            <div className="flex items-center space-x-2">
-              <input
-                id="orthopedicCondition"
-                type="checkbox"
-                checked={orthopedicCondition}
-                onChange={(e) => setOrthopedicCondition(e.target.checked)}
-                className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-              />
-              <label htmlFor="orthopedicCondition" className="text-sm font-medium mr-2">
-                סעיף פרופיל אורטופדי
-              </label>
-            </div>
-          </div>
         </div>
         
         <button

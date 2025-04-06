@@ -12,7 +12,7 @@ const BaseHeader = ({ selectedBase }: BaseHeaderProps) => {
       <span className="inline-block px-4 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium mb-2">
         בסיס: {selectedBase.name}
       </span>
-      <h2 className="text-3xl font-bold">רישום מתאמנים</h2>
+      <h2 className="text-3xl font-bold">טופס הרשמה למכון כושר </h2>
     </div>
   );
 };

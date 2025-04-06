@@ -387,7 +387,7 @@ const EntriesHistory = () => {
                       >
                         <td className="px-4 py-3 flex items-center">
                           {hasOrthopedic && (
-                            <AlertTriangle className="h-4 w-4 text-amber-500 mr-2" />
+                            <AlertTriangle className="h-4 w-4 text-amber-500 ml-2" />
                           )}
                           {entry.traineeFullName}
                         </td>
