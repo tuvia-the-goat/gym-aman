@@ -1,11 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../components/DashboardLayout';
 import { useAdmin } from '../context/AdminContext';
-import { Entry, Trainee } from '../types';
+import { Entry, Trainee, EntryStatus } from '../types';
 import { traineeService } from '../services/api';
 import { useToast } from '@/components/ui/use-toast';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, CheckCircle, XCircle, User } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -217,6 +216,35 @@ const EntriesHistory = () => {
     return differenceInYears(new Date(), parseISO(birthDate));
   };
 
+  const getEntryStatusDisplay = (status: EntryStatus) => {
+    switch (status) {
+      case 'success':
+        return {
+          icon: <CheckCircle className="h-4 w-4 text-green-500 ml-2" />,
+          textClass: 'text-green-600',
+          rowClass: ''
+        };
+      case 'noMedicalApproval':
+        return {
+          icon: <XCircle className="h-4 w-4 text-red-500 ml-2" />,
+          textClass: 'text-red-600',
+          rowClass: 'bg-red-50'
+        };
+      case 'notRegistered':
+        return {
+          icon: <User className="h-4 w-4 text-blue-500 ml-2" />,
+          textClass: 'text-blue-600',
+          rowClass: 'bg-blue-50'
+        };
+      default:
+        return {
+          icon: null,
+          textClass: '',
+          rowClass: ''
+        };
+    }
+  };
+
   return (
     <DashboardLayout activeTab="entries">
       <div className="space-y-6 animate-fade-up">
@@ -370,40 +398,50 @@ const EntriesHistory = () => {
                   )}
                   <th className="px-4 py-3 text-right">תאריך</th>
                   <th className="px-4 py-3 text-right">שעה</th>
+                  <th className="px-4 py-3 text-right">סטטוס</th>
                 </tr>
               </thead>
               <tbody>
                 {displayedEntries.length > 0 ? (
                   displayedEntries.map((entry) => {
                     const hasOrthopedic = hasOrthopedicCondition(entry.traineeId);
+                    const statusDisplay = getEntryStatusDisplay(entry.status || 'success');
+                    
                     return (
                       <tr 
                         key={entry._id} 
                         className={cn(
                           "border-t hover:bg-muted/50 cursor-pointer transition-colors",
-                          hasOrthopedic && "bg-amber-50"
+                          hasOrthopedic && "bg-amber-50",
+                          statusDisplay.rowClass
                         )}
-                        onClick={() => handleTraineeClick(entry.traineeId)}
+                        onClick={() => entry.traineeId && handleTraineeClick(entry.traineeId)}
                       >
                         <td className="px-4 py-3 flex items-center">
                           {hasOrthopedic && (
                             <AlertTriangle className="h-4 w-4 text-amber-500 ml-2" />
                           )}
-                          {entry.traineeFullName}
+                          {entry.traineeFullName || 'משתמש לא רשום'}
                         </td>
                         <td className="px-4 py-3">{entry.traineePersonalId}</td>
-                        <td className="px-4 py-3">{getDepartmentName(entry.departmentId)}</td>
+                        <td className="px-4 py-3">{entry.departmentId ? getDepartmentName(entry.departmentId) : '-'}</td>
                         {admin?.role === 'generalAdmin' && (
                           <td className="px-4 py-3">{getBaseName(entry.baseId)}</td>
                         )}
                         <td className="px-4 py-3">{entry.entryDate}</td>
                         <td className="px-4 py-3">{entry.entryTime}</td>
+                        <td className={`px-4 py-3 flex items-center ${statusDisplay.textClass}`}>
+                          {statusDisplay.icon}
+                          {entry.status === 'success' && 'כניסה מוצלחת'}
+                          {entry.status === 'noMedicalApproval' && 'אין אישור רפואי'}
+                          {entry.status === 'notRegistered' && 'משתמש לא רשום'}
+                        </td>
                       </tr>
                     );
                   })
                 ) : (
                   <tr>
-                    <td colSpan={admin?.role === 'generalAdmin' ? 6 : 5} className="px-4 py-8 text-center text-muted-foreground">
+                    <td colSpan={admin?.role === 'generalAdmin' ? 7 : 6} className="px-4 py-8 text-center text-muted-foreground">
                       לא נמצאו רשומות
                     </td>
                   </tr>

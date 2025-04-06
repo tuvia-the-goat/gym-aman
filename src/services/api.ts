@@ -1,6 +1,7 @@
+
 // src/services/api.ts
 import axios from 'axios';
-import { Admin, Base, Department, Trainee, Entry, MedicalFormScore } from '../types';
+import { Admin, Base, Department, Trainee, Entry, MedicalFormScore, EntryStatus } from '../types';
 
 const API_URL = 'http://localhost:3000/api';
 
@@ -142,9 +143,22 @@ export const entryService = {
     traineeFullName: string,
     traineePersonalId: string,
     departmentId: string,
-    baseId: string
+    baseId: string,
+    status: EntryStatus
   }): Promise<Entry> => {
     const response = await api.post('/entries', entryData);
+    return response.data;
+  },
+
+  // Create entry for non-registered user
+  createNonRegistered: async (entryData: {
+    entryDate: string,
+    entryTime: string,
+    traineePersonalId: string,
+    baseId: string,
+    status: EntryStatus
+  }): Promise<Entry> => {
+    const response = await api.post('/entries/non-registered', entryData);
     return response.data;
   }
 };
