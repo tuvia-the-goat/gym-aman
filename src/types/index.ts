@@ -21,6 +21,8 @@ export interface Department {
   baseId: string;
 }
 
+export type MedicalFormScore = 'notRequired' | 'fullScore' | 'partialScore' | 'reserve';
+
 export interface Trainee {
   _id: string;
   personalId: string; // 7 digits
@@ -37,6 +39,10 @@ export interface Trainee {
   gender: 'male' | 'female';
   birthDate: string;
   orthopedicCondition: boolean;
+  // Additional new fields
+  medicalFormScore: MedicalFormScore;
+  medicalCertificateProvided?: boolean;
+  medicalLimitation?: string;
 }
 
 export interface Entry {
