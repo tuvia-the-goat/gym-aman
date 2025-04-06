@@ -2,10 +2,10 @@
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../components/DashboardLayout';
 import { useAdmin } from '../context/AdminContext';
-import { Entry, Trainee } from '../types';
+import { Entry, Trainee, EntryStatus } from '../types';
 import { traineeService } from '../services/api';
 import { useToast } from '@/components/ui/use-toast';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, CheckCircle, XCircle, UserX } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -41,6 +41,7 @@ const EntriesHistory = () => {
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
   const [selectedTrainee, setSelectedTrainee] = useState<Trainee | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedStatus, setSelectedStatus] = useState<EntryStatus | ''>('');
   
   const [currentPage, setCurrentPage] = useState(1);
   const entriesPerPage = 20;
@@ -86,6 +87,10 @@ const EntriesHistory = () => {
       );
     }
     
+    if (selectedStatus) {
+      filtered = filtered.filter(entry => entry.status === selectedStatus);
+    }
+    
     if (startDate && endDate) {
       filtered = filtered.filter(entry => {
         const entryDate = parseISO(entry.entryDate);
@@ -95,7 +100,7 @@ const EntriesHistory = () => {
     
     setFilteredEntries(filtered);
     setCurrentPage(1);
-  }, [admin, entries, searchTerm, selectedDepartment, selectedBase, selectedProfile, startDate, endDate, trainees]);
+  }, [admin, entries, searchTerm, selectedDepartment, selectedBase, selectedProfile, selectedStatus, startDate, endDate, trainees]);
 
   useEffect(() => {
     const startIndex = (currentPage - 1) * entriesPerPage;
@@ -132,6 +137,32 @@ const EntriesHistory = () => {
   const hasOrthopedicCondition = (traineeId: string) => {
     const trainee = trainees.find(t => t._id === traineeId);
     return trainee?.orthopedicCondition || false;
+  };
+
+  const getEntryStatusIcon = (status: EntryStatus) => {
+    switch (status) {
+      case 'success':
+        return <CheckCircle className="h-4 w-4 text-green-500" />;
+      case 'noMedicalApproval':
+        return <XCircle className="h-4 w-4 text-red-500" />;
+      case 'notRegistered':
+        return <UserX className="h-4 w-4 text-amber-500" />;
+      default:
+        return null;
+    }
+  };
+
+  const getEntryStatusText = (status: EntryStatus) => {
+    switch (status) {
+      case 'success':
+        return "כניסה אושרה";
+      case 'noMedicalApproval':
+        return "אין אישור רפואי";
+      case 'notRegistered':
+        return "לא רשום";
+      default:
+        return "";
+    }
   };
 
   const getTraineeAnalytics = (traineeId: string) => {
@@ -299,6 +330,21 @@ const EntriesHistory = () => {
             </select>
           </div>
           
+          <div>
+            <label htmlFor="status" className="block text-sm font-medium mb-1">סינון לפי סטטוס</label>
+            <select
+              id="status"
+              value={selectedStatus}
+              onChange={(e) => setSelectedStatus(e.target.value as EntryStatus | '')}
+              className="input-field"
+            >
+              <option value="">כל הסטטוסים</option>
+              <option value="success">כניסה אושרה</option>
+              <option value="noMedicalApproval">אין אישור רפואי</option>
+              <option value="notRegistered">לא רשום</option>
+            </select>
+          </div>
+          
           <div className="xl:col-span-2">
             <label className="block text-sm font-medium mb-1">טווח תאריכים</label>
             <div className="flex items-center gap-2">
@@ -370,6 +416,7 @@ const EntriesHistory = () => {
                   )}
                   <th className="px-4 py-3 text-right">תאריך</th>
                   <th className="px-4 py-3 text-right">שעה</th>
+                  <th className="px-4 py-3 text-right">סטטוס</th>
                 </tr>
               </thead>
               <tbody>
@@ -381,9 +428,11 @@ const EntriesHistory = () => {
                         key={entry._id} 
                         className={cn(
                           "border-t hover:bg-muted/50 cursor-pointer transition-colors",
-                          hasOrthopedic && "bg-amber-50"
+                          hasOrthopedic && "bg-amber-50",
+                          entry.status === 'noMedicalApproval' && "bg-red-50",
+                          entry.status === 'notRegistered' && "bg-amber-50"
                         )}
-                        onClick={() => handleTraineeClick(entry.traineeId)}
+                        onClick={() => entry.traineeId !== 'not-registered' && handleTraineeClick(entry.traineeId)}
                       >
                         <td className="px-4 py-3 flex items-center">
                           {hasOrthopedic && (
@@ -392,18 +441,26 @@ const EntriesHistory = () => {
                           {entry.traineeFullName}
                         </td>
                         <td className="px-4 py-3">{entry.traineePersonalId}</td>
-                        <td className="px-4 py-3">{getDepartmentName(entry.departmentId)}</td>
+                        <td className="px-4 py-3">
+                          {entry.departmentId === 'unknown' ? 'לא ידוע' : getDepartmentName(entry.departmentId)}
+                        </td>
                         {admin?.role === 'generalAdmin' && (
                           <td className="px-4 py-3">{getBaseName(entry.baseId)}</td>
                         )}
                         <td className="px-4 py-3">{entry.entryDate}</td>
                         <td className="px-4 py-3">{entry.entryTime}</td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center">
+                            {getEntryStatusIcon(entry.status)}
+                            <span className="ml-2">{getEntryStatusText(entry.status)}</span>
+                          </div>
+                        </td>
                       </tr>
                     );
                   })
                 ) : (
                   <tr>
-                    <td colSpan={admin?.role === 'generalAdmin' ? 6 : 5} className="px-4 py-8 text-center text-muted-foreground">
+                    <td colSpan={admin?.role === 'generalAdmin' ? 7 : 6} className="px-4 py-8 text-center text-muted-foreground">
                       לא נמצאו רשומות
                     </td>
                   </tr>
@@ -537,6 +594,13 @@ const EntriesHistory = () => {
                     <div className={selectedTrainee.orthopedicCondition ? "text-amber-600" : ""}>
                       {selectedTrainee.orthopedicCondition ? "יש" : "אין"}
                     </div>
+
+                    {selectedTrainee.medicalLimitation && (
+                      <>
+                        <div className="text-sm text-muted-foreground">מגבלה רפואית:</div>
+                        <div className="text-red-600">{selectedTrainee.medicalLimitation}</div>
+                      </>
+                    )}
                   </div>
                   
                   <div className="flex space-x-2 pt-2">

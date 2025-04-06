@@ -45,6 +45,8 @@ export interface Trainee {
   medicalLimitation?: string;
 }
 
+export type EntryStatus = 'success' | 'noMedicalApproval' | 'notRegistered';
+
 export interface Entry {
   _id: string;
   traineeId: string;
@@ -54,6 +56,7 @@ export interface Entry {
   traineePersonalId: string;
   departmentId: string;
   baseId: string;
+  status: EntryStatus;
   createdAt?: string; // From MongoDB timestamp
 }
 
