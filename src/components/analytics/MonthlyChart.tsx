@@ -10,7 +10,7 @@ interface MonthlyChartProps {
 }
 
 const MonthlyChart: React.FC<MonthlyChartProps> = ({ data }) => {
-  const [showAverage, setShowAverage] = useState(true);
+  const [showAverage, setShowAverage] = useState(false);
   
   return (
     <ChartCard title="כניסות לפי חודשים">

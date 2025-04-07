@@ -22,7 +22,7 @@ const dayNames = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמיש�
 
 const HourlyDistributionChart: React.FC<HourlyDistributionChartProps> = ({ entries }) => {
   const [selectedDay, setSelectedDay] = React.useState('כל הימים');
-  const [showAverage, setShowAverage] = useState(true);
+  const [showAverage, setShowAverage] = useState(false);
 
   // Generate hourly data based on selected day
   const hourlyData = React.useMemo(() => {
@@ -95,17 +95,17 @@ const HourlyDistributionChart: React.FC<HourlyDistributionChartProps> = ({ entri
             />
           </div>
           <Select value={selectedDay} onValueChange={setSelectedDay}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="בחר יום" />
-            </SelectTrigger>
-            <SelectContent>
-              {dayNames.map(day => (
-                <SelectItem key={day} value={day}>
-                  {day}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+  <SelectTrigger className="w-[180px]">
+    <SelectValue placeholder="בחר יום" />
+  </SelectTrigger>
+  <SelectContent>
+    {dayNames.map(day => (
+      <SelectItem key={day} value={day} className="flex justify-end">
+        {day}
+      </SelectItem>
+    ))}
+  </SelectContent>
+</Select>
           
         </div>
         

@@ -10,7 +10,7 @@ interface WeekdayChartProps {
 }
 
 const WeekdayChart: React.FC<WeekdayChartProps> = ({ data }) => {
-  const [showAverage, setShowAverage] = useState(true);
+  const [showAverage, setShowAverage] = useState(false);
   
   return (
     <ChartCard title="כניסות לפי ימים בשבוע">

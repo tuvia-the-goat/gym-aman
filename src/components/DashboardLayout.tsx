@@ -64,13 +64,34 @@ const DashboardLayout = ({ children, activeTab }: DashboardLayoutProps) => {
       </div>
     );
   }
-  
+
   const sidebarItems = [
     { 
       path: '/dashboard', 
       icon: <Home className="h-5 w-5" />, 
       label: 'דף הבית', 
       active: activeTab === 'dashboard',
+      showFor: ['generalAdmin', 'gymAdmin']
+    },
+    { 
+      path: '/entries-history', 
+      icon: <List className="h-5 w-5" />, 
+      label: 'היסטוריית כניסות', 
+      active: activeTab === 'entries',
+      showFor: ['generalAdmin', 'gymAdmin']
+    },
+    { 
+      path: '/analytics', 
+      icon: <BarChart2 className="h-5 w-5" />, 
+      label: 'אנליטיקות', 
+      active: activeTab === 'analytics',
+      showFor: ['generalAdmin', 'gymAdmin']
+    },
+    { 
+      path: '/medical-approvals', 
+      icon: <UserCheck className="h-5 w-5" />, 
+      label: 'אישורים רפואיים', 
+      active: activeTab === 'medical-approvals',
       showFor: ['generalAdmin', 'gymAdmin']
     },
     { 
@@ -85,27 +106,6 @@ const DashboardLayout = ({ children, activeTab }: DashboardLayoutProps) => {
       icon: <Dumbbell className="h-5 w-5" />, 
       label: 'כניסה לחדר כושר', 
       active: activeTab === 'trainee-entering',
-      showFor: ['generalAdmin', 'gymAdmin']
-    },
-    { 
-      path: '/medical-approvals', 
-      icon: <UserCheck className="h-5 w-5" />, 
-      label: 'אישורים רפואיים', 
-      active: activeTab === 'medical-approvals',
-      showFor: ['generalAdmin', 'gymAdmin']
-    },
-    { 
-      path: '/entries-history', 
-      icon: <List className="h-5 w-5" />, 
-      label: 'היסטוריית כניסות', 
-      active: activeTab === 'entries-history',
-      showFor: ['generalAdmin', 'gymAdmin']
-    },
-    { 
-      path: '/analytics', 
-      icon: <BarChart2 className="h-5 w-5" />, 
-      label: 'אנליטיקות', 
-      active: activeTab === 'analytics',
       showFor: ['generalAdmin', 'gymAdmin']
     },
     { 
@@ -125,7 +125,7 @@ const DashboardLayout = ({ children, activeTab }: DashboardLayoutProps) => {
     <SidebarProvider>
       <div className="flex h-screen overflow-hidden w-full">
         {/* Mobile Sidebar Toggle - only visible on mobile */}
-        {isMobile && (
+        {true && (
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
             className="fixed right-4 top-4 z-50 p-2 bg-primary text-primary-foreground rounded-md shadow-lg md:hidden"
