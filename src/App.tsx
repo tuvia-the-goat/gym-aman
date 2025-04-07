@@ -12,6 +12,7 @@ import Settings from './pages/Settings';
 import NotFound from './pages/NotFound';
 import MedicalApprovals from './pages/MedicalApprovals';
 import Index from './pages/Index';
+import { Toaster } from '@/components/ui/toaster';
 import './App.css';
 
 const App = () => {
@@ -30,6 +31,7 @@ const App = () => {
           <Route path="/settings" element={<Settings />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
+        <Toaster />
       </BrowserRouter>
     </AdminProvider>
   );
