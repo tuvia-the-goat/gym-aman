@@ -56,10 +56,10 @@ const EntriesHistory = () => {
       filtered = filtered.filter(entry => entry.baseId === admin.baseId);
     }
     if (searchTerm) {
-      // Fix: Changed to use lowercase for case-insensitive search and includes for partial matches
+      // Fixed: Added null/undefined check before calling toLowerCase
       const lowerCaseSearchTerm = searchTerm.toLowerCase();
       filtered = filtered.filter(entry => 
-        entry.traineeFullName.toLowerCase().includes(lowerCaseSearchTerm)
+        entry.traineeFullName && entry.traineeFullName.toLowerCase().includes(lowerCaseSearchTerm)
       );
     }
     if (selectedDepartment) {
