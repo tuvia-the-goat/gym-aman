@@ -11,7 +11,8 @@ import {
   SidebarFooter,
   SidebarMenu,
   SidebarMenuItem,
-  SidebarMenuButton
+  SidebarMenuButton,
+  SidebarProvider
 } from './ui/sidebar';
 import { 
   Home, Menu, X, UserPlus, BarChart2, List, Settings, Shield, LogOut, Dumbbell, UserCheck
@@ -118,62 +119,64 @@ const DashboardLayout = ({ children, activeTab }: DashboardLayoutProps) => {
   );
   
   return (
-    <div className="flex h-screen overflow-hidden">
-      {/* Mobile Sidebar Toggle */}
-      {isMobile && (
-        <button
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="fixed right-4 top-4 z-50 p-2 bg-primary text-primary-foreground rounded-md shadow-lg"
-        >
-          {sidebarOpen ? <X /> : <Menu />}
-        </button>
-      )}
-      
-      {/* Sidebar */}
-      <Sidebar
-        className={`${isMobile ? 'fixed inset-y-0 right-0 z-40' : 'sticky top-0 h-screen'} max-w-[250px] border-l`}
-      >
-        <SidebarHeader className="px-6 py-4 flex flex-col items-center justify-center text-center">
-          <h1 className="text-2xl font-bold">
-            מערכת אימ"ון
-          </h1>
-          <div className="mt-2 px-3 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium">
-            {admin.role === 'generalAdmin' ? 'מנהל כללי' : 'מנהל חדר כושר'}
-          </div>
-        </SidebarHeader>
-        
-        <SidebarContent className="px-3 py-2">
-          <SidebarMenu>
-            {filteredSidebarItems.map((item) => (
-              <SidebarMenuItem key={item.path}>
-                <SidebarMenuButton asChild className={item.active ? "bg-accent text-accent-foreground" : ""}>
-                  <Link to={item.path} className="flex items-center gap-3">
-                    {item.icon}
-                    <span>{item.label}</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            ))}
-          </SidebarMenu>
-        </SidebarContent>
-        
-        <SidebarFooter className="px-3 py-4">
-          <Button 
-            variant="outline" 
-            className="w-full justify-start" 
-            onClick={handleLogout}
+    <SidebarProvider>
+      <div className="flex h-screen overflow-hidden w-full">
+        {/* Mobile Sidebar Toggle */}
+        {isMobile && (
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="fixed right-4 top-4 z-50 p-2 bg-primary text-primary-foreground rounded-md shadow-lg"
           >
-            <LogOut className="ml-2 h-4 w-4" />
-            התנתק
-          </Button>
-        </SidebarFooter>
-      </Sidebar>
-      
-      {/* Main Content */}
-      <main className="flex-1 overflow-auto">
-        {children}
-      </main>
-    </div>
+            {sidebarOpen ? <X /> : <Menu />}
+          </button>
+        )}
+        
+        {/* Sidebar */}
+        <Sidebar
+          className={`${isMobile ? 'fixed inset-y-0 right-0 z-40' : 'sticky top-0 h-screen'} max-w-[250px] border-l`}
+        >
+          <SidebarHeader className="px-6 py-4 flex flex-col items-center justify-center text-center">
+            <h1 className="text-2xl font-bold">
+              מערכת אימ"ון
+            </h1>
+            <div className="mt-2 px-3 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium">
+              {admin.role === 'generalAdmin' ? 'מנהל כללי' : 'מנהל חדר כושר'}
+            </div>
+          </SidebarHeader>
+          
+          <SidebarContent className="px-3 py-2">
+            <SidebarMenu>
+              {filteredSidebarItems.map((item) => (
+                <SidebarMenuItem key={item.path}>
+                  <SidebarMenuButton asChild className={item.active ? "bg-accent text-accent-foreground" : ""}>
+                    <Link to={item.path} className="flex items-center gap-3">
+                      {item.icon}
+                      <span>{item.label}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarContent>
+          
+          <SidebarFooter className="px-3 py-4">
+            <Button 
+              variant="outline" 
+              className="w-full justify-start" 
+              onClick={handleLogout}
+            >
+              <LogOut className="ml-2 h-4 w-4" />
+              התנתק
+            </Button>
+          </SidebarFooter>
+        </Sidebar>
+        
+        {/* Main Content */}
+        <main className="flex-1 overflow-auto">
+          {children}
+        </main>
+      </div>
+    </SidebarProvider>
   );
 };
 
