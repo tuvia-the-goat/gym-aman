@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 interface TopTrainee {
   name: string;
   value: number;
-  mainFrameworkName: string;
+  departmentName: string;
   baseName: string;
 }
 
@@ -38,7 +38,7 @@ const TopTraineesChart: React.FC<TopTraineesChartProps> = ({ data, hasSpecificFi
               <TableHeader>
                 <TableRow>
                   <TableHead className="text-right">שם</TableHead>
-                  <TableHead className="text-right">מסגרת ראשית</TableHead>
+                  <TableHead className="text-right">מחלקה</TableHead>
                   {showBaseColumn && (
                     <TableHead className="text-right">בסיס</TableHead>
                   )}
@@ -49,7 +49,7 @@ const TopTraineesChart: React.FC<TopTraineesChartProps> = ({ data, hasSpecificFi
                 {data.map((trainee, index) => (
                   <TableRow key={index}>
                     <TableCell>{trainee.name}</TableCell>
-                    <TableCell>{trainee.mainFrameworkName}</TableCell>
+                    <TableCell>{trainee.departmentName}</TableCell>
                     {showBaseColumn && (
                       <TableCell>{trainee.baseName}</TableCell>
                     )}

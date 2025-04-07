@@ -4,22 +4,22 @@ import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import ChartCard from './ChartCard';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
-interface MainFramework {
+interface Department {
   name: string;
   value: number;
   baseName: string;
 }
 
-interface TopMainFrameworksChartProps {
-  data: MainFramework[];
+interface TopDepartmentsChartProps {
+  data: Department[];
   showBaseColumn: boolean;
 }
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#A478E8'];
 
-const TopMainFrameworksChart: React.FC<TopMainFrameworksChartProps> = ({ data, showBaseColumn }) => {
+const TopDepartmentsChart: React.FC<TopDepartmentsChartProps> = ({ data, showBaseColumn }) => {
   return (
-    <ChartCard title="5 המסגרות הראשיות המובילות">
+    <ChartCard title="5 המחלקות המובילות">
       {data.length > 0 ? (
         <div className="space-y-4">
           <div className="h-60">
@@ -46,7 +46,7 @@ const TopMainFrameworksChart: React.FC<TopMainFrameworksChartProps> = ({ data, s
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="text-right">מסגרת ראשית</TableHead>
+                  <TableHead className="text-right">מחלקה</TableHead>
                   {showBaseColumn && (
                     <TableHead className="text-right">בסיס</TableHead>
                   )}
@@ -54,13 +54,13 @@ const TopMainFrameworksChart: React.FC<TopMainFrameworksChartProps> = ({ data, s
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {data.map((framework, index) => (
+                {data.map((dept, index) => (
                   <TableRow key={index}>
-                    <TableCell>{framework.name}</TableCell>
+                    <TableCell>{dept.name}</TableCell>
                     {showBaseColumn && (
-                      <TableCell>{framework.baseName}</TableCell>
+                      <TableCell>{dept.baseName}</TableCell>
                     )}
-                    <TableCell>{framework.value}</TableCell>
+                    <TableCell>{dept.value}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -74,4 +74,4 @@ const TopMainFrameworksChart: React.FC<TopMainFrameworksChartProps> = ({ data, s
   );
 };
 
-export default TopMainFrameworksChart;
+export default TopDepartmentsChart;

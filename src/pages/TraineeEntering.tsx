@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAdmin } from '../context/AdminContext';
-import { Trainee, Base, MainFramework, EntryStatus, MedicalFormScore } from '../types';
+import { Department, Base, Trainee, MedicalFormScore, EntryStatus } from '../types';
 import { useToast } from '@/components/ui/use-toast';
 import { 
   baseService, 
-  mainFrameworkService, 
+  departmentService, 
   traineeService, 
   entryService, 
   authService 
@@ -20,7 +20,7 @@ import TraineeProfile from '../components/TraineeProfile';
 
 const TraineeEntering = () => {
   const navigate = useNavigate();
-  const { admin, bases, mainFrameworks, trainees, setTrainees, entries, setEntries } = useAdmin();
+  const { admin, bases, departments, trainees, setTrainees, entries, setEntries } = useAdmin();
   const { toast } = useToast();
   
   const [selectedBase, setSelectedBase] = useState<Base | null>(null);
@@ -30,7 +30,7 @@ const TraineeEntering = () => {
   const [personalId, setPersonalId] = useState('');
   const [fullName, setFullName] = useState('');
   const [medicalProfile, setMedicalProfile] = useState<string>('');
-  const [mainFrameworkId, setMainFrameworkId] = useState('');
+  const [departmentId, setDepartmentId] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [gender, setGender] = useState<'male' | 'female' | ''>('');
   const [birthDate, setBirthDate] = useState<Date | undefined>(undefined);
@@ -145,7 +145,7 @@ const TraineeEntering = () => {
         personalId,
         fullName,
         medicalProfile: medicalProfile as '97' | '82' | '72' | '64' | '45' | '25',
-        mainFrameworkId,
+        departmentId,
         phoneNumber,
         baseId: selectedBase._id,
         gender: gender as 'male' | 'female',
@@ -157,7 +157,7 @@ const TraineeEntering = () => {
       setPersonalId('');
       setFullName('');
       setMedicalProfile('');
-      setMainFrameworkId('');
+      setDepartmentId('');
       setPhoneNumber('');
       setGender('');
       setBirthDate(undefined);
@@ -257,7 +257,7 @@ const TraineeEntering = () => {
           entryTime: currentTime,
           traineeFullName: entryTrainee.fullName,
           traineePersonalId: entryTrainee.personalId,
-          mainFrameworkId: entryTrainee.mainFrameworkId,
+          departmentId: entryTrainee.departmentId,
           baseId: entryTrainee.baseId,
           status: 'noMedicalApproval'
         });
@@ -291,7 +291,7 @@ const TraineeEntering = () => {
         entryTime: currentTime,
         traineeFullName: entryTrainee.fullName,
         traineePersonalId: entryTrainee.personalId,
-        mainFrameworkId: entryTrainee.mainFrameworkId,
+        departmentId: entryTrainee.departmentId,
         baseId: entryTrainee.baseId,
         status: 'success'
       });
@@ -313,8 +313,8 @@ const TraineeEntering = () => {
     }
   };
 
-  const filteredMainFrameworks = mainFrameworks.filter(
-    framework => selectedBase && framework.baseId === selectedBase._id
+  const filteredDepartments = departments.filter(
+    dept => selectedBase && dept.baseId === selectedBase._id
   );
 
   return (
@@ -477,20 +477,20 @@ const TraineeEntering = () => {
                       </div>
                       
                       <div className="space-y-2">
-                        <label htmlFor="mainFramework" className="block text-sm font-medium">
-                          מסגרת ראשית
+                        <label htmlFor="department" className="block text-sm font-medium">
+                          מחלקה
                         </label>
                         <select
-                          id="mainFramework"
-                          value={mainFrameworkId}
-                          onChange={(e) => setMainFrameworkId(e.target.value)}
+                          id="department"
+                          value={departmentId}
+                          onChange={(e) => setDepartmentId(e.target.value)}
                           className="input-field"
                           required
                         >
-                          <option value="">בחר מסגרת ראשית</option>
-                          {filteredMainFrameworks.map((framework) => (
-                            <option key={framework._id} value={framework._id}>
-                              {framework.name}
+                          <option value="">בחר מחלקה</option>
+                          {filteredDepartments.map((dept) => (
+                            <option key={dept._id} value={dept._id}>
+                              {dept.name}
                             </option>
                           ))}
                         </select>
@@ -607,13 +607,13 @@ const TraineeEntering = () => {
                                 <span>התייעצתי עם רופא לגבי פעילות גופנית אם יש לי בעיות בריאותיות.</span>
                               </li>
                             </ul>
-                            <p className="mt-3 text-sm font-medium">לחיצה על כפתור "רישום כניסה" ��הווה אישור של ההצהרה הרפואית למעלה</p>
+                            <p className="mt-3 text-sm font-medium">לחיצה על כפתור "רישום כניסה" מהווה אישור של ההצהרה הרפואית למעלה</p>
                           </div>
                           
                           {(!entryTrainee.medicalApproval.approved || 
                             (entryTrainee.medicalApproval.expirationDate && 
                              new Date(entryTrainee.medicalApproval.expirationDate) < new Date())) && (
-                            <div className='w-full border-2 border-destructive bg-destructive/10 text-destructive font-bold text-center p-3 rounded-[8px]'>
+                            <div className="w-full border-2 border-destructive bg-destructive/10 text-destructive font-bold text-center p-3 rounded-[8px]">
                               <AlertCircle className="inline-block mr-2 h-5 w-5" />
                               אין לך אישור רפואי בתוקף. יש לעדכן את האישור הרפואי לפני הכניסה לחדר הכושר.
                             </div>

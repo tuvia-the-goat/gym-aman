@@ -1,7 +1,7 @@
 
 // src/services/api.ts
 import axios from 'axios';
-import { Admin, Base, MainFramework, SecondaryFramework, Trainee, Entry, MedicalFormScore, EntryStatus } from '../types';
+import { Admin, Base, Department, Trainee, Entry, MedicalFormScore, EntryStatus } from '../types';
 
 const API_URL = 'http://localhost:3000/api';
 
@@ -78,32 +78,17 @@ export const baseService = {
   }
 };
 
-// Main Framework Services
-export const mainFrameworkService = {
-  // Get all main frameworks
-  getAll: async (): Promise<MainFramework[]> => {
-    const response = await api.get('/main-frameworks');
+// Department Services
+export const departmentService = {
+  // Get all departments
+  getAll: async (): Promise<Department[]> => {
+    const response = await api.get('/departments');
     return response.data;
   },
   
-  // Create new main framework
-  create: async (mainFrameworkData: { name: string, baseId: string }): Promise<MainFramework> => {
-    const response = await api.post('/main-frameworks', mainFrameworkData);
-    return response.data;
-  }
-};
-
-// Secondary Framework Services
-export const secondaryFrameworkService = {
-  // Get all secondary frameworks
-  getAll: async (): Promise<SecondaryFramework[]> => {
-    const response = await api.get('/secondary-frameworks');
-    return response.data;
-  },
-  
-  // Create new secondary framework
-  create: async (secondaryFrameworkData: { name: string, mainFrameworkId: string }): Promise<SecondaryFramework> => {
-    const response = await api.post('/secondary-frameworks', secondaryFrameworkData);
+  // Create new department
+  create: async (departmentData: { name: string, baseId: string }): Promise<Department> => {
+    const response = await api.post('/departments', departmentData);
     return response.data;
   }
 };
@@ -121,8 +106,7 @@ export const traineeService = {
     personalId: string,
     fullName: string,
     medicalProfile: '97' | '82' | '72' | '64' | '45' | '25',
-    mainFrameworkId: string,
-    secondaryFrameworkId?: string,
+    departmentId: string,
     phoneNumber: string,
     baseId: string,
     gender: 'male' | 'female',
@@ -175,7 +159,7 @@ export const entryService = {
     entryTime: string,
     traineeFullName: string,
     traineePersonalId: string,
-    mainFrameworkId: string,
+    departmentId: string,
     baseId: string,
     status: EntryStatus
   }): Promise<Entry> => {

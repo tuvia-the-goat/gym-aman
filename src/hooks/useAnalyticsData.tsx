@@ -1,4 +1,3 @@
-
 import { useMemo } from 'react';
 import { isWithinInterval, parseISO, differenceInYears } from 'date-fns';
 import { useAdmin } from '../context/AdminContext';
@@ -10,7 +9,7 @@ export const useAnalyticsData = (
   endDate?: Date,
   hasSpecificFilters = false
 ) => {
-  const { admin, entries, mainFrameworks, bases } = useAdmin();
+  const { admin, entries, departments, bases } = useAdmin();
   const isGeneralAdmin = admin?.role === 'generalAdmin';
 
   // Data for days of week chart - now calculates averages
@@ -162,8 +161,7 @@ export const useAnalyticsData = (
           fullName: trainee.fullName,
           gender: trainee.gender,
           medicalProfile: trainee.medicalProfile,
-          mainFrameworkName: getMainFrameworkName(trainee.mainFrameworkId),
-          departmentName: getMainFrameworkName(trainee.mainFrameworkId) // Adding departmentName for backward compatibility
+          departmentName: getDepartmentName(trainee.departmentId)
         };
       });
   }, [filteredTrainees]);
@@ -177,7 +175,7 @@ export const useAnalyticsData = (
         id: trainee._id, 
         name: trainee.fullName, 
         count, 
-        mainFrameworkId: trainee.mainFrameworkId,
+        departmentId: trainee.departmentId,
         baseId: trainee.baseId
       };
     });
@@ -188,12 +186,12 @@ export const useAnalyticsData = (
       .map(trainee => ({
         name: trainee.name,
         value: trainee.count,
-        mainFrameworkName: getMainFrameworkName(trainee.mainFrameworkId),
+        departmentName: getDepartmentName(trainee.departmentId),
         baseName: getBaseName(trainee.baseId)
       }));
   }, [filteredEntries, filteredTrainees]);
   
-  // Top main frameworks data
+  // Top departments data - always show top 5 regardless of trainee/department filters
   const topDepartmentsData = useMemo(() => {
     // Filter entries only by date range if date filters are active
     let entriesForTopChart = entries;
@@ -210,28 +208,28 @@ export const useAnalyticsData = (
       });
     }
     
-    const frameworkCounts: { [key: string]: number } = {};
+    const departmentCounts: { [key: string]: number } = {};
     
     entriesForTopChart.forEach(entry => {
-      const frameworkId = entry.mainFrameworkId;
-      frameworkCounts[frameworkId] = (frameworkCounts[frameworkId] || 0) + 1;
+      const deptId = entry.departmentId;
+      departmentCounts[deptId] = (departmentCounts[deptId] || 0) + 1;
     });
     
-    return Object.entries(frameworkCounts)
-      .map(([frameworkId, count]) => ({
-        id: frameworkId,
-        name: getMainFrameworkName(frameworkId),
+    return Object.entries(departmentCounts)
+      .map(([deptId, count]) => ({
+        id: deptId,
+        name: getDepartmentName(deptId),
         value: count,
-        baseId: mainFrameworks.find(d => d._id === frameworkId)?.baseId || '',
+        baseId: departments.find(d => d._id === deptId)?.baseId || '',
       }))
       .sort((a, b) => b.value - a.value)
       .slice(0, 5)
-      .map(framework => ({
-        name: framework.name,
-        value: framework.value,
-        baseName: getBaseName(framework.baseId)
+      .map(dept => ({
+        name: dept.name,
+        value: dept.value,
+        baseName: getBaseName(dept.baseId)
       }));
-  }, [entries, mainFrameworks, admin, startDate, endDate]);
+  }, [entries, departments, admin, startDate, endDate]);
   
   // Bases data (only for all bases admin)
   const basesData = useMemo(() => {
@@ -269,9 +267,9 @@ export const useAnalyticsData = (
   }, [filteredEntries, filteredTrainees]);
   
   // Helper functions to get names
-  function getMainFrameworkName(id: string): string {
-    const framework = mainFrameworks.find(fw => fw._id === id);
-    return framework ? framework.name : '';
+  function getDepartmentName(id: string): string {
+    const department = departments.find(dept => dept._id === id);
+    return department ? department.name : '';
   }
   
   function getBaseName(id: string): string {
@@ -291,7 +289,7 @@ export const useAnalyticsData = (
     detailedTraineeAgeData,
     avgEntriesPerTrainee,
     isGeneralAdmin,
-    getMainFrameworkName,
+    getDepartmentName,
     getBaseName
   };
 };

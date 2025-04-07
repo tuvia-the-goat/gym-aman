@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import DashboardLayout from '../components/DashboardLayout';
 import { useAdmin } from '../context/AdminContext';
@@ -7,13 +6,13 @@ import { useToast } from '@/components/ui/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   baseService, 
-  mainFrameworkService, 
+  departmentService, 
   traineeService, 
   adminService 
 } from '../services/api';
 
 const Settings = () => {
-  const { admin, bases, setBases, mainFrameworks, setMainFrameworks, trainees, setTrainees } = useAdmin();
+  const { admin, bases, setBases, departments, setDepartments, trainees, setTrainees } = useAdmin();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('medicalApproval');
   
@@ -24,7 +23,7 @@ const Settings = () => {
   const [newBaseName, setNewBaseName] = useState('');
   const [newBaseLocation, setNewBaseLocation] = useState('');
   
-  // New main framework
+  // New department
   const [newDepartmentName, setNewDepartmentName] = useState('');
   const [selectedBaseForDepartment, setSelectedBaseForDepartment] = useState('');
   
@@ -77,10 +76,10 @@ const Settings = () => {
     }
   }, [admin, trainees, medicalFilter]);
   
-  // Get main framework and base names
-  const getMainFrameworkName = (id: string) => {
-    const mainFramework = mainFrameworks.find(fw => fw._id === id);
-    return mainFramework ? mainFramework.name : '';
+  // Get department and base names
+  const getDepartmentName = (id: string) => {
+    const department = departments.find(dept => dept._id === id);
+    return department ? department.name : '';
   };
   
   const getBaseName = (id: string) => {
@@ -174,7 +173,7 @@ const Settings = () => {
     }
   };
   
-  // Handle adding a new main framework
+  // Handle adding a new department
   const handleAddDepartment = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -188,14 +187,14 @@ const Settings = () => {
     }
     
     try {
-      // Create main framework via API
-      const newMainFramework = await mainFrameworkService.create({
+      // Create department via API
+      const newDepartment = await departmentService.create({
         name: newDepartmentName,
         baseId: selectedBaseForDepartment
       });
       
-      // Update main frameworks state
-      setMainFrameworks([...mainFrameworks, newMainFramework]);
+      // Update departments state
+      setDepartments([...departments, newDepartment]);
       
       // Reset form
       setNewDepartmentName('');
@@ -203,10 +202,10 @@ const Settings = () => {
       
       toast({
         title: "מחלקה חדשה נוספה",
-        description: `מחלקה ${newMainFramework.name} נוספה בהצלחה`,
+        description: `מחלקה ${newDepartment.name} נוספה בהצלחה`,
       });
     } catch (error) {
-      console.error('Error adding main framework:', error);
+      console.error('Error adding department:', error);
       toast({
         title: "שגיאה",
         description: "אירעה שגיאה בעת הוספת המחלקה",
@@ -367,7 +366,7 @@ const Settings = () => {
                           {admin?.role === 'generalAdmin' && (
                             <td className="px-4 py-3">{getBaseName(trainee.baseId)}</td>
                           )}
-                          <td className="px-4 py-3">{getMainFrameworkName(trainee.mainFrameworkId)}</td>
+                          <td className="px-4 py-3">{getDepartmentName(trainee.departmentId)}</td>
                           <td className="px-4 py-3">{trainee.personalId}</td>
                           <td className="px-4 py-3">{trainee.fullName}</td>
                         </tr>
@@ -388,7 +387,7 @@ const Settings = () => {
             </div>
           </TabsContent>
           
-          {/* Main Frameworks Tab */}
+          {/* Departments Tab */}
           <TabsContent value="departments" className="pt-6">
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               
@@ -405,14 +404,14 @@ const Settings = () => {
                       </tr>
                     </thead>
                     <tbody style={{textAlign: "right"}}>
-                      {mainFrameworks
-                        .filter(mainFw => 
-                          admin?.role === 'generalAdmin' || mainFw.baseId === admin?.baseId
+                      {departments
+                        .filter(dept => 
+                          admin?.role === 'generalAdmin' || dept.baseId === admin?.baseId
                         )
-                        .map((mainFramework) => (
-                          <tr key={mainFramework._id} className="border-t hover:bg-muted/30">
-                            <td className="px-4 py-3">{getBaseName(mainFramework.baseId)}</td>
-                            <td className="px-4 py-3">{mainFramework.name}</td>
+                        .map((department) => (
+                          <tr key={department._id} className="border-t hover:bg-muted/30">
+                            <td className="px-4 py-3">{getBaseName(department.baseId)}</td>
+                            <td className="px-4 py-3">{department.name}</td>
                           </tr>
                         ))
                       }
@@ -538,7 +537,7 @@ const Settings = () => {
                             <td className="px-4 py-3">{base.name}</td>
                             <td className="px-4 py-3">{base.location}</td>
                             <td className="px-4 py-3">
-                              {mainFrameworks.filter(dept => dept.baseId === base._id).length}
+                              {departments.filter(dept => dept.baseId === base._id).length}
                             </td>
                           </tr>
                         ))}

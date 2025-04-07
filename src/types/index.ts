@@ -15,16 +15,10 @@ export interface Base {
   location: string;
 }
 
-export interface MainFramework {
+export interface Department {
   _id: string;
   name: string;
   baseId: string;
-}
-
-export interface SecondaryFramework {
-  _id: string;
-  name: string;
-  mainFrameworkId: string;
 }
 
 export type MedicalFormScore = 'notRequired' | 'fullScore' | 'partialScore' | 'reserve';
@@ -34,8 +28,7 @@ export interface Trainee {
   personalId: string; // 7 digits
   fullName: string;
   medicalProfile: '97' | '82' | '72' | '64' | '45' | '25';
-  mainFrameworkId: string;
-  secondaryFrameworkId?: string;
+  departmentId: string;
   phoneNumber: string; // 10 digits, starting with 05
   medicalApproval: {
     approved: boolean;
@@ -61,7 +54,7 @@ export interface Entry {
   entryTime: string;
   traineeFullName: string;
   traineePersonalId: string;
-  mainFrameworkId: string;
+  departmentId: string;
   baseId: string;
   status: EntryStatus; // New field to track entry status
   createdAt?: string; // From MongoDB timestamp
@@ -82,25 +75,12 @@ export interface AdminContextType {
   setAdmin: (admin: Admin | null) => void;
   bases: Base[];
   setBases: (bases: Base[]) => void;
-  mainFrameworks: MainFramework[];
-  setMainFrameworks: (mainFrameworks: MainFramework[]) => void;
-  secondaryFrameworks: SecondaryFramework[];
-  setSecondaryFrameworks: (secondaryFrameworks: SecondaryFramework[]) => void;
+  departments: Department[];
+  setDepartments: (departments: Department[]) => void;
   trainees: Trainee[];
   setTrainees: (trainees: Trainee[]) => void;
   entries: Entry[];
   setEntries: (entries: Entry[]) => void;
   loading: boolean;
   setLoading: (loading: boolean) => void;
-}
-
-// Add FullTraineeDataPoint type for Analytics.tsx
-export interface FullTraineeDataPoint {
-  _id: string;
-  age: number;
-  fullName: string;
-  gender: 'male' | 'female';
-  medicalProfile: string;
-  mainFrameworkName: string;
-  departmentName?: string; // Optional now for backward compatibility
 }

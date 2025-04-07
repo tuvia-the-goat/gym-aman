@@ -15,7 +15,7 @@ import {
   SidebarProvider
 } from './ui/sidebar';
 import { 
-  Home, Menu, X, UserPlus, BarChart2, List, Settings, LogOut, Dumbbell, UserCheck
+  Home, Menu, X, UserPlus, BarChart2, List, Settings, Shield, LogOut, Dumbbell, UserCheck
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { useIsMobile } from '../hooks/use-mobile';
