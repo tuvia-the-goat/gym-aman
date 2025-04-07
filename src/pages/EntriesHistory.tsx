@@ -338,8 +338,8 @@ const EntriesHistory = () => {
                     hasMedical && "bg-blue-50",
                     statusDisplay.rowClass)} onClick={() => entry.traineeId && handleTraineeClick(entry.traineeId)}>
                         <td className="px-4 py-3 flex items-center">
-                          {hasOrthopedic && <AlertTriangle className="h-4 w-4 text-amber-500 ml-2" title="סעיף אורטופדי" />}
-                          {hasMedical && <Flag className="h-4 w-4 text-blue-500 ml-2" title="מגבלה רפואית" />}
+                          {hasOrthopedic && <AlertTriangle className="h-4 w-4 text-amber-500 ml-2" aria-label="סעיף אורטופדי" />}
+                          {hasMedical && <Flag className="h-4 w-4 text-blue-500 ml-2" aria-label="מגבלה רפואית" />}
                           {entry.traineeFullName || '-'}
                         </td>
                         <td className="px-4 py-3">{entry.traineePersonalId}</td>

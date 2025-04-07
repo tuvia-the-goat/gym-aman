@@ -1,7 +1,6 @@
-
 // src/services/api.ts
 import axios from 'axios';
-import { Admin, Base, Department, Trainee, Entry, MedicalFormScore, EntryStatus } from '../types';
+import { Admin, Base, Department, Trainee, Entry, EntryStatus, MedicalFormScore } from '../types';
 
 const API_URL = 'http://localhost:3000/api';
 

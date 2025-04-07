@@ -1,3 +1,4 @@
+
 export interface Admin {
   _id: string;
   personalId: string;
@@ -7,11 +8,13 @@ export interface Admin {
   email: string;
   password?: string;
   token?: string;
+  username: string; // Added username property
 }
 
 export interface Base {
   _id: string;
   name: string;
+  location: string; // Added location property
 }
 
 export interface Department {
@@ -54,6 +57,9 @@ export interface AdminContextType {
   setLoading: (loading: boolean) => void;
 }
 
+// Adding MedicalFormScore type
+export type MedicalFormScore = 'notRequired' | 'fullScore' | 'partialScore' | 'reserve';
+
 export interface Trainee {
   _id: string;
   personalId: string;
@@ -74,4 +80,7 @@ export interface Trainee {
   lastEntryDate?: string;
   entryCount?: number;
   notes?: string;
+  // Add missing properties
+  medicalFormScore: MedicalFormScore;
+  medicalCertificateProvided?: boolean;
 }

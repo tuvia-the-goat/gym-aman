@@ -1,4 +1,3 @@
-
 import React from 'react';
 import DashboardLayout from '../components/DashboardLayout';
 import { useAdmin } from '../context/AdminContext';
@@ -28,7 +27,7 @@ const Dashboard = () => {
     <DashboardLayout activeTab="dashboard">
       <div className="p-6">
         <h1 className="text-3xl font-bold mb-6">לוח בקרה</h1>
-        <p className="text-xl mb-6">שלום {admin?.username || 'משתמש'}, ברוך הבא למערכת ניהול חדר הכושר</p>
+        <p className="text-xl mb-6">שלום {admin?.fullName || 'משתמש'}, ברוך הבא למערכת ניהול חדר הכושר</p>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <Card>
