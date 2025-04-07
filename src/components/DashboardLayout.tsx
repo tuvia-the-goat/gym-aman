@@ -15,7 +15,7 @@ import {
   SidebarProvider
 } from './ui/sidebar';
 import { 
-  Home, Menu, X, UserPlus, BarChart2, List, Settings, Shield, LogOut, Dumbbell, UserCheck
+  Home, Menu, X, UserPlus, BarChart2, List, Settings, LogOut, Dumbbell, UserCheck
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { useIsMobile } from '../hooks/use-mobile';
@@ -27,7 +27,7 @@ interface DashboardLayoutProps {
 
 const DashboardLayout = ({ children, activeTab }: DashboardLayoutProps) => {
   const navigate = useNavigate();
-  const { admin, loading } = useAdmin();
+  const { admin, loading, bases } = useAdmin();
   const { toast } = useToast();
   const [sidebarOpen, setSidebarOpen] = useState(true); // Default to open on desktop
   const isMobile = useIsMobile();
@@ -64,6 +64,15 @@ const DashboardLayout = ({ children, activeTab }: DashboardLayoutProps) => {
       </div>
     );
   }
+
+  // Get the gym name for gym admins
+  const getGymName = () => {
+    if (admin.role === 'gymAdmin' && admin.baseId) {
+      const gym = bases.find(base => base._id === admin.baseId);
+      return gym ? gym.name : '';
+    }
+    return '';
+  };
 
   const sidebarItems = [
     { 
@@ -149,6 +158,11 @@ const DashboardLayout = ({ children, activeTab }: DashboardLayoutProps) => {
             <div className="mt-3 px-4 py-2 bg-primary/10 text-primary rounded-full text-sm font-medium">
               {admin.role === 'generalAdmin' ? 'מנהל כללי' : 'מנהל חדר כושר'}
             </div>
+            {admin.role === 'gymAdmin' && getGymName() && (
+              <div className="mt-2 text-sm font-medium text-muted-foreground">
+                {getGymName()}
+              </div>
+            )}
           </SidebarHeader>
           
           <SidebarContent className="px-4 py-4">

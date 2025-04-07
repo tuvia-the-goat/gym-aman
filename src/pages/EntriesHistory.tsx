@@ -4,7 +4,7 @@ import { useAdmin } from '../context/AdminContext';
 import { Entry, Trainee, EntryStatus } from '../types';
 import { traineeService } from '../services/api';
 import { useToast } from '@/components/ui/use-toast';
-import { AlertTriangle, CheckCircle, XCircle, User } from 'lucide-react';
+import { AlertTriangle, CheckCircle, XCircle, User, Flag } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { isWithinInterval, parseISO, format, differenceInYears } from 'date-fns';
@@ -14,7 +14,9 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Button } from '@/components/ui/button';
 import { CalendarIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
+
 console.log('Warning: EntriesHistory.tsx has a type error that needs to be fixed, but it is marked as read-only.');
+
 const EntriesHistory = () => {
   const {
     admin,
@@ -38,6 +40,7 @@ const EntriesHistory = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const entriesPerPage = 20;
+
   useEffect(() => {
     let filtered = [...entries];
     if (admin?.role === 'gymAdmin' && admin.baseId) {
@@ -45,6 +48,7 @@ const EntriesHistory = () => {
     }
     setFilteredEntries(filtered);
   }, [admin, entries]);
+
   useEffect(() => {
     let filtered = [...entries];
     if (admin?.role === 'gymAdmin' && admin.baseId) {
@@ -75,22 +79,27 @@ const EntriesHistory = () => {
     setFilteredEntries(filtered);
     setCurrentPage(1);
   }, [admin, entries, searchTerm, selectedDepartment, selectedBase, selectedProfile, startDate, endDate, trainees]);
+
   useEffect(() => {
     const startIndex = (currentPage - 1) * entriesPerPage;
     const endIndex = startIndex + entriesPerPage;
     setDisplayedEntries(filteredEntries.slice(startIndex, endIndex));
   }, [filteredEntries, currentPage]);
+
   const getTotalPages = () => {
     return Math.ceil(filteredEntries.length / entriesPerPage);
   };
+
   const getDepartmentName = (id: string) => {
     const department = departments.find(dept => dept._id === id);
     return department ? department.name : '';
   };
+
   const getBaseName = (id: string) => {
     const base = bases.find(base => base._id === id);
     return base ? base.name : '';
   };
+
   const handleTraineeClick = (traineeId: string) => {
     const trainee = trainees.find(t => t._id === traineeId);
     if (trainee) {
@@ -98,13 +107,21 @@ const EntriesHistory = () => {
       setIsDialogOpen(true);
     }
   };
+
   const getTraineeForEntry = (traineeId: string) => {
     return trainees.find(t => t._id === traineeId) || null;
   };
+
   const hasOrthopedicCondition = (traineeId: string) => {
     const trainee = trainees.find(t => t._id === traineeId);
     return trainee?.orthopedicCondition || false;
   };
+
+  const hasMedicalLimitation = (traineeId: string) => {
+    const trainee = trainees.find(t => t._id === traineeId);
+    return trainee?.medicalLimitation ? true : false;
+  };
+
   const getTraineeAnalytics = (traineeId: string) => {
     const traineeEntries = entries.filter(entry => entry.traineeId === traineeId);
     const hourCounts: {
@@ -149,6 +166,7 @@ const EntriesHistory = () => {
       totalEntries: traineeEntries.length
     };
   };
+
   const updateMedicalApproval = async (approved: boolean) => {
     if (!selectedTrainee) return;
     try {
@@ -170,18 +188,22 @@ const EntriesHistory = () => {
       });
     }
   };
+
   const goToPage = (page: number) => {
     setCurrentPage(page);
   };
+
   const calculateAge = (birthDate: string) => {
     return differenceInYears(new Date(), parseISO(birthDate));
   };
+
   const getDateFormat = (dateToFormat: Date) => {
     const day = dateToFormat.getDate();
     const month = dateToFormat.getMonth() + 1;
     const year = dateToFormat.getFullYear();
     return `${day}/${month}/${year}`;
   };
+
   const getEntryStatusDisplay = (status: EntryStatus) => {
     switch (status) {
       case 'success':
@@ -210,6 +232,7 @@ const EntriesHistory = () => {
         };
     }
   };
+
   return <DashboardLayout activeTab="entries">
       <div className="space-y-6 animate-fade-up">
         <div className="flex justify-between items-center">
@@ -308,10 +331,15 @@ const EntriesHistory = () => {
               <tbody>
                 {displayedEntries.length > 0 ? displayedEntries.map(entry => {
                 const hasOrthopedic = hasOrthopedicCondition(entry.traineeId);
+                const hasMedical = hasMedicalLimitation(entry.traineeId);
                 const statusDisplay = getEntryStatusDisplay(entry.status || 'success');
-                return <tr key={entry._id} className={cn("border-t hover:bg-muted/50 cursor-pointer transition-colors", hasOrthopedic && "bg-amber-50", statusDisplay.rowClass)} onClick={() => entry.traineeId && handleTraineeClick(entry.traineeId)}>
+                return <tr key={entry._id} className={cn("border-t hover:bg-muted/50 cursor-pointer transition-colors", 
+                    hasOrthopedic && "bg-amber-50", 
+                    hasMedical && "bg-blue-50",
+                    statusDisplay.rowClass)} onClick={() => entry.traineeId && handleTraineeClick(entry.traineeId)}>
                         <td className="px-4 py-3 flex items-center">
-                          {hasOrthopedic && <AlertTriangle className="h-4 w-4 text-amber-500 ml-2" />}
+                          {hasOrthopedic && <AlertTriangle className="h-4 w-4 text-amber-500 ml-2" title="סעיף אורטופדי" />}
+                          {hasMedical && <Flag className="h-4 w-4 text-blue-500 ml-2" title="מגבלה רפואית" />}
                           {entry.traineeFullName || '-'}
                         </td>
                         <td className="px-4 py-3">{entry.traineePersonalId}</td>
@@ -394,9 +422,13 @@ const EntriesHistory = () => {
         }}>
               <DialogTitle className="text-2xl">
                 {selectedTrainee.fullName}
-                {selectedTrainee.orthopedicCondition && <span className="inline-flex items-center ml-2 px-2 py-1 bg-amber-100 text-amber-800 text-xs rounded-md mx-[19px]">
+                {selectedTrainee.orthopedicCondition && <span className="inline-flex items-center ml-2 px-2 py-1 bg-amber-100 text-amber-800 text-xs rounded-md">
                     <AlertTriangle className="h-3 w-3 mr-1" />
                     סעיף אורטופדי
+                  </span>}
+                {selectedTrainee.medicalLimitation && <span className="inline-flex items-center ml-2 px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-md">
+                    <Flag className="h-3 w-3 mr-1" />
+                    מגבלה רפואית: {selectedTrainee.medicalLimitation}
                   </span>}
               </DialogTitle>
             </DialogHeader>
@@ -436,6 +468,11 @@ const EntriesHistory = () => {
                     <div className="text-sm text-muted-foreground">סעיף אורטופדי:</div>
                     <div className={selectedTrainee.orthopedicCondition ? "text-amber-600" : ""}>
                       {selectedTrainee.orthopedicCondition ? "יש" : "אין"}
+                    </div>
+                    
+                    <div className="text-sm text-muted-foreground">מגבלה רפואית:</div>
+                    <div className={selectedTrainee.medicalLimitation ? "text-blue-600" : ""}>
+                      {selectedTrainee.medicalLimitation ? selectedTrainee.medicalLimitation : "אין"}
                     </div>
                   </div>
                   
@@ -500,7 +537,7 @@ const EntriesHistory = () => {
                         <div className="text-3xl font-bold">
                           {getTraineeAnalytics(selectedTrainee._id).percentile}%
                         </div>
-                        <div className="text-sm text-muted-foreground">אחוזון המתאמנים</div>
+                        <div className="text-sm text-muted-foreground">אחוזון ה��תאמנים</div>
                       </div>
                     </div>
                   </>}
@@ -510,4 +547,5 @@ const EntriesHistory = () => {
         </Dialog>}
     </DashboardLayout>;
 };
+
 export default EntriesHistory;
