@@ -90,29 +90,32 @@ const Settings = () => {
   // Handle medical approval update
   const updateMedicalApproval = async (traineeId: string, approved: boolean) => {
     try {
-      // Update medical approval via API
-      await traineeService.updateMedicalApproval(traineeId, approved);
+      // Create a proper expirationDate (1 year from now)
+      const expirationDate = new Date();
+      expirationDate.setFullYear(expirationDate.getFullYear() + 1);
       
-    // Update local state to reflect the change
-    const updatedTrainees = trainees.map(trainee => {
-      if (trainee._id === traineeId) {
-        // Create a new expiration date (1 year from now)
-        const expirationDate = new Date();
-        expirationDate.setFullYear(expirationDate.getFullYear() + 1);
-        
-        return {
-          ...trainee,
-          medicalApproval: {
-            approved: approved,
-            expirationDate: expirationDate.toISOString()
-          }
-        };
-      }
-      return trainee;
-    });
-    
-    // Update the state with the modified trainees array
-    setTrainees(updatedTrainees);
+      // Update medical approval via API with the correct object structure
+      await traineeService.updateMedicalApproval(traineeId, {
+        approved: approved,
+        expirationDate: expirationDate.toISOString()
+      });
+      
+      // Update local state to reflect the change
+      const updatedTrainees = trainees.map(trainee => {
+        if (trainee._id === traineeId) {
+          return {
+            ...trainee,
+            medicalApproval: {
+              approved: approved,
+              expirationDate: expirationDate.toISOString()
+            }
+          };
+        }
+        return trainee;
+      });
+      
+      // Update the state with the modified trainees array
+      setTrainees(updatedTrainees);
       toast({
         title: approved ? "אישור רפואי עודכן" : "אישור רפואי בוטל",
         description: approved 

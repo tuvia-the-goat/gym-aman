@@ -13,7 +13,8 @@ const Dashboard = () => {
   const totalEntries = entries.length;
   const todayEntries = entries.filter(entry => {
     const today = new Date().toISOString().split('T')[0];
-    return entry.date.split('T')[0] === today;
+    // Using entryDate instead of date property
+    return entry.entryDate.split('T')[0] === today;
   }).length;
   
   // Calculate active trainees (with valid medical approval)
@@ -27,7 +28,7 @@ const Dashboard = () => {
     <DashboardLayout activeTab="dashboard">
       <div className="p-6">
         <h1 className="text-3xl font-bold mb-6">לוח בקרה</h1>
-        <p className="text-xl mb-6">שלום {admin?.name || 'משתמש'}, ברוך הבא למערכת ניהול חדר הכושר</p>
+        <p className="text-xl mb-6">שלום {admin?.username || 'משתמש'}, ברוך הבא למערכת ניהול חדר הכושר</p>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <Card>
