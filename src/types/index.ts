@@ -15,10 +15,16 @@ export interface Base {
   location: string;
 }
 
-export interface Department {
+export interface MainFramework {
   _id: string;
   name: string;
   baseId: string;
+}
+
+export interface SecondaryFramework {
+  _id: string;
+  name: string;
+  mainFrameworkId: string;
 }
 
 export type MedicalFormScore = 'notRequired' | 'fullScore' | 'partialScore' | 'reserve';
@@ -28,7 +34,8 @@ export interface Trainee {
   personalId: string; // 7 digits
   fullName: string;
   medicalProfile: '97' | '82' | '72' | '64' | '45' | '25';
-  departmentId: string;
+  mainFrameworkId: string;
+  secondaryFrameworkId?: string;
   phoneNumber: string; // 10 digits, starting with 05
   medicalApproval: {
     approved: boolean;
@@ -54,7 +61,7 @@ export interface Entry {
   entryTime: string;
   traineeFullName: string;
   traineePersonalId: string;
-  departmentId: string;
+  mainFrameworkId: string;
   baseId: string;
   status: EntryStatus; // New field to track entry status
   createdAt?: string; // From MongoDB timestamp
@@ -75,8 +82,10 @@ export interface AdminContextType {
   setAdmin: (admin: Admin | null) => void;
   bases: Base[];
   setBases: (bases: Base[]) => void;
-  departments: Department[];
-  setDepartments: (departments: Department[]) => void;
+  mainFrameworks: MainFramework[];
+  setMainFrameworks: (mainFrameworks: MainFramework[]) => void;
+  secondaryFrameworks: SecondaryFramework[];
+  setSecondaryFrameworks: (secondaryFrameworks: SecondaryFramework[]) => void;
   trainees: Trainee[];
   setTrainees: (trainees: Trainee[]) => void;
   entries: Entry[];

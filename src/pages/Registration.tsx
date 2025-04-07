@@ -10,7 +10,7 @@ import RegistrationForm from '../components/registration/RegistrationForm';
 
 const Registration = () => {
   const navigate = useNavigate();
-  const { admin, bases, departments, trainees, setTrainees } = useAdmin();
+  const { admin, bases, mainFrameworks, secondaryFrameworks, trainees, setTrainees } = useAdmin();
   
   // Selected base for registration
   const [selectedBase, setSelectedBase] = useState<Base | null>(null);
@@ -68,7 +68,8 @@ const Registration = () => {
             {/* Registration Form */}
             <RegistrationForm 
               selectedBase={selectedBase}
-              departments={departments}
+              mainFrameworks={mainFrameworks}
+              secondaryFrameworks={secondaryFrameworks}
               onRegistrationSuccess={handleRegistrationSuccess}
             />
           </div>

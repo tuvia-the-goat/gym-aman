@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Trainee, Department, MedicalFormScore } from '../types';
+import { Trainee, MainFramework, SecondaryFramework, MedicalFormScore } from '../types';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
@@ -13,14 +13,16 @@ import { traineeService } from '../services/api';
 
 interface TraineeProfileProps {
   trainee: Trainee;
-  departments: Department[];
+  mainFrameworks: MainFramework[];
+  secondaryFrameworks: SecondaryFramework[];
   onUpdate: (updatedTrainee: Trainee) => void;
   readOnly?: boolean;
 }
 
 const TraineeProfile: React.FC<TraineeProfileProps> = ({ 
   trainee, 
-  departments, 
+  mainFrameworks, 
+  secondaryFrameworks, 
   onUpdate,
   readOnly = false 
 }) => {
@@ -41,9 +43,15 @@ const TraineeProfile: React.FC<TraineeProfileProps> = ({
            (formScore === 'partialScore' && certificateProvided);
   };
   
-  const getDepartmentName = (departmentId: string) => {
-    const department = departments.find(dept => dept._id === departmentId);
-    return department ? department.name : 'לא ידוע';
+  const getMainFrameworkName = (mainFrameworkId: string) => {
+    const framework = mainFrameworks.find(fw => fw._id === mainFrameworkId);
+    return framework ? framework.name : 'לא ידוע';
+  };
+
+  const getSecondaryFrameworkName = (secondaryFrameworkId?: string) => {
+    if (!secondaryFrameworkId) return 'לא נבחרה';
+    const framework = secondaryFrameworks.find(fw => fw._id === secondaryFrameworkId);
+    return framework ? framework.name : 'לא ידוע';
   };
   
   const getMedicalFormScoreText = (score: MedicalFormScore) => {
@@ -186,8 +194,13 @@ const TraineeProfile: React.FC<TraineeProfileProps> = ({
           </div>
           
           <div>
-            <h3 className="text-sm font-medium text-muted-foreground">מחלקה</h3>
-            <p className="font-medium">{getDepartmentName(trainee.departmentId)}</p>
+            <h3 className="text-sm font-medium text-muted-foreground">מסגרת ראשית</h3>
+            <p className="font-medium">{getMainFrameworkName(trainee.mainFrameworkId)}</p>
+          </div>
+          
+          <div>
+            <h3 className="text-sm font-medium text-muted-foreground">מסגרת משנית</h3>
+            <p className="font-medium">{getSecondaryFrameworkName(trainee.secondaryFrameworkId)}</p>
           </div>
           
           <div>

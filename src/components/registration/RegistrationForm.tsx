@@ -1,6 +1,6 @@
 
-import React, { useState } from 'react';
-import { Department, Base, MedicalFormScore } from '../../types';
+import React, { useState, useEffect } from 'react';
+import { MainFramework, SecondaryFramework, Base, MedicalFormScore } from '../../types';
 import { useToast } from '@/components/ui/use-toast';
 import { traineeService } from '../../services/api';
 import { Calendar } from '@/components/ui/calendar';
@@ -13,18 +13,25 @@ import { Textarea } from '@/components/ui/textarea';
 
 interface RegistrationFormProps {
   selectedBase: Base;
-  departments: Department[];
+  mainFrameworks: MainFramework[];
+  secondaryFrameworks: SecondaryFramework[];
   onRegistrationSuccess: (newTrainee: any) => void;
 }
 
-const RegistrationForm = ({ selectedBase, departments, onRegistrationSuccess }: RegistrationFormProps) => {
+const RegistrationForm = ({ 
+  selectedBase, 
+  mainFrameworks, 
+  secondaryFrameworks, 
+  onRegistrationSuccess 
+}: RegistrationFormProps) => {
   const { toast } = useToast();
   
   // Registration fields
   const [personalId, setPersonalId] = useState('');
   const [fullName, setFullName] = useState('');
   const [medicalProfile, setMedicalProfile] = useState<string>('');
-  const [departmentId, setDepartmentId] = useState('');
+  const [mainFrameworkId, setMainFrameworkId] = useState('');
+  const [secondaryFrameworkId, setSecondaryFrameworkId] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   
   // New fields
@@ -36,6 +43,26 @@ const RegistrationForm = ({ selectedBase, departments, onRegistrationSuccess }: 
   const [medicalFormScore, setMedicalFormScore] = useState<MedicalFormScore | ''>('');
   const [medicalCertificateProvided, setMedicalCertificateProvided] = useState(false);
   const [medicalLimitation, setMedicalLimitation] = useState('');
+
+  // Filtered secondary frameworks based on selected main framework
+  const [filteredSecondaryFrameworks, setFilteredSecondaryFrameworks] = useState<SecondaryFramework[]>([]);
+  
+  // Update filtered secondary frameworks when main framework changes
+  useEffect(() => {
+    if (mainFrameworkId) {
+      const filtered = secondaryFrameworks.filter(
+        framework => framework.mainFrameworkId === mainFrameworkId
+      );
+      setFilteredSecondaryFrameworks(filtered);
+      // Reset secondary framework selection if the current selection is not valid
+      if (filtered.length > 0 && !filtered.some(f => f._id === secondaryFrameworkId)) {
+        setSecondaryFrameworkId('');
+      }
+    } else {
+      setFilteredSecondaryFrameworks([]);
+      setSecondaryFrameworkId('');
+    }
+  }, [mainFrameworkId, secondaryFrameworks, secondaryFrameworkId]);
   
   // Validate personal ID (7 digits)
   const validatePersonalId = (id: string) => {
@@ -139,7 +166,8 @@ const RegistrationForm = ({ selectedBase, departments, onRegistrationSuccess }: 
         personalId,
         fullName,
         medicalProfile: medicalProfile as '97' | '82' | '72' | '64' | '45' | '25',
-        departmentId,
+        mainFrameworkId,
+        secondaryFrameworkId: secondaryFrameworkId || undefined,
         phoneNumber,
         baseId: selectedBase._id,
         gender: gender as 'male' | 'female',
@@ -161,7 +189,8 @@ const RegistrationForm = ({ selectedBase, departments, onRegistrationSuccess }: 
       setPersonalId('');
       setFullName('');
       setMedicalProfile('');
-      setDepartmentId('');
+      setMainFrameworkId('');
+      setSecondaryFrameworkId('');
       setPhoneNumber('');
       setGender('');
       setBirthDate(undefined);
@@ -184,9 +213,9 @@ const RegistrationForm = ({ selectedBase, departments, onRegistrationSuccess }: 
     }
   };
 
-  // Filter departments by selected base
-  const filteredDepartments = departments.filter(
-    dept => selectedBase && dept.baseId === selectedBase._id
+  // Filter main frameworks by selected base
+  const filteredMainFrameworks = mainFrameworks.filter(
+    framework => selectedBase && framework.baseId === selectedBase._id
   );
   
   return (
@@ -284,20 +313,40 @@ const RegistrationForm = ({ selectedBase, departments, onRegistrationSuccess }: 
           
           
           <div className="space-y-2">
-            <label htmlFor="department" className="block text-sm font-medium">
-              מחלקה
+            <label htmlFor="mainFramework" className="block text-sm font-medium">
+              מסגרת ראשית
             </label>
             <select
-              id="department"
-              value={departmentId}
-              onChange={(e) => setDepartmentId(e.target.value)}
+              id="mainFramework"
+              value={mainFrameworkId}
+              onChange={(e) => setMainFrameworkId(e.target.value)}
               className="input-field"
               required
             >
-              <option value="">בחר מחלקה</option>
-              {filteredDepartments.map((dept) => (
-                <option key={dept._id} value={dept._id}>
-                  {dept.name}
+              <option value="">בחר מסגרת ראשית</option>
+              {filteredMainFrameworks.map((framework) => (
+                <option key={framework._id} value={framework._id}>
+                  {framework.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          
+          <div className="space-y-2">
+            <label htmlFor="secondaryFramework" className="block text-sm font-medium">
+              מסגרת משנית
+            </label>
+            <select
+              id="secondaryFramework"
+              value={secondaryFrameworkId}
+              onChange={(e) => setSecondaryFrameworkId(e.target.value)}
+              className="input-field"
+              disabled={!mainFrameworkId || filteredSecondaryFrameworks.length === 0}
+            >
+              <option value="">בחר מסגרת משנית</option>
+              {filteredSecondaryFrameworks.map((framework) => (
+                <option key={framework._id} value={framework._id}>
+                  {framework.name}
                 </option>
               ))}
             </select>
