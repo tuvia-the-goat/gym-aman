@@ -156,13 +156,8 @@ const DashboardLayout = ({ children, activeTab }: DashboardLayoutProps) => {
               מערכת אימ"ון
             </h1>
             <div className="mt-3 px-4 py-2 bg-primary/10 text-primary rounded-full text-sm font-medium">
-              {admin.role === 'generalAdmin' ? 'מנהל כללי' : 'מנהל חדר כושר'}
+              {admin.role === 'generalAdmin' ? 'מנהל כללי' : `מנהל חדר כושר- בסיס ${getGymName()}`}
             </div>
-            {admin.role === 'gymAdmin' && getGymName() && (
-              <div className="mt-2 text-sm font-medium text-muted-foreground">
-                {getGymName()}
-              </div>
-            )}
           </SidebarHeader>
           
           <SidebarContent className="px-4 py-4">
