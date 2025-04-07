@@ -25,24 +25,24 @@ const Analytics = () => {
     setStartDate,
     endDate,
     setEndDate,
-    selectedDepartmentIds,
-    setSelectedDepartmentIds,
+    selectedMainFrameworkIds,
+    setSelectedMainFrameworkIds,
     selectedTrainees,
     setSelectedTrainees,
     showFilterDialog,
     setShowFilterDialog,
     filteredEntries,
     filteredTrainees,
-    availableDepartments,
-    traineesByDepartment,
+    availableMainFrameworks,
+    traineesByMainFramework,
     hasSpecificFilters,
     hasActiveFilters,
     clearFilters,
     clearDateFilters,
-    clearDepartmentFilters,
+    clearMainFrameworkFilters,
     clearTraineeFilters,
     toggleTrainee,
-    toggleDepartment
+    toggleMainFramework
   } = useAnalyticsFilters();
   
   const {
@@ -57,7 +57,7 @@ const Analytics = () => {
     detailedTraineeAgeData,
     avgEntriesPerTrainee,
     isGeneralAdmin,
-    getDepartmentName,
+    getMainFrameworkName,
     getBaseName
   } = useAnalyticsData(
     filteredEntries,
@@ -85,16 +85,16 @@ const Analytics = () => {
           endDate={endDate}
           setStartDate={setStartDate}
           setEndDate={setEndDate}
-          selectedDepartmentIds={selectedDepartmentIds}
-          setSelectedDepartmentIds={setSelectedDepartmentIds}
+          selectedMainFrameworkIds={selectedMainFrameworkIds}
+          setSelectedMainFrameworkIds={setSelectedMainFrameworkIds}
           selectedTrainees={selectedTrainees}
           setSelectedTrainees={setSelectedTrainees}
-          availableDepartments={availableDepartments}
-          traineesByDepartment={traineesByDepartment}
+          availableMainFrameworks={availableMainFrameworks}
+          traineesByMainFramework={traineesByMainFramework}
           clearFilters={clearFilters}
-          toggleDepartment={toggleDepartment}
+          toggleMainFramework={toggleMainFramework}
           toggleTrainee={toggleTrainee}
-          getDepartmentName={getDepartmentName}
+          getMainFrameworkName={getMainFrameworkName}
           getBaseName={getBaseName}
           isGeneralAdmin={isGeneralAdmin}
         />
@@ -103,10 +103,10 @@ const Analytics = () => {
         <ActiveFilters 
           startDate={startDate}
           endDate={endDate}
-          selectedDepartmentIds={selectedDepartmentIds}
+          selectedMainFrameworkIds={selectedMainFrameworkIds}
           selectedTrainees={selectedTrainees}
           clearDateFilters={clearDateFilters}
-          clearDepartmentFilters={clearDepartmentFilters}
+          clearMainFrameworkFilters={clearMainFrameworkFilters}
           clearTraineeFilters={clearTraineeFilters}
         />
         
@@ -141,7 +141,7 @@ const Analytics = () => {
           <MonthlyChart data={monthlyData} />
         </div>
         
-        {/* Top Trainees and Departments - always visible */}
+        {/* Top Trainees and Main Frameworks - always visible */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Top Trainees */}
           <TopTraineesChart 
@@ -150,7 +150,7 @@ const Analytics = () => {
             showBaseColumn={isGeneralAdmin}
           />
           
-          {/* Top Departments - only show if no specific filters active */}
+          {/* Top Main Frameworks - only show if no specific filters active */}
           {!hasSpecificFilters && (
             <TopDepartmentsChart 
               data={topDepartmentsData}

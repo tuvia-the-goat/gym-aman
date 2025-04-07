@@ -6,23 +6,23 @@ import { X } from 'lucide-react';
 interface ActiveFiltersProps {
   startDate?: Date;
   endDate?: Date;
-  selectedDepartmentIds: string[];
+  selectedMainFrameworkIds: string[];
   selectedTrainees: string[];
   clearDateFilters: () => void;
-  clearDepartmentFilters: () => void;
+  clearMainFrameworkFilters: () => void;
   clearTraineeFilters: () => void;
 }
 
 const ActiveFilters: React.FC<ActiveFiltersProps> = ({
   startDate,
   endDate,
-  selectedDepartmentIds,
+  selectedMainFrameworkIds,
   selectedTrainees,
   clearDateFilters,
-  clearDepartmentFilters,
+  clearMainFrameworkFilters,
   clearTraineeFilters
 }) => {
-  const hasActiveFilters = startDate || endDate || selectedDepartmentIds.length > 0 || selectedTrainees.length > 0;
+  const hasActiveFilters = startDate || endDate || selectedMainFrameworkIds.length > 0 || selectedTrainees.length > 0;
   
   if (!hasActiveFilters) return null;
 
@@ -42,11 +42,11 @@ const ActiveFilters: React.FC<ActiveFiltersProps> = ({
         </div>
       )}
       
-      {selectedDepartmentIds.length > 0 && (
+      {selectedMainFrameworkIds.length > 0 && (
         <div className="bg-background border rounded-md px-2 py-1 flex items-center gap-1 text-sm">
-          <span>מחלקות: </span>
-          {selectedDepartmentIds.length} נבחרו
-          <button onClick={clearDepartmentFilters} className="mr-1 hover:text-destructive">
+          <span>מסגרות ראשיות: </span>
+          {selectedMainFrameworkIds.length} נבחרו
+          <button onClick={clearMainFrameworkFilters} className="mr-1 hover:text-destructive">
             <X size={14} />
           </button>
         </div>

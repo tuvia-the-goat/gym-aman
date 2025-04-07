@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../components/DashboardLayout';
 import { useAdmin } from '../context/AdminContext';
-import { Entry, Trainee, EntryStatus } from '../types';
+import { Entry, Trainee, EntryStatus, MainFramework, Base } from '../types';
 import { traineeService } from '../services/api';
 import { useToast } from '@/components/ui/use-toast';
 import { AlertTriangle, CheckCircle, XCircle, User } from 'lucide-react';
@@ -30,12 +31,12 @@ import { cn } from '@/lib/utils';
 console.log('Warning: EntriesHistory.tsx has a type error that needs to be fixed, but it is marked as read-only.');
 
 const EntriesHistory = () => {
-  const { admin, entries, trainees, departments, bases } = useAdmin();
+  const { admin, entries, trainees, mainFrameworks, bases } = useAdmin();
   const [filteredEntries, setFilteredEntries] = useState<Entry[]>([]);
   const [displayedEntries, setDisplayedEntries] = useState<Entry[]>([]);
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedDepartment, setSelectedDepartment] = useState('');
+  const [selectedMainFramework, setSelectedMainFramework] = useState('');
   const [selectedBase, setSelectedBase] = useState('');
   const [selectedProfile, setSelectedProfile] = useState('');
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
@@ -69,8 +70,8 @@ const EntriesHistory = () => {
       );
     }
     
-    if (selectedDepartment) {
-      filtered = filtered.filter(entry => entry.departmentId === selectedDepartment);
+    if (selectedMainFramework) {
+      filtered = filtered.filter(entry => entry.mainFrameworkId === selectedMainFramework);
     }
     
     if (admin?.role === 'generalAdmin' && selectedBase) {
@@ -96,7 +97,7 @@ const EntriesHistory = () => {
     
     setFilteredEntries(filtered);
     setCurrentPage(1);
-  }, [admin, entries, searchTerm, selectedDepartment, selectedBase, selectedProfile, startDate, endDate, trainees]);
+  }, [admin, entries, searchTerm, selectedMainFramework, selectedBase, selectedProfile, startDate, endDate, trainees]);
 
   useEffect(() => {
     const startIndex = (currentPage - 1) * entriesPerPage;
@@ -108,9 +109,9 @@ const EntriesHistory = () => {
     return Math.ceil(filteredEntries.length / entriesPerPage);
   };
 
-  const getDepartmentName = (id: string) => {
-    const department = departments.find(dept => dept._id === id);
-    return department ? department.name : '';
+  const getMainFrameworkName = (id: string) => {
+    const mainFramework = mainFrameworks.find(fw => fw._id === id);
+    return mainFramework ? mainFramework.name : '';
   };
 
   const getBaseName = (id: string) => {
@@ -279,23 +280,23 @@ const EntriesHistory = () => {
           </div>
           
           <div>
-            <label htmlFor="department" className="block text-sm font-medium mb-1">סינון לפי מחלקה</label>
+            <label htmlFor="mainFramework" className="block text-sm font-medium mb-1">סינון לפי מסגרת ראשית</label>
             <select
-              id="department"
-              value={selectedDepartment}
-              onChange={(e) => setSelectedDepartment(e.target.value)}
+              id="mainFramework"
+              value={selectedMainFramework}
+              onChange={(e) => setSelectedMainFramework(e.target.value)}
               className="input-field"
               style={{marginLeft: "20px"}}
             >
-              <option value="">כל המחלקות</option>
-              {departments
-                .filter(dept => 
+              <option value="">כל המסגרות הראשיות</option>
+              {mainFrameworks
+                .filter(fw => 
                   admin?.role === 'generalAdmin' || 
-                  dept.baseId === admin?.baseId
+                  fw.baseId === admin?.baseId
                 )
-                .map(dept => (
-                  <option key={dept._id} value={dept._id}>
-                    {dept.name}
+                .map(fw => (
+                  <option key={fw._id} value={fw._id}>
+                    {fw.name}
                   </option>
                 ))
               }
@@ -404,7 +405,7 @@ const EntriesHistory = () => {
                 <tr>
                   <th className="px-4 py-3 text-right">שם מתאמן</th>
                   <th className="px-4 py-3 text-right">מספר אישי</th>
-                  <th className="px-4 py-3 text-right">מחלקה</th>
+                  <th className="px-4 py-3 text-right">מסגרת ראשית</th>
                   {admin?.role === 'generalAdmin' && (
                     <th className="px-4 py-3 text-right">בסיס</th>
                   )}
@@ -436,7 +437,7 @@ const EntriesHistory = () => {
                           {entry.traineeFullName ||'-'}
                         </td>
                         <td className="px-4 py-3">{entry.traineePersonalId}</td>
-                        <td className="px-4 py-3">{entry.departmentId ? getDepartmentName(entry.departmentId) : '-'}</td>
+                        <td className="px-4 py-3">{entry.mainFrameworkId ? getMainFrameworkName(entry.mainFrameworkId) : '-'}</td>
                         {admin?.role === 'generalAdmin' && (
                           <td className="px-4 py-3">{getBaseName(entry.baseId)}</td>
                         )}
@@ -552,8 +553,8 @@ const EntriesHistory = () => {
                     <div className="text-sm text-muted-foreground">מספר אישי:</div>
                     <div>{selectedTrainee.personalId}</div>
                     
-                    <div className="text-sm text-muted-foreground">מחלקה:</div>
-                    <div>{getDepartmentName(selectedTrainee.departmentId)}</div>
+                    <div className="text-sm text-muted-foreground">מסגרת ראשית:</div>
+                    <div>{getMainFrameworkName(selectedTrainee.mainFrameworkId)}</div>
                     
                     <div className="text-sm text-muted-foreground">בסיס:</div>
                     <div>{getBaseName(selectedTrainee.baseId)}</div>

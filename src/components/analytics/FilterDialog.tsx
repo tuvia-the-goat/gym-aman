@@ -9,22 +9,10 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
+import { MainFramework, Trainee } from '../types';
 
-interface Department {
-  _id: string;
-  name: string;
-  baseId: string;
-}
-
-interface Trainee {
-  _id: string;
-  fullName: string;
-  departmentId: string;
-  baseId: string;
-}
-
-interface TraineesByDepartment {
-  [departmentId: string]: Trainee[];
+interface TraineesByMainFramework {
+  [mainFrameworkId: string]: Trainee[];
 }
 
 interface FilterDialogProps {
@@ -34,16 +22,16 @@ interface FilterDialogProps {
   endDate?: Date;
   setStartDate: (date?: Date) => void;
   setEndDate: (date?: Date) => void;
-  selectedDepartmentIds: string[];
-  setSelectedDepartmentIds: (ids: string[]) => void;
+  selectedMainFrameworkIds: string[];
+  setSelectedMainFrameworkIds: (ids: string[]) => void;
   selectedTrainees: string[];
   setSelectedTrainees: (ids: string[]) => void;
-  availableDepartments: Department[];
-  traineesByDepartment: TraineesByDepartment;
+  availableMainFrameworks: MainFramework[];
+  traineesByMainFramework: TraineesByMainFramework;
   clearFilters: () => void;
-  toggleDepartment: (departmentId: string) => void;
+  toggleMainFramework: (mainFrameworkId: string) => void;
   toggleTrainee: (traineeId: string) => void;
-  getDepartmentName: (id: string) => string;
+  getMainFrameworkName: (id: string) => string;
   getBaseName: (id: string) => string;
   isGeneralAdmin: boolean;
 }
@@ -55,20 +43,20 @@ const FilterDialog: React.FC<FilterDialogProps> = ({
   endDate,
   setStartDate,
   setEndDate,
-  selectedDepartmentIds,
-  setSelectedDepartmentIds,
+  selectedMainFrameworkIds,
+  setSelectedMainFrameworkIds,
   selectedTrainees,
   setSelectedTrainees,
-  availableDepartments,
-  traineesByDepartment,
+  availableMainFrameworks,
+  traineesByMainFramework,
   clearFilters,
-  toggleDepartment,
+  toggleMainFramework,
   toggleTrainee,
-  getDepartmentName,
+  getMainFrameworkName,
   getBaseName,
   isGeneralAdmin
 }) => {
-  const [openDepartmentCommand, setOpenDepartmentCommand] = useState(false);
+  const [openMainFrameworkCommand, setOpenMainFrameworkCommand] = useState(false);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -135,45 +123,45 @@ const FilterDialog: React.FC<FilterDialogProps> = ({
             </div>
           </div>
           
-          {/* Multiple Department Selection */}
+          {/* Multiple Main Framework Selection */}
           <div className="space-y-2">
-            <h3 className="font-medium">בחירת מחלקות</h3>
-            <Popover open={openDepartmentCommand} onOpenChange={setOpenDepartmentCommand}>
+            <h3 className="font-medium">בחירת מסגרות ראשיות</h3>
+            <Popover open={openMainFrameworkCommand} onOpenChange={setOpenMainFrameworkCommand}>
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
                   role="combobox"
-                  aria-expanded={openDepartmentCommand}
+                  aria-expanded={openMainFrameworkCommand}
                   className="w-full justify-between text-right"
                 >
-                  {selectedDepartmentIds.length > 0
-                    ? `${selectedDepartmentIds.length} מחלקות נבחרו`
-                    : "בחר מחלקות"}
+                  {selectedMainFrameworkIds.length > 0
+                    ? `${selectedMainFrameworkIds.length} מסגרות ראשיות נבחרו`
+                    : "בחר מסגרות ראשיות"}
                   <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-full p-0">
                 <Command>
-                  <CommandInput placeholder="חפש מחלקה..." />
+                  <CommandInput placeholder="חפש מסגרת ראשית..." />
                   <CommandList>
-                    <CommandEmpty>לא נמצאו מחלקות</CommandEmpty>
+                    <CommandEmpty>לא נמצאו מסגרות ראשיות</CommandEmpty>
                     <CommandGroup>
-                      {availableDepartments.map((department) => (
+                      {availableMainFrameworks.map((framework) => (
                         <CommandItem
-                          key={department._id}
-                          value={department.name}
+                          key={framework._id}
+                          value={framework.name}
                           onSelect={() => {
-                            toggleDepartment(department._id);
+                            toggleMainFramework(framework._id);
                           }}
                         >
                           <Checkbox
-                            checked={selectedDepartmentIds.includes(department._id)}
+                            checked={selectedMainFrameworkIds.includes(framework._id)}
                             className="ml-2"
                           />
-                          <span>{department.name}</span>
+                          <span>{framework.name}</span>
                           {isGeneralAdmin && (
                             <span className="mr-auto text-xs text-muted-foreground">
-                              {getBaseName(department.baseId)}
+                              {getBaseName(framework.baseId)}
                             </span>
                           )}
                         </CommandItem>
@@ -184,13 +172,13 @@ const FilterDialog: React.FC<FilterDialogProps> = ({
               </PopoverContent>
             </Popover>
             
-            {selectedDepartmentIds.length > 0 && (
+            {selectedMainFrameworkIds.length > 0 && (
               <div className="flex flex-wrap gap-2 mt-2">
-                {selectedDepartmentIds.map(deptId => (
-                  <div key={deptId} className="bg-muted text-sm rounded-md px-2 py-1 flex items-center gap-1">
-                    {getDepartmentName(deptId)}
+                {selectedMainFrameworkIds.map(frameworkId => (
+                  <div key={frameworkId} className="bg-muted text-sm rounded-md px-2 py-1 flex items-center gap-1">
+                    {getMainFrameworkName(frameworkId)}
                     <button 
-                      onClick={() => toggleDepartment(deptId)} 
+                      onClick={() => toggleMainFramework(frameworkId)} 
                       className="hover:text-destructive"
                     >
                       <X size={14} />
@@ -200,7 +188,7 @@ const FilterDialog: React.FC<FilterDialogProps> = ({
                 <Button 
                   variant="ghost" 
                   size="sm" 
-                  onClick={() => setSelectedDepartmentIds([])}
+                  onClick={() => setSelectedMainFrameworkIds([])}
                   className="text-xs"
                 >
                   נקה הכל
@@ -209,27 +197,27 @@ const FilterDialog: React.FC<FilterDialogProps> = ({
             )}
           </div>
           
-          {/* Trainees Selection (organized by department) */}
+          {/* Trainees Selection (organized by main framework) */}
           <div className="space-y-2">
             <h3 className="font-medium">בחירת מתאמנים</h3>
             <div className="max-h-64 overflow-y-auto border rounded-md">
-              {Object.keys(traineesByDepartment).length === 0 ? (
+              {Object.keys(traineesByMainFramework).length === 0 ? (
                 <p className="text-center py-2 text-muted-foreground">אין מתאמנים זמינים</p>
               ) : (
                 <div className="divide-y">
-                  {Object.entries(traineesByDepartment).map(([deptId, deptTrainees]) => (
-                    <div key={deptId} className="p-2">
+                  {Object.entries(traineesByMainFramework).map(([frameworkId, frameworkTrainees]) => (
+                    <div key={frameworkId} className="p-2">
                       <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-medium text-sm">{getDepartmentName(deptId)}</h4>
+                        <h4 className="font-medium text-sm">{getMainFrameworkName(frameworkId)}</h4>
                         <Button 
                           variant="ghost" 
                           size="sm" 
                           className="h-6 text-xs"
                           onClick={() => {
-                            // Get trainee IDs for this department
-                            const traineeIds = deptTrainees.map(t => t._id);
+                            // Get trainee IDs for this main framework
+                            const traineeIds = frameworkTrainees.map(t => t._id);
                             
-                            // Check if all trainees from this department are already selected
+                            // Check if all trainees from this main framework are already selected
                             const allSelected = traineeIds.every(id => selectedTrainees.includes(id));
                             
                             if (allSelected) {
@@ -248,14 +236,14 @@ const FilterDialog: React.FC<FilterDialogProps> = ({
                             }
                           }}
                         >
-                          {deptTrainees.every(t => selectedTrainees.includes(t._id)) 
+                          {frameworkTrainees.every(t => selectedTrainees.includes(t._id)) 
                             ? "בטל בחירת כולם" 
                             : "בחר הכל"}
                         </Button>
                       </div>
                       
                       <div className="space-y-1 pl-2">
-                        {deptTrainees.map(trainee => (
+                        {frameworkTrainees.map(trainee => (
                           <div key={trainee._id} className="flex items-center space-x-2 justify-end">
                             <label htmlFor={`trainee-${trainee._id}`} className="text-sm cursor-pointer mr-2 flex-1">
                               {trainee.fullName}
