@@ -8,6 +8,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Checkbox } from '@/components/ui/checkbox';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 
 interface Department {
@@ -69,6 +70,62 @@ const FilterDialog: React.FC<FilterDialogProps> = ({
   isGeneralAdmin
 }) => {
   const [openDepartmentCommand, setOpenDepartmentCommand] = useState(false);
+  const [startDateInput, setStartDateInput] = useState(startDate ? format(startDate, "yyyy-MM-dd") : "");
+  const [endDateInput, setEndDateInput] = useState(endDate ? format(endDate, "yyyy-MM-dd") : "");
+
+  // Handle manual date input changes
+  const handleStartDateInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setStartDateInput(value);
+    
+    try {
+      if (value) {
+        const date = new Date(value);
+        if (!isNaN(date.getTime())) {
+          setStartDate(date);
+        }
+      } else {
+        setStartDate(undefined);
+      }
+    } catch (error) {
+      console.error("Invalid date format:", error);
+    }
+  };
+
+  const handleEndDateInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setEndDateInput(value);
+    
+    try {
+      if (value) {
+        const date = new Date(value);
+        if (!isNaN(date.getTime())) {
+          setEndDate(date);
+        }
+      } else {
+        setEndDate(undefined);
+      }
+    } catch (error) {
+      console.error("Invalid date format:", error);
+    }
+  };
+
+  // Update text inputs when dates change via calendar
+  React.useEffect(() => {
+    if (startDate) {
+      setStartDateInput(format(startDate, "yyyy-MM-dd"));
+    } else {
+      setStartDateInput("");
+    }
+  }, [startDate]);
+
+  React.useEffect(() => {
+    if (endDate) {
+      setEndDateInput(format(endDate, "yyyy-MM-dd"));
+    } else {
+      setEndDateInput("");
+    }
+  }, [endDate]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -82,55 +139,73 @@ const FilterDialog: React.FC<FilterDialogProps> = ({
             <div className="flex gap-2">
               <div className="w-1/2">
                 <p className="text-sm mb-1">מתאריך:</p>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className={cn(
-                        "w-full justify-start text-right",
-                        !startDate && "text-muted-foreground"
-                      )}
-                    >
-                      <CalendarIcon className="ml-2 h-4 w-4" />
-                      {startDate ? format(startDate, "dd/MM/yyyy") : "בחר תאריך"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={startDate}
-                      onSelect={setStartDate}
-                      initialFocus
-                      className="p-3 pointer-events-auto"
-                    />
-                  </PopoverContent>
-                </Popover>
+                <div className="flex flex-col gap-2">
+                  <Input
+                    type="date"
+                    value={startDateInput}
+                    onChange={handleStartDateInputChange}
+                    className="w-full"
+                    dir="ltr"
+                  />
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-full justify-start text-right",
+                          !startDate && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="ml-2 h-4 w-4" />
+                        {startDate ? format(startDate, "dd/MM/yyyy") : "בחר תאריך"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={startDate}
+                        onSelect={setStartDate}
+                        initialFocus
+                        className="p-3 pointer-events-auto"
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
               </div>
               <div className="w-1/2">
                 <p className="text-sm mb-1">עד תאריך:</p>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className={cn(
-                        "w-full justify-start text-right",
-                        !endDate && "text-muted-foreground"
-                      )}
-                    >
-                      <CalendarIcon className="ml-2 h-4 w-4" />
-                      {endDate ? format(endDate, "dd/MM/yyyy") : "בחר תאריך"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={endDate}
-                      onSelect={setEndDate}
-                      initialFocus
-                      className="p-3 pointer-events-auto"
-                    />
-                  </PopoverContent>
-                </Popover>
+                <div className="flex flex-col gap-2">
+                  <Input
+                    type="date"
+                    value={endDateInput}
+                    onChange={handleEndDateInputChange}
+                    className="w-full"
+                    dir="ltr"
+                  />
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-full justify-start text-right",
+                          !endDate && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="ml-2 h-4 w-4" />
+                        {endDate ? format(endDate, "dd/MM/yyyy") : "בחר תאריך"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={endDate}
+                        onSelect={setEndDate}
+                        initialFocus
+                        className="p-3 pointer-events-auto"
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
               </div>
             </div>
           </div>
