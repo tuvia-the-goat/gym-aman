@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAdmin } from '../context/AdminContext';
@@ -9,6 +8,9 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { Search, Filter, Calendar, Check, X } from 'lucide-react';
 import TraineeProfile from '../components/TraineeProfile';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar as CalendarComponent } from '@/components/ui/calendar';
+import { format, addMonths, isAfter, isBefore } from 'date-fns';
 
 const MedicalApprovals = () => {
   const navigate = useNavigate();
@@ -19,6 +21,7 @@ const MedicalApprovals = () => {
   const [selectedTrainee, setSelectedTrainee] = useState<Trainee | null>(null);
   const [filteredTrainees, setFilteredTrainees] = useState<Trainee[]>([]);
   const [showOnlyExpired, setShowOnlyExpired] = useState(false);
+  const [expirationDate, setExpirationDate] = useState<Date | undefined>(undefined);
   
   useEffect(() => {
     if (!admin) {
@@ -47,8 +50,22 @@ const MedicalApprovals = () => {
       );
     }
     
+    // Filter based on expiration date
+    if (expirationDate) {
+      filtered = filtered.filter(trainee => 
+        trainee.medicalApproval.approved && 
+        trainee.medicalApproval.expirationDate && 
+        isBefore(new Date(trainee.medicalApproval.expirationDate), expirationDate)
+      );
+    }
+    
     setFilteredTrainees(filtered);
-  }, [trainees, searchQuery, showOnlyExpired]);
+  }, [trainees, searchQuery, showOnlyExpired, expirationDate]);
+  
+  const clearFilters = () => {
+    setShowOnlyExpired(false);
+    setExpirationDate(undefined);
+  };
   
   const handleTraineeSelect = (trainee: Trainee) => {
     setSelectedTrainee(trainee);
@@ -104,14 +121,92 @@ const MedicalApprovals = () => {
             />
           </div>
           
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button 
+                variant={expirationDate ? "default" : "outline"}
+                className="w-full md:w-auto"
+              >
+                <Calendar className="mr-2 h-4 w-4" />
+                {expirationDate ? `יפוג עד ${format(expirationDate, 'dd/MM/yyyy')}` : 'סינון לפי תאריך פקיעה'}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <div className="p-3">
+                <h3 className="mb-2 font-medium text-right">בחר תאריך פקיעה</h3>
+                <div className="flex flex-col gap-2">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => {
+                      const oneMonth = addMonths(new Date(), 1);
+                      setExpirationDate(oneMonth);
+                    }}
+                    className="justify-start"
+                  >
+                    יפוג תוך חודש
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => {
+                      const threeMonths = addMonths(new Date(), 3);
+                      setExpirationDate(threeMonths);
+                    }}
+                    className="justify-start"
+                  >
+                    יפוג תוך 3 חודשים
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => {
+                      const sixMonths = addMonths(new Date(), 6);
+                      setExpirationDate(sixMonths);
+                    }}
+                    className="justify-start"
+                  >
+                    יפוג תוך 6 חודשים
+                  </Button>
+                </div>
+                <CalendarComponent
+                  mode="single"
+                  selected={expirationDate}
+                  onSelect={setExpirationDate}
+                  className="p-3 pointer-events-auto mt-2"
+                />
+                <div className="flex justify-between mt-2">
+                  <Button 
+                    variant="ghost" 
+                    onClick={() => setExpirationDate(undefined)}
+                    size="sm"
+                  >
+                    נקה סינון
+                  </Button>
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
+          
           <Button
             variant={showOnlyExpired ? "default" : "outline"}
-            onClick={() => setShowOnlyExpired(!showOnlyExpired)}
+            onClick={() => {
+              setShowOnlyExpired(!showOnlyExpired);
+              if (expirationDate) setExpirationDate(undefined);
+            }}
             className="w-full md:w-auto"
           >
             <Filter className="mr-2 h-4 w-4" />
             {showOnlyExpired ? 'הצג את כולם' : 'הצג רק פגי תוקף'}
           </Button>
+          
+          {(showOnlyExpired || expirationDate) && (
+            <Button
+              variant="ghost"
+              onClick={clearFilters}
+              className="w-full md:w-auto"
+            >
+              <X className="mr-2 h-4 w-4" />
+              נקה סינונים
+            </Button>
+          )}
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

@@ -1,12 +1,24 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAdmin } from '../context/AdminContext';
 import { Button } from '@/components/ui/button';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger
+} from "@/components/ui/alert-dialog";
 
 const Index = () => {
   const navigate = useNavigate();
   const { admin, loading } = useAdmin();
+  const [showGymEntryConfirm, setShowGymEntryConfirm] = useState(false);
   
   useEffect(() => {
     // If user is already logged in, redirect to dashboard
@@ -15,8 +27,31 @@ const Index = () => {
     }
   }, [admin, loading, navigate]);
 
+  const handleGymEntryClick = () => {
+    setShowGymEntryConfirm(true);
+  };
+
+  const handleGymEntryConfirm = () => {
+    navigate('/trainee-entering');
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-background to-secondary/20">
+      <AlertDialog open={showGymEntryConfirm} onOpenChange={setShowGymEntryConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>מעבר למסך כניסה לחדר כושר</AlertDialogTitle>
+            <AlertDialogDescription>
+              אתה עומד לעבור למסך כניסה לחדר כושר. האם אתה בטוח שברצונך להמשיך?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>ביטול</AlertDialogCancel>
+            <AlertDialogAction onClick={handleGymEntryConfirm}>המשך</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <div className="max-w-lg w-full px-4 py-8 space-y-8 bg-background rounded-lg shadow-lg text-center">
         <h1 className="text-4xl font-bold">מערכת אימ"ון</h1>
         <p className="text-xl text-muted-foreground">מערכת ניהול חדר כושר</p>
@@ -25,7 +60,7 @@ const Index = () => {
           <Button size="lg" onClick={() => navigate('/login')} className="w-full">
             כניסה למערכת
           </Button>
-          <Button size="lg" variant="outline" onClick={() => navigate('/trainee-entering')} className="w-full">
+          <Button size="lg" variant="outline" onClick={handleGymEntryClick} className="w-full">
             כניסה לחדר כושר
           </Button>
         </div>

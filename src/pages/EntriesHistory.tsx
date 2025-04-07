@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../components/DashboardLayout';
 import { useAdmin } from '../context/AdminContext';
@@ -55,7 +56,11 @@ const EntriesHistory = () => {
       filtered = filtered.filter(entry => entry.baseId === admin.baseId);
     }
     if (searchTerm) {
-      filtered = filtered.filter(entry => entry.traineeFullName.includes(searchTerm));
+      // Fixed: Added null/undefined check before calling toLowerCase
+      const lowerCaseSearchTerm = searchTerm.toLowerCase();
+      filtered = filtered.filter(entry => 
+        entry.traineeFullName && entry.traineeFullName.toLowerCase().includes(lowerCaseSearchTerm)
+      );
     }
     if (selectedDepartment) {
       filtered = filtered.filter(entry => entry.departmentId === selectedDepartment);
