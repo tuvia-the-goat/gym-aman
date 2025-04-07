@@ -4,12 +4,12 @@ import { isWithinInterval, parseISO } from 'date-fns';
 import { useAdmin } from '../context/AdminContext';
 
 export const useAnalyticsFilters = () => {
-  const { admin, entries, trainees, departments } = useAdmin();
+  const { admin, entries, trainees, mainFrameworks } = useAdmin();
   
   // Filtering state
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
-  const [selectedDepartmentIds, setSelectedDepartmentIds] = useState<string[]>([]);
+  const [selectedMainFrameworkIds, setSelectedMainFrameworkIds] = useState<string[]>([]);
   const [selectedTrainees, setSelectedTrainees] = useState<string[]>([]);
   const [showFilterDialog, setShowFilterDialog] = useState(false);
   
@@ -30,9 +30,9 @@ export const useAnalyticsFilters = () => {
       });
     }
     
-    // Department filter
-    if (selectedDepartmentIds.length > 0) {
-      filtered = filtered.filter(entry => selectedDepartmentIds.includes(entry.departmentId));
+    // Main framework filter
+    if (selectedMainFrameworkIds.length > 0) {
+      filtered = filtered.filter(entry => selectedMainFrameworkIds.includes(entry.mainFrameworkId));
     }
     
     // Selected trainees filter
@@ -41,7 +41,7 @@ export const useAnalyticsFilters = () => {
     }
     
     return filtered;
-  }, [admin, entries, startDate, endDate, selectedDepartmentIds, selectedTrainees]);
+  }, [admin, entries, startDate, endDate, selectedMainFrameworkIds, selectedTrainees]);
   
   const filteredTrainees = useMemo(() => {
     let filtered = trainees;
@@ -51,9 +51,9 @@ export const useAnalyticsFilters = () => {
       filtered = filtered.filter(trainee => trainee.baseId === admin.baseId);
     }
     
-    // Department filter
-    if (selectedDepartmentIds.length > 0) {
-      filtered = filtered.filter(trainee => selectedDepartmentIds.includes(trainee.departmentId));
+    // Main framework filter
+    if (selectedMainFrameworkIds.length > 0) {
+      filtered = filtered.filter(trainee => selectedMainFrameworkIds.includes(trainee.mainFrameworkId));
     }
     
     // Selected trainees filter
@@ -62,15 +62,15 @@ export const useAnalyticsFilters = () => {
     }
     
     return filtered;
-  }, [admin, trainees, selectedDepartmentIds, selectedTrainees]);
+  }, [admin, trainees, selectedMainFrameworkIds, selectedTrainees]);
   
-  // Get available departments for filtering
-  const availableDepartments = useMemo(() => {
+  // Get available main frameworks for filtering
+  const availableMainFrameworks = useMemo(() => {
     if (admin?.role === 'gymAdmin' && admin.baseId) {
-      return departments.filter(dept => dept.baseId === admin.baseId);
+      return mainFrameworks.filter(framework => framework.baseId === admin.baseId);
     }
-    return departments;
-  }, [admin, departments]);
+    return mainFrameworks;
+  }, [admin, mainFrameworks]);
   
   // Get available trainees for filtering
   const availableTrainees = useMemo(() => {
@@ -84,19 +84,19 @@ export const useAnalyticsFilters = () => {
     return filtered;
   }, [admin, trainees]);
   
-  // Group trainees by department for the UI
-  const traineesByDepartment = useMemo(() => {
+  // Group trainees by main framework for the UI
+  const traineesByMainFramework = useMemo(() => {
     const grouped: Record<string, typeof trainees> = {};
     
-    // Filter trainees by selected departments if any are selected
+    // Filter trainees by selected main frameworks if any are selected
     let filteredTrainees = availableTrainees;
     
-    // Group the trainees by department
+    // Group the trainees by main framework
     filteredTrainees.forEach(trainee => {
-      if (!grouped[trainee.departmentId]) {
-        grouped[trainee.departmentId] = [];
+      if (!grouped[trainee.mainFrameworkId]) {
+        grouped[trainee.mainFrameworkId] = [];
       }
-      grouped[trainee.departmentId].push(trainee);
+      grouped[trainee.mainFrameworkId].push(trainee);
     });
     
     return grouped;
@@ -104,14 +104,14 @@ export const useAnalyticsFilters = () => {
 
   // Check if specific filters are active
   const hasDateFilters = Boolean(startDate || endDate);
-  const hasSpecificFilters = selectedDepartmentIds.length > 0 || selectedTrainees.length > 0;
+  const hasSpecificFilters = selectedMainFrameworkIds.length > 0 || selectedTrainees.length > 0;
   const hasActiveFilters = hasDateFilters || hasSpecificFilters;
   
   // Clear all filters
   const clearFilters = () => {
     setStartDate(undefined);
     setEndDate(undefined);
-    setSelectedDepartmentIds([]);
+    setSelectedMainFrameworkIds([]);
     setSelectedTrainees([]);
   };
   
@@ -121,8 +121,8 @@ export const useAnalyticsFilters = () => {
     setEndDate(undefined);
   };
   
-  const clearDepartmentFilters = () => {
-    setSelectedDepartmentIds([]);
+  const clearMainFrameworkFilters = () => {
+    setSelectedMainFrameworkIds([]);
   };
   
   const clearTraineeFilters = () => {
@@ -138,24 +138,24 @@ export const useAnalyticsFilters = () => {
     );
   };
   
-  // Toggle entire department selection
-  const toggleDepartment = (departmentId: string) => {
-    setSelectedDepartmentIds(prev => {
-      if (prev.includes(departmentId)) {
-        // If department is already selected, remove it
-        return prev.filter(id => id !== departmentId);
+  // Toggle entire main framework selection
+  const toggleMainFramework = (mainFrameworkId: string) => {
+    setSelectedMainFrameworkIds(prev => {
+      if (prev.includes(mainFrameworkId)) {
+        // If main framework is already selected, remove it
+        return prev.filter(id => id !== mainFrameworkId);
       } else {
-        // If department is not selected, add it
-        return [...prev, departmentId];
+        // If main framework is not selected, add it
+        return [...prev, mainFrameworkId];
       }
     });
     
-    // Also update trainee selection based on department toggle
-    const departmentTrainees = traineesByDepartment[departmentId] || [];
-    const traineeIds = departmentTrainees.map(trainee => trainee._id);
+    // Also update trainee selection based on main framework toggle
+    const frameworkTrainees = traineesByMainFramework[mainFrameworkId] || [];
+    const traineeIds = frameworkTrainees.map(trainee => trainee._id);
     
-    if (selectedDepartmentIds.includes(departmentId)) {
-      // If department is already selected, remove all its trainees
+    if (selectedMainFrameworkIds.includes(mainFrameworkId)) {
+      // If main framework is already selected, remove all its trainees
       setSelectedTrainees(prev => prev.filter(id => !traineeIds.includes(id)));
     }
   };
@@ -165,25 +165,25 @@ export const useAnalyticsFilters = () => {
     setStartDate,
     endDate,
     setEndDate,
-    selectedDepartmentIds,
-    setSelectedDepartmentIds,
+    selectedMainFrameworkIds,
+    setSelectedMainFrameworkIds,
     selectedTrainees,
     setSelectedTrainees,
     showFilterDialog,
     setShowFilterDialog,
     filteredEntries,
     filteredTrainees,
-    availableDepartments,
+    availableMainFrameworks,
     availableTrainees,
-    traineesByDepartment,
+    traineesByMainFramework,
     hasDateFilters,
     hasSpecificFilters,
     hasActiveFilters,
     clearFilters,
     clearDateFilters,
-    clearDepartmentFilters,
+    clearMainFrameworkFilters,
     clearTraineeFilters,
     toggleTrainee,
-    toggleDepartment
+    toggleMainFramework
   };
 };

@@ -1,3 +1,4 @@
+
 import { useMemo } from 'react';
 import { isWithinInterval, parseISO, differenceInYears } from 'date-fns';
 import { useAdmin } from '../context/AdminContext';
@@ -9,7 +10,7 @@ export const useAnalyticsData = (
   endDate?: Date,
   hasSpecificFilters = false
 ) => {
-  const { admin, entries, departments, bases } = useAdmin();
+  const { admin, entries, mainFrameworks, bases } = useAdmin();
   const isGeneralAdmin = admin?.role === 'generalAdmin';
 
   // Data for days of week chart - now calculates averages
@@ -161,7 +162,7 @@ export const useAnalyticsData = (
           fullName: trainee.fullName,
           gender: trainee.gender,
           medicalProfile: trainee.medicalProfile,
-          departmentName: getDepartmentName(trainee.departmentId)
+          mainFrameworkName: getMainFrameworkName(trainee.mainFrameworkId)
         };
       });
   }, [filteredTrainees]);
@@ -175,7 +176,7 @@ export const useAnalyticsData = (
         id: trainee._id, 
         name: trainee.fullName, 
         count, 
-        departmentId: trainee.departmentId,
+        mainFrameworkId: trainee.mainFrameworkId,
         baseId: trainee.baseId
       };
     });
@@ -186,12 +187,12 @@ export const useAnalyticsData = (
       .map(trainee => ({
         name: trainee.name,
         value: trainee.count,
-        departmentName: getDepartmentName(trainee.departmentId),
+        mainFrameworkName: getMainFrameworkName(trainee.mainFrameworkId),
         baseName: getBaseName(trainee.baseId)
       }));
   }, [filteredEntries, filteredTrainees]);
   
-  // Top departments data - always show top 5 regardless of trainee/department filters
+  // Top main frameworks data
   const topDepartmentsData = useMemo(() => {
     // Filter entries only by date range if date filters are active
     let entriesForTopChart = entries;
@@ -208,28 +209,28 @@ export const useAnalyticsData = (
       });
     }
     
-    const departmentCounts: { [key: string]: number } = {};
+    const frameworkCounts: { [key: string]: number } = {};
     
     entriesForTopChart.forEach(entry => {
-      const deptId = entry.departmentId;
-      departmentCounts[deptId] = (departmentCounts[deptId] || 0) + 1;
+      const frameworkId = entry.mainFrameworkId;
+      frameworkCounts[frameworkId] = (frameworkCounts[frameworkId] || 0) + 1;
     });
     
-    return Object.entries(departmentCounts)
-      .map(([deptId, count]) => ({
-        id: deptId,
-        name: getDepartmentName(deptId),
+    return Object.entries(frameworkCounts)
+      .map(([frameworkId, count]) => ({
+        id: frameworkId,
+        name: getMainFrameworkName(frameworkId),
         value: count,
-        baseId: departments.find(d => d._id === deptId)?.baseId || '',
+        baseId: mainFrameworks.find(d => d._id === frameworkId)?.baseId || '',
       }))
       .sort((a, b) => b.value - a.value)
       .slice(0, 5)
-      .map(dept => ({
-        name: dept.name,
-        value: dept.value,
-        baseName: getBaseName(dept.baseId)
+      .map(framework => ({
+        name: framework.name,
+        value: framework.value,
+        baseName: getBaseName(framework.baseId)
       }));
-  }, [entries, departments, admin, startDate, endDate]);
+  }, [entries, mainFrameworks, admin, startDate, endDate]);
   
   // Bases data (only for all bases admin)
   const basesData = useMemo(() => {
@@ -267,9 +268,9 @@ export const useAnalyticsData = (
   }, [filteredEntries, filteredTrainees]);
   
   // Helper functions to get names
-  function getDepartmentName(id: string): string {
-    const department = departments.find(dept => dept._id === id);
-    return department ? department.name : '';
+  function getMainFrameworkName(id: string): string {
+    const framework = mainFrameworks.find(fw => fw._id === id);
+    return framework ? framework.name : '';
   }
   
   function getBaseName(id: string): string {
@@ -289,7 +290,7 @@ export const useAnalyticsData = (
     detailedTraineeAgeData,
     avgEntriesPerTrainee,
     isGeneralAdmin,
-    getDepartmentName,
+    getMainFrameworkName,
     getBaseName
   };
 };
