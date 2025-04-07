@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { format } from 'date-fns';
 import { CalendarIcon, X, ChevronsUpDown, Check } from 'lucide-react';
@@ -9,7 +8,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
-import { MainFramework, Trainee } from '../types';
+import { MainFramework, Trainee } from '@/types';
 
 interface TraineesByMainFramework {
   [mainFrameworkId: string]: Trainee[];

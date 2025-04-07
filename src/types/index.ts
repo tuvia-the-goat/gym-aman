@@ -93,3 +93,14 @@ export interface AdminContextType {
   loading: boolean;
   setLoading: (loading: boolean) => void;
 }
+
+// Add FullTraineeDataPoint type for Analytics.tsx
+export interface FullTraineeDataPoint {
+  _id: string;
+  age: number;
+  fullName: string;
+  gender: 'male' | 'female';
+  medicalProfile: string;
+  mainFrameworkName: string;
+  departmentName: string; // For backward compatibility
+}

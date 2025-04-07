@@ -162,7 +162,8 @@ export const useAnalyticsData = (
           fullName: trainee.fullName,
           gender: trainee.gender,
           medicalProfile: trainee.medicalProfile,
-          mainFrameworkName: getMainFrameworkName(trainee.mainFrameworkId)
+          mainFrameworkName: getMainFrameworkName(trainee.mainFrameworkId),
+          departmentName: getMainFrameworkName(trainee.mainFrameworkId) // Adding departmentName for backward compatibility
         };
       });
   }, [filteredTrainees]);

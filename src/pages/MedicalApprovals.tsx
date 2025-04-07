@@ -1,8 +1,7 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAdmin } from '../context/AdminContext';
-import { Trainee, Base, Department } from '../types';
+import { Trainee, MainFramework } from '../types';
 import DashboardLayout from '../components/DashboardLayout';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -12,7 +11,7 @@ import TraineeProfile from '../components/TraineeProfile';
 
 const MedicalApprovals = () => {
   const navigate = useNavigate();
-  const { admin, trainees, departments, setTrainees } = useAdmin();
+  const { admin, trainees, mainFrameworks, setTrainees } = useAdmin();
   const { toast } = useToast();
   
   const [searchQuery, setSearchQuery] = useState('');
@@ -29,7 +28,6 @@ const MedicalApprovals = () => {
   useEffect(() => {
     let filtered = [...trainees];
     
-    // Filter based on search query
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(trainee => 
@@ -38,7 +36,6 @@ const MedicalApprovals = () => {
       );
     }
     
-    // Filter based on expired approvals
     if (showOnlyExpired) {
       filtered = filtered.filter(trainee => 
         !trainee.medicalApproval.approved || 
@@ -61,7 +58,6 @@ const MedicalApprovals = () => {
     setTrainees(updatedTrainees);
     setSelectedTrainee(updatedTrainee);
     
-    // Update filtered trainees as well
     const updatedFiltered = filteredTrainees.map(t => 
       t._id === updatedTrainee._id ? updatedTrainee : t
     );
@@ -160,7 +156,6 @@ const MedicalApprovals = () => {
             {selectedTrainee ? (
               <TraineeProfile 
                 trainee={selectedTrainee} 
-                departments={departments} 
                 onUpdate={handleTraineeUpdate} 
               />
             ) : (
