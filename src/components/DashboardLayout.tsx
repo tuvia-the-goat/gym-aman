@@ -29,7 +29,7 @@ const DashboardLayout = ({ children, activeTab }: DashboardLayoutProps) => {
   const navigate = useNavigate();
   const { admin, loading } = useAdmin();
   const { toast } = useToast();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true); // Default to open on desktop
   const isMobile = useIsMobile();
   
   useEffect(() => {
@@ -42,6 +42,9 @@ const DashboardLayout = ({ children, activeTab }: DashboardLayoutProps) => {
     // Close sidebar when navigating on mobile
     if (isMobile) {
       setSidebarOpen(false);
+    } else {
+      // Always open sidebar on desktop
+      setSidebarOpen(true);
     }
   }, [activeTab, isMobile]);
   
@@ -121,34 +124,38 @@ const DashboardLayout = ({ children, activeTab }: DashboardLayoutProps) => {
   return (
     <SidebarProvider>
       <div className="flex h-screen overflow-hidden w-full">
-        {/* Mobile Sidebar Toggle */}
+        {/* Mobile Sidebar Toggle - only visible on mobile */}
         {isMobile && (
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="fixed right-4 top-4 z-50 p-2 bg-primary text-primary-foreground rounded-md shadow-lg"
+            className="fixed right-4 top-4 z-50 p-2 bg-primary text-primary-foreground rounded-md shadow-lg md:hidden"
           >
             {sidebarOpen ? <X /> : <Menu />}
           </button>
         )}
         
-        {/* Sidebar */}
+        {/* Sidebar - wider and always visible on desktop */}
         <Sidebar
-          className={`${isMobile ? 'fixed inset-y-0 right-0 z-40' : 'sticky top-0 h-screen'} max-w-[250px] border-l`}
+          className={`
+            ${isMobile ? 'fixed inset-y-0 right-0 z-40' : 'sticky top-0 h-screen'}
+            ${isMobile && !sidebarOpen ? '-right-72' : 'right-0'}
+            max-w-[280px] md:min-w-[250px] border-l transition-all duration-300
+          `}
         >
-          <SidebarHeader className="px-6 py-4 flex flex-col items-center justify-center text-center">
-            <h1 className="text-2xl font-bold">
+          <SidebarHeader className="px-6 py-6 flex flex-col items-center justify-center text-center">
+            <h1 className="text-3xl font-bold">
               מערכת אימ"ון
             </h1>
-            <div className="mt-2 px-3 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium">
+            <div className="mt-3 px-4 py-2 bg-primary/10 text-primary rounded-full text-sm font-medium">
               {admin.role === 'generalAdmin' ? 'מנהל כללי' : 'מנהל חדר כושר'}
             </div>
           </SidebarHeader>
           
-          <SidebarContent className="px-3 py-2">
+          <SidebarContent className="px-4 py-4">
             <SidebarMenu>
               {filteredSidebarItems.map((item) => (
                 <SidebarMenuItem key={item.path}>
-                  <SidebarMenuButton asChild className={item.active ? "bg-accent text-accent-foreground" : ""}>
+                  <SidebarMenuButton asChild className={item.active ? "bg-accent text-accent-foreground text-base py-3" : "text-base py-3"}>
                     <Link to={item.path} className="flex items-center gap-3">
                       {item.icon}
                       <span>{item.label}</span>
@@ -159,21 +166,23 @@ const DashboardLayout = ({ children, activeTab }: DashboardLayoutProps) => {
             </SidebarMenu>
           </SidebarContent>
           
-          <SidebarFooter className="px-3 py-4">
+          <SidebarFooter className="px-4 py-5">
             <Button 
               variant="outline" 
-              className="w-full justify-start" 
+              className="w-full justify-start py-3 text-base" 
               onClick={handleLogout}
             >
-              <LogOut className="ml-2 h-4 w-4" />
+              <LogOut className="ml-3 h-5 w-5" />
               התנתק
             </Button>
           </SidebarFooter>
         </Sidebar>
         
-        {/* Main Content */}
-        <main className="flex-1 overflow-auto">
-          {children}
+        {/* Main Content - expanded with margins on desktop */}
+        <main className="flex-1 overflow-auto bg-background p-4 md:p-6 lg:p-8">
+          <div className="mx-auto max-w-7xl">
+            {children}
+          </div>
         </main>
       </div>
     </SidebarProvider>
