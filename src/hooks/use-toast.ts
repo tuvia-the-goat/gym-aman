@@ -1,8 +1,6 @@
 
+import * as React from "react"
 import { ToastActionElement, ToastProps } from "@/components/ui/toast"
-import {
-  useToast as useToastOriginal,
-} from "@radix-ui/react-toast"
 
 export type ToasterToast = ToastProps & {
   id: string
@@ -111,5 +109,5 @@ export const toast = (props: Omit<ToasterToast, "id">) => {
   return id
 }
 
+// Export types correctly using 'export type'
 export type { ToastActionElement, ToastProps }
-export { ToastActionElement, ToastProps }
