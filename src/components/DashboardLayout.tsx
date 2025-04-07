@@ -19,6 +19,16 @@ import {
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { useIsMobile } from '../hooks/use-mobile';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -31,6 +41,7 @@ const DashboardLayout = ({ children, activeTab }: DashboardLayoutProps) => {
   const { toast } = useToast();
   const [sidebarOpen, setSidebarOpen] = useState(true); // Default to open on desktop
   const isMobile = useIsMobile();
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   
   useEffect(() => {
     if (!loading && !admin) {
@@ -47,6 +58,10 @@ const DashboardLayout = ({ children, activeTab }: DashboardLayoutProps) => {
       setSidebarOpen(true);
     }
   }, [activeTab, isMobile]);
+  
+  const handleLogoutConfirm = () => {
+    setShowLogoutConfirm(true);
+  };
   
   const handleLogout = () => {
     authService.logout();
@@ -132,6 +147,21 @@ const DashboardLayout = ({ children, activeTab }: DashboardLayoutProps) => {
   
   return (
     <SidebarProvider>
+      <AlertDialog open={showLogoutConfirm} onOpenChange={setShowLogoutConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>האם אתה בטוח שברצונך להתנתק?</AlertDialogTitle>
+            <AlertDialogDescription>
+              לאחר ההתנתקות תועבר למסך הכניסה.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>ביטול</AlertDialogCancel>
+            <AlertDialogAction onClick={handleLogout}>התנתק</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <div className="flex h-screen overflow-hidden w-full">
         {/* Mobile Sidebar Toggle - only visible on mobile */}
         {true && (
@@ -184,7 +214,7 @@ const DashboardLayout = ({ children, activeTab }: DashboardLayoutProps) => {
             <Button 
               variant="outline" 
               className="w-full justify-start py-3 text-base" 
-              onClick={handleLogout}
+              onClick={handleLogoutConfirm}
             >
               <LogOut className="ml-3 h-5 w-5" />
               התנתק
