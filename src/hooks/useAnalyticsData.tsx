@@ -1,4 +1,3 @@
-
 import { useMemo } from 'react';
 import { isWithinInterval, parseISO, differenceInYears } from 'date-fns';
 import { useAdmin } from '../context/AdminContext';
@@ -76,7 +75,7 @@ export const useAnalyticsData = (
     });
   }, [filteredEntries]);
   
-  // Gender distribution data
+  // Gender distribution data for trainees
   const genderDistributionData = useMemo(() => {
     const maleFemaleCount = {
       male: 0,
@@ -97,6 +96,35 @@ export const useAnalyticsData = (
     ];
   }, [filteredTrainees]);
   
+  // Gender distribution data for entries
+  const genderEntriesDistributionData = useMemo(() => {
+    const maleFemaleEntries = {
+      male: 0,
+      female: 0
+    };
+    
+    // Map of trainee ID to gender
+    const traineeGenderMap = new Map();
+    filteredTrainees.forEach(trainee => {
+      traineeGenderMap.set(trainee._id, trainee.gender);
+    });
+    
+    // Count entries by gender
+    filteredEntries.forEach(entry => {
+      const gender = traineeGenderMap.get(entry.traineeId);
+      if (gender === 'male') {
+        maleFemaleEntries.male++;
+      } else if (gender === 'female') {
+        maleFemaleEntries.female++;
+      }
+    });
+    
+    return [
+      { name: 'זכר', value: maleFemaleEntries.male, color: '#3b82f6' },
+      { name: 'נקבה', value: maleFemaleEntries.female, color: '#ec4899' }
+    ];
+  }, [filteredEntries, filteredTrainees]);
+  
   // Age distribution data
   const ageDistributionData = useMemo(() => {
     const today = new Date();
@@ -115,6 +143,27 @@ export const useAnalyticsData = (
       age,
       count
     }));
+  }, [filteredTrainees]);
+  
+  // Detailed trainee data for personal info display
+  const detailedTraineeAgeData = useMemo(() => {
+    const today = new Date();
+    
+    return filteredTrainees
+      .filter(trainee => trainee.birthDate)
+      .map(trainee => {
+        const birthDate = parseISO(trainee.birthDate);
+        const age = differenceInYears(today, birthDate);
+        
+        return {
+          _id: trainee._id,
+          age,
+          fullName: trainee.fullName,
+          gender: trainee.gender,
+          medicalProfile: trainee.medicalProfile,
+          departmentName: getDepartmentName(trainee.departmentId)
+        };
+      });
   }, [filteredTrainees]);
   
   // Top trainees data - now uses filtered entries when specific trainees are selected
@@ -235,7 +284,9 @@ export const useAnalyticsData = (
     topDepartmentsData,
     basesData,
     genderDistributionData,
+    genderEntriesDistributionData,
     ageDistributionData,
+    detailedTraineeAgeData,
     avgEntriesPerTrainee,
     isGeneralAdmin,
     getDepartmentName,

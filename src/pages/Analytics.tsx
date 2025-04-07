@@ -52,7 +52,9 @@ const Analytics = () => {
     topDepartmentsData,
     basesData,
     genderDistributionData,
+    genderEntriesDistributionData,
     ageDistributionData,
+    detailedTraineeAgeData,
     avgEntriesPerTrainee,
     isGeneralAdmin,
     getDepartmentName,
@@ -117,8 +119,14 @@ const Analytics = () => {
         
         {/* New Charts - Gender and Age Distribution */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <GenderDistributionChart data={genderDistributionData} />
-          <AgeDistributionChart data={ageDistributionData} />
+          <GenderDistributionChart 
+            data={genderDistributionData} 
+            entriesData={genderEntriesDistributionData} 
+          />
+          <AgeDistributionChart 
+            data={ageDistributionData} 
+            traineeDetails={detailedTraineeAgeData}
+          />
         </div>
         
         {/* New Chart - Hourly Distribution */}
