@@ -7,15 +7,17 @@ import { useToast } from '@/components/ui/use-toast';
 import { 
   Sidebar, 
   SidebarHeader, 
-  SidebarMain, 
-  SidebarFooter, 
-  SidebarItem 
+  SidebarContent, 
+  SidebarFooter,
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarMenuButton
 } from './ui/sidebar';
 import { 
   Home, Menu, X, UserPlus, BarChart2, List, Settings, Shield, LogOut, Dumbbell, UserCheck
 } from 'lucide-react';
 import { Button } from './ui/button';
-import { useMobile } from '../hooks/use-mobile';
+import { useIsMobile } from '../hooks/use-mobile';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -27,7 +29,7 @@ const DashboardLayout = ({ children, activeTab }: DashboardLayoutProps) => {
   const { admin, loading } = useAdmin();
   const { toast } = useToast();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const isMobile = useMobile();
+  const isMobile = useIsMobile();
   
   useEffect(() => {
     if (!loading && !admin) {
@@ -129,7 +131,6 @@ const DashboardLayout = ({ children, activeTab }: DashboardLayoutProps) => {
       
       {/* Sidebar */}
       <Sidebar
-        open={isMobile ? sidebarOpen : true}
         className={`${isMobile ? 'fixed inset-y-0 right-0 z-40' : 'sticky top-0 h-screen'} max-w-[250px] border-l`}
       >
         <SidebarHeader className="px-6 py-4 flex flex-col items-center justify-center text-center">
@@ -141,16 +142,20 @@ const DashboardLayout = ({ children, activeTab }: DashboardLayoutProps) => {
           </div>
         </SidebarHeader>
         
-        <SidebarMain className="px-3 py-2">
-          {filteredSidebarItems.map((item) => (
-            <Link key={item.path} to={item.path}>
-              <SidebarItem active={item.active} className="mb-1">
-                {item.icon}
-                <span>{item.label}</span>
-              </SidebarItem>
-            </Link>
-          ))}
-        </SidebarMain>
+        <SidebarContent className="px-3 py-2">
+          <SidebarMenu>
+            {filteredSidebarItems.map((item) => (
+              <SidebarMenuItem key={item.path}>
+                <SidebarMenuButton asChild className={item.active ? "bg-accent text-accent-foreground" : ""}>
+                  <Link to={item.path} className="flex items-center gap-3">
+                    {item.icon}
+                    <span>{item.label}</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            ))}
+          </SidebarMenu>
+        </SidebarContent>
         
         <SidebarFooter className="px-3 py-4">
           <Button 
