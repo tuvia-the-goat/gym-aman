@@ -95,15 +95,6 @@ const RegistrationForm = ({ selectedBase, departments, onRegistrationSuccess }: 
       return;
     }
     
-    // Validate medical certificate if partial score
-    if (medicalFormScore === 'partialScore' && !medicalCertificateProvided) {
-      toast({
-        title: "שגיאה",
-        description: "יש לציין האם הוצג אישור רפואי",
-        variant: "destructive",
-      });
-      return;
-    }
     
     // Validate inputs
     if (!validatePersonalId(personalId)) {
@@ -128,7 +119,8 @@ const RegistrationForm = ({ selectedBase, departments, onRegistrationSuccess }: 
       // Format birth date to ISO string (YYYY-MM-DD)
       const formattedBirthDate = birthDate.toISOString().split('T')[0];
       
-      // Determine if medical approval should be granted automatically
+      // Determine if medical appr
+      //  foval should be granted automatically
       const approved = shouldAutomaticallyApprove(medicalFormScore as MedicalFormScore, medicalCertificateProvided);
       
       // Calculate expiration date (1 year from now if approved)

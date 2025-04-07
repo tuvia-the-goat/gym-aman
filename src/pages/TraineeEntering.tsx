@@ -610,14 +610,6 @@ const TraineeEntering = () => {
                             <p className="mt-3 text-sm font-medium">לחיצה על כפתור "רישום כניסה" מהווה אישור של ההצהרה הרפואית למעלה</p>
                           </div>
                           
-                          {(!entryTrainee.medicalApproval.approved || 
-                            (entryTrainee.medicalApproval.expirationDate && 
-                             new Date(entryTrainee.medicalApproval.expirationDate) < new Date())) && (
-                            <div className="w-full border-2 border-destructive bg-destructive/10 text-destructive font-bold text-center p-3 rounded-[8px]">
-                              <AlertCircle className="inline-block mr-2 h-5 w-5" />
-                              אין לך אישור רפואי בתוקף. יש לעדכן את האישור הרפואי לפני הכניסה לחדר הכושר.
-                            </div>
-                          )}
                           
                           {isMedicalAboutToExpire() && entryTrainee.medicalApproval.approved && (
                             <div className='w-full border-2 border-[rgb(255,220,5)] bg-[rgba(255,255,141,0.44)] text-[rgb(255,220,5)] font-bold text-center p-3 rounded-[8px]'>
@@ -627,35 +619,7 @@ const TraineeEntering = () => {
                             </div>
                           )}
                           
-                          <div className="border rounded-lg p-4 bg-background/50">
-                            <h4 className="font-semibold text-md mb-2">פרטי שאלון א"ס</h4>
-                            <p className="text-sm mb-1">
-                              <span className="font-medium ml-1">ציון שאלון:</span>
-                              {entryTrainee.medicalFormScore === 'notRequired' && 'לא נזקק למילוי שאלון'}
-                              {entryTrainee.medicalFormScore === 'fullScore' && '100 נקודות'}
-                              {entryTrainee.medicalFormScore === 'partialScore' && 'פחות מ-100 נקודות'}
-                              {entryTrainee.medicalFormScore === 'reserve' && 'מיל\' או אע"צ, מילא שאלון נפרד'}
-                            </p>
-                            
-                            {entryTrainee.medicalFormScore === 'partialScore' && (
-                              <p className="text-sm mb-1">
-                                <span className="font-medium ml-1">הוצג אישור רפואי:</span>
-                                {entryTrainee.medicalCertificateProvided ? 'כן' : 'לא'}
-                              </p>
-                            )}
-                            
-                            {entryTrainee.medicalLimitation && (
-                              <p className="text-sm mb-1">
-                                <span className="font-medium ml-1">מגבלה רפואית:</span>
-                                {entryTrainee.medicalLimitation}
-                              </p>
-                            )}
-                            
-                            <p className="text-sm">
-                              <span className="font-medium ml-1">סעיף פרופיל אורטופדי:</span>
-                              {entryTrainee.orthopedicCondition ? 'כן' : 'לא'}
-                            </p>
-                          </div>
+
                           
                           <div className="flex space-x-4 gap-10">
                             <button

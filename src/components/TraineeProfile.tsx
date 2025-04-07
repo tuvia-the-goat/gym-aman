@@ -71,15 +71,6 @@ const TraineeProfile: React.FC<TraineeProfileProps> = ({
   
   const handleSave = async () => {
     try {
-      // Validate medical certificate if partial score
-      if (medicalFormScore === 'partialScore' && !medicalCertificateProvided) {
-        toast({
-          title: "שגיאה",
-          description: "יש לציין האם הוצג אישור רפואי",
-          variant: "destructive",
-        });
-        return;
-      }
       
       // Determine if medical approval should be granted automatically
       const approved = shouldAutomaticallyApprove(medicalFormScore, medicalCertificateProvided);

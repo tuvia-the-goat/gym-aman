@@ -25,7 +25,7 @@ const HourlyDistributionChart: React.FC<HourlyDistributionChartProps> = ({ entri
   const [showAverage, setShowAverage] = useState(false);
 
   // Generate hourly data based on selected day
-  const hourlyData = React.useMemo(() => {
+  const hourlyData = React.useMemo(() => { 
     // Initialize data for all hours (0-23)
     const hours = Array.from({ length: 24 }, (_, i) => ({
       hour: i,

@@ -334,12 +334,10 @@ const EntriesHistory = () => {
                 const hasMedical = hasMedicalLimitation(entry.traineeId);
                 const statusDisplay = getEntryStatusDisplay(entry.status || 'success');
                 return <tr key={entry._id} className={cn("border-t hover:bg-muted/50 cursor-pointer transition-colors", 
-                    hasOrthopedic && "bg-amber-50", 
-                    hasMedical && "bg-blue-50",
+                    (hasOrthopedic || hasMedical) && "bg-amber-50", 
                     statusDisplay.rowClass)} onClick={() => entry.traineeId && handleTraineeClick(entry.traineeId)}>
                         <td className="px-4 py-3 flex items-center">
-                          {hasOrthopedic && <AlertTriangle className="h-4 w-4 text-amber-500 ml-2" aria-label="סעיף אורטופדי" />}
-                          {hasMedical && <Flag className="h-4 w-4 text-blue-500 ml-2" aria-label="מגבלה רפואית" />}
+                          {(hasOrthopedic || hasMedical) && <AlertTriangle className="h-4 w-4 text-amber-500 ml-2" aria-label="סעיף אורטופדי" />}
                           {entry.traineeFullName || '-'}
                         </td>
                         <td className="px-4 py-3">{entry.traineePersonalId}</td>
@@ -422,12 +420,12 @@ const EntriesHistory = () => {
         }}>
               <DialogTitle className="text-2xl">
                 {selectedTrainee.fullName}
-                {selectedTrainee.orthopedicCondition && <span className="inline-flex items-center ml-2 px-2 py-1 bg-amber-100 text-amber-800 text-xs rounded-md">
-                    <AlertTriangle className="h-3 w-3 mr-1" />
+                {selectedTrainee.orthopedicCondition && <span className="inline-flex items-center mr-2 px-2 py-1 bg-amber-100 text-amber-800 text-xs rounded-md">
+                    <AlertTriangle className="h-3 w-3 ml-1" />
                     סעיף אורטופדי
                   </span>}
-                {selectedTrainee.medicalLimitation && <span className="inline-flex items-center ml-2 px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-md">
-                    <Flag className="h-3 w-3 mr-1" />
+                {selectedTrainee.medicalLimitation && <span className="inline-flex items-center mr-2 px-2 py-1 bg-amber-100 text-amber-800 text-xs rounded-md">
+                    <AlertTriangle className="h-3 w-3 ml-1" />
                     מגבלה רפואית: {selectedTrainee.medicalLimitation}
                   </span>}
               </DialogTitle>
