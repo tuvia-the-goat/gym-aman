@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAdmin } from '../context/AdminContext';
@@ -11,7 +12,7 @@ import TraineeProfile from '../components/TraineeProfile';
 
 const MedicalApprovals = () => {
   const navigate = useNavigate();
-  const { admin, trainees, mainFrameworks, setTrainees } = useAdmin();
+  const { admin, trainees, mainFrameworks, secondaryFrameworks, setTrainees } = useAdmin();
   const { toast } = useToast();
   
   const [searchQuery, setSearchQuery] = useState('');
@@ -156,7 +157,9 @@ const MedicalApprovals = () => {
             {selectedTrainee ? (
               <TraineeProfile 
                 trainee={selectedTrainee} 
-                onUpdate={handleTraineeUpdate} 
+                onUpdate={handleTraineeUpdate}
+                mainFrameworks={mainFrameworks}
+                secondaryFrameworks={secondaryFrameworks}
               />
             ) : (
               <div className="flex flex-col items-center justify-center h-full p-6 text-center glass rounded-xl">

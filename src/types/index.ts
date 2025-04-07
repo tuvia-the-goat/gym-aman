@@ -102,5 +102,5 @@ export interface FullTraineeDataPoint {
   gender: 'male' | 'female';
   medicalProfile: string;
   mainFrameworkName: string;
-  departmentName: string; // For backward compatibility
+  departmentName?: string; // Optional now for backward compatibility
 }
