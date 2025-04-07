@@ -7,7 +7,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import { CalendarIcon } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, addYears } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Textarea } from '@/components/ui/textarea';
 
@@ -45,6 +45,14 @@ const RegistrationForm = ({ selectedBase, departments, onRegistrationSuccess }: 
   // Validate phone number (10 digits starting with 05)
   const validatePhoneNumber = (phone: string) => {
     return /^05\d{8}$/.test(phone);
+  };
+  
+  // Determine if medical approval should be automatic based on form score
+  const shouldAutomaticallyApprove = (formScore: MedicalFormScore, certificateProvided: boolean) => {
+    return formScore === 'fullScore' || 
+           formScore === 'notRequired' || 
+           formScore === 'reserve' || 
+           (formScore === 'partialScore' && certificateProvided);
   };
   
   // Handle trainee registration
@@ -120,6 +128,12 @@ const RegistrationForm = ({ selectedBase, departments, onRegistrationSuccess }: 
       // Format birth date to ISO string (YYYY-MM-DD)
       const formattedBirthDate = birthDate.toISOString().split('T')[0];
       
+      // Determine if medical approval should be granted automatically
+      const approved = shouldAutomaticallyApprove(medicalFormScore as MedicalFormScore, medicalCertificateProvided);
+      
+      // Calculate expiration date (1 year from now if approved)
+      const expirationDate = approved ? addYears(new Date(), 1).toISOString().split('T')[0] : null;
+      
       // Create new trainee via API
       const newTrainee = await traineeService.create({
         personalId,
@@ -133,7 +147,11 @@ const RegistrationForm = ({ selectedBase, departments, onRegistrationSuccess }: 
         orthopedicCondition,
         medicalFormScore: medicalFormScore as MedicalFormScore,
         ...(medicalFormScore === 'partialScore' && { medicalCertificateProvided }),
-        ...(medicalLimitation && { medicalLimitation })
+        ...(medicalLimitation && { medicalLimitation }),
+        medicalApproval: {
+          approved,
+          expirationDate
+        }
       });
       
       // Update state with new trainee through callback

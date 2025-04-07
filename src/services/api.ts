@@ -114,15 +114,32 @@ export const traineeService = {
     orthopedicCondition: boolean,
     medicalFormScore: MedicalFormScore,
     medicalCertificateProvided?: boolean,
-    medicalLimitation?: string
+    medicalLimitation?: string,
+    medicalApproval?: {
+      approved: boolean,
+      expirationDate: string | null
+    }
   }): Promise<Trainee> => {
     const response = await api.post('/trainees', traineeData);
     return response.data;
   },
   
   // Update trainee medical approval
-  updateMedicalApproval: async (traineeId: string, approved: boolean): Promise<Trainee> => {
-    const response = await api.put(`/trainees/${traineeId}/medical-approval`, { approved });
+  updateMedicalApproval: async (traineeId: string, medicalApprovalData: {
+    approved: boolean,
+    expirationDate: string | null,
+    medicalFormScore?: MedicalFormScore,
+    medicalCertificateProvided?: boolean,
+    medicalLimitation?: string,
+    orthopedicCondition?: boolean
+  }): Promise<Trainee> => {
+    const response = await api.put(`/trainees/${traineeId}/medical-approval`, medicalApprovalData);
+    return response.data;
+  },
+  
+  // Update trainee profile
+  updateProfile: async (traineeId: string, profileData: Partial<Trainee>): Promise<Trainee> => {
+    const response = await api.put(`/trainees/${traineeId}`, profileData);
     return response.data;
   }
 };

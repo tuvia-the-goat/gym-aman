@@ -1,80 +1,37 @@
 
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AdminProvider } from "./context/AdminContext";
-import Login from "./pages/Login";
-import EntriesHistory from "./pages/EntriesHistory";
-import Analytics from "./pages/Analytics";
-import Settings from "./pages/Settings";
-import Registration from "./pages/Registration";
-import NotFound from "./pages/NotFound";
-import { useEffect } from "react";
-import TraineeEntering from "./pages/TraineeEntering";
-
-const queryClient = new QueryClient();
-
-// Protected route component
-const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const admin = JSON.parse(localStorage.getItem('admin') || 'null');
-  
-  if (!admin) {
-    return <Navigate to="/login" replace />;
-  }
-  
-  return <>{children}</>;
-};
+import React, { useEffect, useState } from 'react';
+import { BrowserRouter, Route, Routes, useNavigate } from 'react-router-dom';
+import { AdminProvider } from './context/AdminContext';
+import Login from './pages/Login';
+import Dashboard from './pages/Dashboard';
+import Analytics from './pages/Analytics';
+import EntriesHistory from './pages/EntriesHistory';
+import Registration from './pages/Registration';
+import TraineeEntering from './pages/TraineeEntering';
+import Settings from './pages/Settings';
+import NotFound from './pages/NotFound';
+import MedicalApprovals from './pages/MedicalApprovals';
+import Index from './pages/Index';
+import './App.css';
 
 const App = () => {
-  // Set the document title and language
-  useEffect(() => {
-    document.documentElement.lang = 'he';
-    document.documentElement.dir = 'rtl';
-  }, []);
-
   return (
-    <QueryClientProvider client={queryClient}>
-      <AdminProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Navigate to="/login" replace />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/registration" element={<TraineeEntering />} />
-              
-              {/* Protected Routes */}
-              <Route path="/dashboard" element={
-                <ProtectedRoute>
-                  <EntriesHistory />
-                </ProtectedRoute>
-              } />
-              <Route path="/dashboard/registration" element={
-                <ProtectedRoute>
-                  <Registration />
-                </ProtectedRoute>
-              } />
-              <Route path="/dashboard/analytics" element={
-                <ProtectedRoute>
-                  <Analytics />
-                </ProtectedRoute>
-              } />
-              <Route path="/dashboard/settings" element={
-                <ProtectedRoute>
-                  <Settings />
-                </ProtectedRoute>
-              } />
-              
-              {/* Catch-all route */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
-      </AdminProvider>
-    </QueryClientProvider>
+    <AdminProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Index />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/trainee-entering" element={<TraineeEntering />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/registration" element={<Registration />} />
+          <Route path="/analytics" element={<Analytics />} />
+          <Route path="/entries-history" element={<EntriesHistory />} />
+          <Route path="/medical-approvals" element={<MedicalApprovals />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </BrowserRouter>
+    </AdminProvider>
   );
 };
 

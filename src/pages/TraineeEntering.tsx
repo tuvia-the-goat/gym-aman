@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button';
 import { CalendarIcon, AlertCircle } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
+import TraineeProfile from '../components/TraineeProfile';
 
 const TraineeEntering = () => {
   const navigate = useNavigate();
@@ -240,23 +241,26 @@ const TraineeEntering = () => {
 
   const handleEntryConfirmation = async () => {
     if (!entryTrainee || !selectedBase) return;
-    if (!entryTrainee.medicalApproval.approved || 
-        (entryTrainee.medicalApproval.expirationDate && 
-         new Date(entryTrainee.medicalApproval.expirationDate) < new Date())) {
-           try {
-             const today = new Date().toISOString().split('T')[0];
-             const currentTime = new Date().toTimeString().split(' ')[0];
-             console.log("ewrwer");
-             const newEntry = await entryService.create({
-              traineeId: entryTrainee._id,
-              entryDate: today,
-              entryTime: currentTime,
-              traineeFullName: entryTrainee.fullName,
-              traineePersonalId: entryTrainee.personalId,
-              departmentId: entryTrainee.departmentId,
-              baseId: entryTrainee.baseId,
-              status: 'noMedicalApproval'
-            });
+    
+    const isMedicalApprovalValid = 
+      entryTrainee.medicalApproval.approved && 
+      (!entryTrainee.medicalApproval.expirationDate || 
+       new Date(entryTrainee.medicalApproval.expirationDate) >= new Date());
+    
+    if (!isMedicalApprovalValid) {
+      try {
+        const today = new Date().toISOString().split('T')[0];
+        const currentTime = new Date().toTimeString().split(' ')[0];
+        const newEntry = await entryService.create({
+          traineeId: entryTrainee._id,
+          entryDate: today,
+          entryTime: currentTime,
+          traineeFullName: entryTrainee.fullName,
+          traineePersonalId: entryTrainee.personalId,
+          departmentId: entryTrainee.departmentId,
+          baseId: entryTrainee.baseId,
+          status: 'noMedicalApproval'
+        });
         
         setEntries([newEntry, ...entries]);
         toast({
@@ -277,6 +281,7 @@ const TraineeEntering = () => {
       }
       return;
     }
+    
     try {
       const today = new Date().toISOString().split('T')[0];
       const currentTime = new Date().toTimeString().split(' ')[0];
@@ -574,63 +579,106 @@ const TraineeEntering = () => {
                     </div>
                   ) : (
                     <div className="space-y-6">
-                      <div className="text-center mb-6">
-                        <p className="text-lg">האם שמך הוא</p>
-                        <p className="text-2xl font-bold">{entryTrainee?.fullName}?</p>
-                      </div>
-                      
-                      <div className="p-4 border rounded-lg bg-secondary">
-                        <h4 className="font-semibold text-lg mb-2">הצהרת בריאות</h4>
-                        <p className="mb-2">אני מצהיר/ה בזאת כי:</p>
-                        <ul className="list-inside space-y-1 text-sm">
-                          <li className="flex items-start">
-                            <span className="ml-2">•</span>
-                            <span>המספר האישי והשם הנ"ל שייכים לי.</span>
-                          </li>
-                          <li className="flex items-start">
-                            <span className="ml-2">•</span>
-                            <span>אני בריא/ה ואין לי מגבלות רפואיות המונעות ממני להתאמן בחדר כושר.</span>
-                          </li>
-                          <li className="flex items-start">
-                            <span className="ml-2">•</span>
-                            <span>אני מודע/ת לכך שהשימוש במתקני חדר הכושר הינו באחריותי הבלעדית.</span>
-                          </li>
-                          <li className="flex items-start">
-                            <span className="ml-2">•</span>
-                            <span>התייעצתי עם רופא לגבי פעילות גופנית אם יש לי בעיות בריאותיות.</span>
-                          </li>
-                        </ul>
-                        <p className="mt-3 text-sm font-medium">לחיצה על כפתור "רישום כניסה" מהווה אישור של ההצהרה הרפואית למעלה</p>
-                      </div>
-                      
-                      { isMedicalAboutToExpire() && 
-                      <div className='w-full border-2 border-[rgb(255,220,5)] bg-[rgba(255,255,141,0.44)] text-[rgb(255,220,5)] font-bold text-center p-3 rounded-[8px]'>
-                        שימ/י לב! תוקף האישור הרפואי שלך יפוג ב-
-                      {getDateFormat(traineeMedicalExpirationDate)}
-                      , יש לחדש אותו בהקדם בברקוד הייעודי ולעדכן את צוות חדר הכושר.
-
-                      </div>
-                      }
-                      <div className="flex space-x-4 gap-10">
-                        <button
-                          onClick={() => {
-                            setConfirmingEntry(false);
-                            setEntryTrainee(null);
-                            setEntryPersonalId('');
-                          }}
-                          className="flex-1 bg-secondary text-secondary-foreground py-3 rounded-lg font-medium
-                          transition duration-300 hover:bg-secondary/80"
-                        >
-                          ביטול
-                        </button>
-                        <button
-                          onClick={handleEntryConfirmation}
-                          className="flex-1 bg-primary text-primary-foreground py-3 rounded-lg font-medium shadow-md
-                          transition duration-300 hover:bg-primary/90 hover:shadow-lg"
-                        >
-                          רישום כניסה
-                        </button>
-                      </div>
+                      {entryTrainee && (
+                        <>
+                          <div className="text-center mb-6">
+                            <p className="text-lg">האם שמך הוא</p>
+                            <p className="text-2xl font-bold">{entryTrainee?.fullName}?</p>
+                          </div>
+                          
+                          <div className="p-4 border rounded-lg bg-secondary">
+                            <h4 className="font-semibold text-lg mb-2">הצהרת בריאות</h4>
+                            <p className="mb-2">אני מצהיר/ה בזאת כי:</p>
+                            <ul className="list-inside space-y-1 text-sm">
+                              <li className="flex items-start">
+                                <span className="ml-2">•</span>
+                                <span>המספר האישי והשם הנ"ל שייכים לי.</span>
+                              </li>
+                              <li className="flex items-start">
+                                <span className="ml-2">•</span>
+                                <span>אני בריא/ה ואין לי מגבלות רפואיות המונעות ממני להתאמן בחדר כושר.</span>
+                              </li>
+                              <li className="flex items-start">
+                                <span className="ml-2">•</span>
+                                <span>אני מודע/ת לכך שהשימוש במתקני חדר הכושר הינו באחריותי הבלעדית.</span>
+                              </li>
+                              <li className="flex items-start">
+                                <span className="ml-2">•</span>
+                                <span>התייעצתי עם רופא לגבי פעילות גופנית אם יש לי בעיות בריאותיות.</span>
+                              </li>
+                            </ul>
+                            <p className="mt-3 text-sm font-medium">לחיצה על כפתור "רישום כניסה" מהווה אישור של ההצהרה הרפואית למעלה</p>
+                          </div>
+                          
+                          {(!entryTrainee.medicalApproval.approved || 
+                            (entryTrainee.medicalApproval.expirationDate && 
+                             new Date(entryTrainee.medicalApproval.expirationDate) < new Date())) && (
+                            <div className="w-full border-2 border-destructive bg-destructive/10 text-destructive font-bold text-center p-3 rounded-[8px]">
+                              <AlertCircle className="inline-block mr-2 h-5 w-5" />
+                              אין לך אישור רפואי בתוקף. יש לעדכן את האישור הרפואי לפני הכניסה לחדר הכושר.
+                            </div>
+                          )}
+                          
+                          {isMedicalAboutToExpire() && entryTrainee.medicalApproval.approved && (
+                            <div className='w-full border-2 border-[rgb(255,220,5)] bg-[rgba(255,255,141,0.44)] text-[rgb(255,220,5)] font-bold text-center p-3 rounded-[8px]'>
+                              שימ/י לב! תוקף האישור הרפואי שלך יפוג ב-
+                              {getDateFormat(traineeMedicalExpirationDate)}
+                              , יש לחדש אותו בהקדם בברקוד הייעודי ולעדכן את צוות חדר הכושר.
+                            </div>
+                          )}
+                          
+                          <div className="border rounded-lg p-4 bg-background/50">
+                            <h4 className="font-semibold text-md mb-2">פרטי שאלון א"ס</h4>
+                            <p className="text-sm mb-1">
+                              <span className="font-medium ml-1">ציון שאלון:</span>
+                              {entryTrainee.medicalFormScore === 'notRequired' && 'לא נזקק למילוי שאלון'}
+                              {entryTrainee.medicalFormScore === 'fullScore' && '100 נקודות'}
+                              {entryTrainee.medicalFormScore === 'partialScore' && 'פחות מ-100 נקודות'}
+                              {entryTrainee.medicalFormScore === 'reserve' && 'מיל\' או אע"צ, מילא שאלון נפרד'}
+                            </p>
+                            
+                            {entryTrainee.medicalFormScore === 'partialScore' && (
+                              <p className="text-sm mb-1">
+                                <span className="font-medium ml-1">הוצג אישור רפואי:</span>
+                                {entryTrainee.medicalCertificateProvided ? 'כן' : 'לא'}
+                              </p>
+                            )}
+                            
+                            {entryTrainee.medicalLimitation && (
+                              <p className="text-sm mb-1">
+                                <span className="font-medium ml-1">מגבלה רפואית:</span>
+                                {entryTrainee.medicalLimitation}
+                              </p>
+                            )}
+                            
+                            <p className="text-sm">
+                              <span className="font-medium ml-1">סעיף פרופיל אורטופדי:</span>
+                              {entryTrainee.orthopedicCondition ? 'כן' : 'לא'}
+                            </p>
+                          </div>
+                          
+                          <div className="flex space-x-4 gap-10">
+                            <button
+                              onClick={() => {
+                                setConfirmingEntry(false);
+                                setEntryTrainee(null);
+                                setEntryPersonalId('');
+                              }}
+                              className="flex-1 bg-secondary text-secondary-foreground py-3 rounded-lg font-medium
+                              transition duration-300 hover:bg-secondary/80"
+                            >
+                              ביטול
+                            </button>
+                            <button
+                              onClick={handleEntryConfirmation}
+                              className="flex-1 bg-primary text-primary-foreground py-3 rounded-lg font-medium shadow-md
+                              transition duration-300 hover:bg-primary/90 hover:shadow-lg"
+                            >
+                              רישום כניסה
+                            </button>
+                          </div>
+                        </>
+                      )}
                     </div>
                   )}
                 </div>
