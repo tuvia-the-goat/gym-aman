@@ -71,20 +71,6 @@ const Dashboard = () => {
             </CardContent>
           </Card>
         </div>
-        
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle>מה חדש במערכת?</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ul className="list-disc list-inside space-y-2">
-              <li>ניהול אישורים רפואיים לפי ציון שאלון א"ס</li>
-              <li>צפייה בהיסטוריית כניסות מתאמנים</li>
-              <li>אנליטיקות מתקדמות לניתוח נתונים</li>
-              <li>ניהול מחלקות ובסיסים</li>
-            </ul>
-          </CardContent>
-        </Card>
       </div>
     </DashboardLayout>
   );

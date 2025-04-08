@@ -42,6 +42,7 @@ const DashboardLayout = ({ children, activeTab }: DashboardLayoutProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(true); // Default to open on desktop
   const isMobile = useIsMobile();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [showTraineeEnteryConfirm, setShowTraineeEnteryConfirm] = useState(false);
   
   useEffect(() => {
     if (!loading && !admin) {
@@ -62,12 +63,25 @@ const DashboardLayout = ({ children, activeTab }: DashboardLayoutProps) => {
   const handleLogoutConfirm = () => {
     setShowLogoutConfirm(true);
   };
+
+  const handleTraineeEntery= () => {
+    setShowTraineeEnteryConfirm(true);
+  };
   
   const handleLogout = () => {
     authService.logout();
     navigate('/login');
     toast({
       title: "התנתקת בהצלחה",
+      description: "להתראות!",
+    });
+  };
+
+  const handleTraineeNavigate = () => {
+    authService.logout();
+    navigate('/trainee-entering');
+    toast({
+      title: "המרה למסך כניסה לחדר כושר",
       description: "להתראות!",
     });
   };
@@ -126,13 +140,6 @@ const DashboardLayout = ({ children, activeTab }: DashboardLayoutProps) => {
       showFor: ['generalAdmin', 'gymAdmin']
     },
     { 
-      path: '/trainee-entering', 
-      icon: <Dumbbell className="h-5 w-5" />, 
-      label: 'כניסה לחדר כושר', 
-      active: activeTab === 'trainee-entering',
-      showFor: ['generalAdmin', 'gymAdmin']
-    },
-    { 
       path: '/settings', 
       icon: <Settings className="h-5 w-5" />, 
       label: 'הגדרות', 
@@ -150,14 +157,29 @@ const DashboardLayout = ({ children, activeTab }: DashboardLayoutProps) => {
       <AlertDialog open={showLogoutConfirm} onOpenChange={setShowLogoutConfirm}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>האם אתה בטוח שברצונך להתנתק?</AlertDialogTitle>
-            <AlertDialogDescription>
-              לאחר ההתנתקות תועבר למסך הכניסה.
-            </AlertDialogDescription>
+            <AlertDialogTitle className="flex items-end">האם אתה בטוח שברצונך להתנתק?</AlertDialogTitle>
+              <AlertDialogDescription className="flex items-end">
+                לאחר ההתנתקות תועבר למסך הכניסה.
+              </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
+          <AlertDialogFooter className="flex justify-start w-full gap-5">
             <AlertDialogCancel>ביטול</AlertDialogCancel>
             <AlertDialogAction onClick={handleLogout}>התנתק</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={showTraineeEnteryConfirm} onOpenChange={setShowTraineeEnteryConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-end">האם אתה בטוח שברצונך לעבור למסך הכניסה לחדר הכושר?</AlertDialogTitle>
+              <AlertDialogDescription className="flex items-end">
+                  מעבר למסך הכניסה ידרוש התנתקות ומעבר לתצוגת משתמש.
+              </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex justify-start w-full gap-5">
+            <AlertDialogCancel>ביטול</AlertDialogCancel>
+            <AlertDialogAction onClick={handleTraineeNavigate}>מעבר למסך הכניסה</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -202,16 +224,24 @@ const DashboardLayout = ({ children, activeTab }: DashboardLayoutProps) => {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild className="text-base py-3 mt-7">
+                    <button onClick={handleTraineeEntery} className="flex items-center gap-3">
+                      <Dumbbell className="h-5 w-5" />
+                      <span>מסך כניסה לחדר כושר</span>
+                    </button>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
             </SidebarMenu>
           </SidebarContent>
           
           <SidebarFooter className="px-4 py-5">
             <Button 
               variant="outline" 
-              className="w-full justify-start py-3 text-base" 
+              className="w-full py-3 text-base" 
               onClick={handleLogoutConfirm}
             >
-              <LogOut className="ml-3 h-5 w-5" />
+              <LogOut className="mr-3 h-5 w-5" />
               התנתק
             </Button>
           </SidebarFooter>
