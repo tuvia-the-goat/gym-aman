@@ -55,7 +55,9 @@ const TraineeProfile: React.FC<TraineeProfileProps> = ({
       default: return '';
     }
   };
-  
+  const getPhoneNumberFormat = (phoneNumberToFormat : string) => {
+    return `${phoneNumberToFormat.slice(0,3)}-${phoneNumberToFormat.slice(3,10)}`
+  }  
   const handleEdit = () => {
     setIsEditing(true);
   };
@@ -183,7 +185,7 @@ const TraineeProfile: React.FC<TraineeProfileProps> = ({
           
           <div>
             <h3 className="text-sm font-medium text-muted-foreground">טלפון</h3>
-            <p className="font-medium">{trainee.phoneNumber}</p>
+            <p className="font-medium">{getPhoneNumberFormat(trainee.phoneNumber)}</p>
           </div>
         </div>
         

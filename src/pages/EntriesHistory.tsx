@@ -347,7 +347,7 @@ const EntriesHistory = () => {
                     (hasOrthopedic || hasMedical) && "bg-amber-50", 
                     statusDisplay.rowClass)} onClick={() => entry.traineeId && handleTraineeClick(entry.traineeId)}>
                         <td className="px-4 py-3 flex items-center">
-                          {(hasOrthopedic || hasMedical) && <AlertTriangle className="h-4 w-4 text-amber-500 ml-2" aria-label="סעיף אורטופדי" />}
+                          {((hasOrthopedic || hasMedical)&& entry.status === 'success') && <AlertTriangle className="h-4 w-4 text-amber-500 ml-2" aria-label="סעיף אורטופדי" />}
                           {entry.traineeFullName || '-'}
                         </td>
                         <td className="px-4 py-3">{entry.traineePersonalId}</td>
@@ -542,10 +542,11 @@ const EntriesHistory = () => {
                       </div>
                       
                       <div className="bg-muted p-4 rounded-lg text-center">
+                        <div className="text-sm text-muted-foreground">מתאמן יותר מ-</div>
                         <div className="text-3xl font-bold">
                           {getTraineeAnalytics(selectedTrainee._id).percentile}%
                         </div>
-                        <div className="text-sm text-muted-foreground">אחוזון ה��תאמנים</div>
+                        <div className="text-sm text-muted-foreground">מהמשתמשים</div>
                       </div>
                     </div>
                   </>}
