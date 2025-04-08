@@ -172,6 +172,10 @@ const EntriesHistory = () => {
     };
   };
 
+  const getPhoneNumberFormat = (phoneNumberToFormat : string) => {
+    return `${phoneNumberToFormat.slice(0,3)}-${phoneNumberToFormat.slice(3,10)}`
+  }  
+
   const updateMedicalApproval = async (approved: boolean) => {
     if (!selectedTrainee) return;
     try {
@@ -288,6 +292,7 @@ const EntriesHistory = () => {
           <div className="xl:col-span-2">
             <label className="block text-sm font-medium mb-1">טווח תאריכים</label>
             <div className="flex items-center gap-2">
+              <span>מ-</span>
               <div className="grid gap-2">
                 <Popover>
                   <PopoverTrigger asChild>
@@ -352,8 +357,8 @@ const EntriesHistory = () => {
                         <td className="px-4 py-3">{entry.entryTime}</td>
                         <td className={`px-4 py-3 flex items-center ${statusDisplay.textClass}`}>
                           {statusDisplay.icon}
-                          {entry.status === 'success' && 'כניסה מוצלחת'}
-                          {entry.status === 'noMedicalApproval' && 'אין אישור רפואי'}
+                          {entry.status === 'success' && 'נכנס/ה בהצלחה'}
+                          {entry.status === 'noMedicalApproval' && 'אין אישור רפואי בתוקף'}
                           {entry.status === 'notRegistered' && 'משתמש לא רשום'}
                         </td>
                       </tr>;
@@ -461,7 +466,7 @@ const EntriesHistory = () => {
                     </div>
                     
                     <div className="text-sm text-muted-foreground">מספר טלפון:</div>
-                    <div>{selectedTrainee.phoneNumber}</div>
+                    <div>{getPhoneNumberFormat(selectedTrainee.phoneNumber)}</div>
                     
                     <div className="text-sm text-muted-foreground">אישור רפואי:</div>
                     <div className={selectedTrainee.medicalApproval.approved ? "text-green-600" : "text-red-600"}>
