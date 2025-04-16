@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAdmin } from '../context/AdminContext';
@@ -69,8 +68,12 @@ const DashboardLayout = ({ children, activeTab }: DashboardLayoutProps) => {
   };
   
   const handleLogout = () => {
+    // Clear admin data and prevent back navigation
     authService.logout();
-    navigate('/login');
+    
+    // Navigate to login page
+    navigate('/login', { replace: true });
+    
     toast({
       title: "התנתקת בהצלחה",
       description: "להתראות!",
@@ -78,8 +81,12 @@ const DashboardLayout = ({ children, activeTab }: DashboardLayoutProps) => {
   };
 
   const handleTraineeNavigate = () => {
+    // Clear admin data before navigating to trainee screen
     authService.logout();
-    navigate('/trainee-entering');
+    
+    // Navigate to trainee entering page with replace to prevent back navigation
+    navigate('/trainee-entering', { replace: true });
+    
     toast({
       title: "המרה למסך כניסה לחדר כושר",
       description: "להתראות!",

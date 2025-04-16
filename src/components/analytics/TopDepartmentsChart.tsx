@@ -19,7 +19,7 @@ const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#A478E8'];
 
 const TopDepartmentsChart: React.FC<TopDepartmentsChartProps> = ({ data, showBaseColumn }) => {
   return (
-    <ChartCard title="5 המחלקות המובילות">
+    <ChartCard title="5 המסגרות המובילות">
       {data.length > 0 ? (
         <div className="space-y-4">
           <div className="h-60">
@@ -46,7 +46,7 @@ const TopDepartmentsChart: React.FC<TopDepartmentsChartProps> = ({ data, showBas
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="text-right">מחלקה</TableHead>
+                  <TableHead className="text-right">מסגרת</TableHead>
                   {showBaseColumn && (
                     <TableHead className="text-right">בסיס</TableHead>
                   )}

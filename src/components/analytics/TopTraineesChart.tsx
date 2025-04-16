@@ -38,7 +38,7 @@ const TopTraineesChart: React.FC<TopTraineesChartProps> = ({ data, hasSpecificFi
               <TableHeader>
                 <TableRow>
                   <TableHead className="text-right">שם</TableHead>
-                  <TableHead className="text-right">מחלקה</TableHead>
+                  <TableHead className="text-right">מסגרת</TableHead>
                   {showBaseColumn && (
                     <TableHead className="text-right">בסיס</TableHead>
                   )}

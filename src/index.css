@@ -120,6 +120,11 @@
   input[type=number] {
     -moz-appearance: textfield;
   }
+  
+  /* Left-to-right direction class */
+  .direction-ltr {
+    direction: ltr;
+  }
 }
 
 @layer components {

@@ -1,10 +1,26 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Trainee, Department, MedicalFormScore } from '../types';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
-import { CalendarIcon, Edit2, Check, X } from 'lucide-react';
+import { 
+  CalendarIcon, 
+  Edit2, 
+  Check, 
+  X, 
+  Loader, 
+  User, 
+  Phone, 
+  Building, 
+  Activity, 
+  Calendar as CalendarFull,
+  Shield, 
+  FileText,
+  CheckCircle2, 
+  XCircle,
+  AlertTriangle
+} from 'lucide-react';
 import { format, parseISO, addYears } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Textarea } from '@/components/ui/textarea';
@@ -16,22 +32,34 @@ interface TraineeProfileProps {
   departments: Department[];
   onUpdate: (updatedTrainee: Trainee) => void;
   readOnly?: boolean;
+  setIsLoading?: (loading: boolean) => void;
 }
 
 const TraineeProfile: React.FC<TraineeProfileProps> = ({ 
   trainee, 
   departments, 
   onUpdate,
-  readOnly = false 
+  readOnly = false,
+  setIsLoading
 }) => {
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   
   // Form fields
   const [orthopedicCondition, setOrthopedicCondition] = useState(trainee.orthopedicCondition);
   const [medicalFormScore, setMedicalFormScore] = useState<MedicalFormScore>(trainee.medicalFormScore);
   const [medicalCertificateProvided, setMedicalCertificateProvided] = useState(trainee.medicalCertificateProvided || false);
   const [medicalLimitation, setMedicalLimitation] = useState(trainee.medicalLimitation || '');
+  
+  // Reset form fields when trainee changes
+  useEffect(() => {
+    setOrthopedicCondition(trainee.orthopedicCondition);
+    setMedicalFormScore(trainee.medicalFormScore);
+    setMedicalCertificateProvided(trainee.medicalCertificateProvided || false);
+    setMedicalLimitation(trainee.medicalLimitation || '');
+    setIsEditing(false);
+  }, [trainee]);
   
   // Medical approval calculation
   const shouldAutomaticallyApprove = (formScore: MedicalFormScore, certificateProvided: boolean) => {
@@ -55,9 +83,11 @@ const TraineeProfile: React.FC<TraineeProfileProps> = ({
       default: return '';
     }
   };
+  
   const getPhoneNumberFormat = (phoneNumberToFormat : string) => {
     return `${phoneNumberToFormat.slice(0,3)}-${phoneNumberToFormat.slice(3,10)}`
-  }  
+  }
+  
   const handleEdit = () => {
     setIsEditing(true);
   };
@@ -73,6 +103,8 @@ const TraineeProfile: React.FC<TraineeProfileProps> = ({
   
   const handleSave = async () => {
     try {
+      setIsSaving(true);
+      if (setIsLoading) setIsLoading(true);
       
       // Determine if medical approval should be granted automatically
       const approved = shouldAutomaticallyApprove(medicalFormScore, medicalCertificateProvided);
@@ -108,6 +140,9 @@ const TraineeProfile: React.FC<TraineeProfileProps> = ({
         variant: "destructive",
       });
       console.error('Update error:', error);
+    } finally {
+      setIsSaving(false);
+      if (setIsLoading) setIsLoading(false);
     }
   };
   
@@ -125,9 +160,14 @@ const TraineeProfile: React.FC<TraineeProfileProps> = ({
      new Date(trainee.medicalApproval.expirationDate) < new Date());
 
   return (
-    <div className="glass p-6 rounded-xl shadow-sm">
+    <div className="glass p-6 rounded-xl border border-border/30 shadow-md">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold">{trainee.fullName}</h2>
+        <div className="flex items-center">
+          <div className="bg-primary/10 p-2 rounded-full mr-3">
+            <User className="h-6 w-6 text-primary" />
+          </div>
+          <h2 className="text-2xl font-bold">{trainee.fullName}</h2>
+        </div>
         {!readOnly && (
           <div>
             {isEditing ? (
@@ -135,17 +175,28 @@ const TraineeProfile: React.FC<TraineeProfileProps> = ({
                 <Button 
                   onClick={handleSave} 
                   size="sm" 
-                  variant="outline" 
+                  variant="default" 
                   className="flex items-center ml-2"
+                  disabled={isSaving}
                 >
-                  <Check className="h-4 w-4 ml-1" />
-                  שמור
+                  {isSaving ? (
+                    <>
+                      <Loader className="h-4 w-4 ml-1 animate-spin" />
+                      שומר...
+                    </>
+                  ) : (
+                    <>
+                      <Check className="h-4 w-4 ml-1" />
+                      שמור
+                    </>
+                  )}
                 </Button>
                 <Button 
                   onClick={handleCancel} 
                   size="sm" 
                   variant="outline" 
                   className="flex items-center"
+                  disabled={isSaving}
                 >
                   <X className="h-4 w-4 ml-1" />
                   בטל
@@ -168,60 +219,90 @@ const TraineeProfile: React.FC<TraineeProfileProps> = ({
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-4">
-          <div>
-            <h3 className="text-sm font-medium text-muted-foreground">מספר אישי</h3>
-            <p className="font-medium">{trainee.personalId}</p>
+          <div className="bg-card/50 p-3 rounded-lg flex items-center border border-border/30">
+            <FileText className="h-5 w-5 text-muted-foreground ml-3" />
+            <div>
+              <h3 className="text-xs font-medium text-muted-foreground">מספר אישי</h3>
+              <p className="font-medium">{trainee.personalId}</p>
+            </div>
           </div>
           
-          <div>
-            <h3 className="text-sm font-medium text-muted-foreground">פרופיל רפואי</h3>
-            <p className="font-medium">{trainee.medicalProfile}</p>
+          <div className="bg-card/50 p-3 rounded-lg flex items-center border border-border/30">
+            <Activity className="h-5 w-5 text-muted-foreground ml-3" />
+            <div>
+              <h3 className="text-xs font-medium text-muted-foreground">פרופיל רפואי</h3>
+              <p className="font-medium">{trainee.medicalProfile}</p>
+            </div>
           </div>
           
-          <div>
-            <h3 className="text-sm font-medium text-muted-foreground">מחלקה</h3>
-            <p className="font-medium">{getDepartmentName(trainee.departmentId)}</p>
+          <div className="bg-card/50 p-3 rounded-lg flex items-center border border-border/30">
+            <Building className="h-5 w-5 text-muted-foreground ml-3" />
+            <div>
+              <h3 className="text-xs font-medium text-muted-foreground">מחלקה</h3>
+              <p className="font-medium">{getDepartmentName(trainee.departmentId)}</p>
+            </div>
           </div>
           
-          <div>
-            <h3 className="text-sm font-medium text-muted-foreground">טלפון</h3>
-            <p className="font-medium">{getPhoneNumberFormat(trainee.phoneNumber)}</p>
+          <div className="bg-card/50 p-3 rounded-lg flex items-center border border-border/30">
+            <Phone className="h-5 w-5 text-muted-foreground ml-3" />
+            <div>
+              <h3 className="text-xs font-medium text-muted-foreground">טלפון</h3>
+              <p className="font-medium direction-ltr">{getPhoneNumberFormat(trainee.phoneNumber)}</p>
+            </div>
           </div>
         </div>
         
         <div className="space-y-4">
-          <div>
-            <h3 className="text-sm font-medium text-muted-foreground">מין</h3>
-            <p className="font-medium">{trainee.gender === 'male' ? 'זכר' : 'נקבה'}</p>
+          <div className="bg-card/50 p-3 rounded-lg flex items-center border border-border/30">
+            <User className="h-5 w-5 text-muted-foreground ml-3" />
+            <div>
+              <h3 className="text-xs font-medium text-muted-foreground">מין</h3>
+              <p className="font-medium">{trainee.gender === 'male' ? 'זכר' : 'נקבה'}</p>
+            </div>
           </div>
           
-          <div>
-            <h3 className="text-sm font-medium text-muted-foreground">תאריך לידה</h3>
-            <p className="font-medium">{formatDate(trainee.birthDate)}</p>
+          <div className="bg-card/50 p-3 rounded-lg flex items-center border border-border/30">
+            <CalendarFull className="h-5 w-5 text-muted-foreground ml-3" />
+            <div>
+              <h3 className="text-xs font-medium text-muted-foreground">תאריך לידה</h3>
+              <p className="font-medium">{formatDate(trainee.birthDate)}</p>
+            </div>
           </div>
           
-          <div>
-            <h3 className="text-sm font-medium text-muted-foreground">סטטוס אישור רפואי</h3>
-            <div className={`flex items-center ${hasExpiredMedicalApproval ? 'text-destructive' : 'text-green-600'}`}>
-              <span className={`inline-block w-2 h-2 rounded-full mr-2 ${hasExpiredMedicalApproval ? 'bg-destructive' : 'bg-green-600'}`}></span>
-              <p className="font-medium">
-                {trainee.medicalApproval.approved 
-                  ? (trainee.medicalApproval.expirationDate 
-                    ? `בתוקף עד ${formatDate(trainee.medicalApproval.expirationDate)}` 
-                    : 'בתוקף')
-                  : 'לא בתוקף'}
-              </p>
+          <div className={`bg-card/50 p-3 rounded-lg flex items-center border ${hasExpiredMedicalApproval ? 'border-destructive/30' : 'border-green-500/30'}`}>
+            <div className={`shrink-0 ml-3 ${hasExpiredMedicalApproval ? 'text-destructive' : 'text-green-600'}`}>
+              {hasExpiredMedicalApproval ? (
+                <AlertTriangle className="h-5 w-5" />
+              ) : (
+                <Shield className="h-5 w-5" />
+              )}
+            </div>
+            <div>
+              <h3 className="text-xs font-medium text-muted-foreground">סטטוס אישור רפואי</h3>
+              <div className={`flex items-center ${hasExpiredMedicalApproval ? 'text-destructive' : 'text-green-600'}`}>
+                <p className="font-medium">
+                  {trainee.medicalApproval.approved 
+                    ? (trainee.medicalApproval.expirationDate 
+                      ? `בתוקף עד ${formatDate(trainee.medicalApproval.expirationDate)}` 
+                      : 'בתוקף')
+                    : 'לא בתוקף'}
+                </p>
+              </div>
             </div>
           </div>
         </div>
       </div>
       
       <div className="border-t border-border mt-6 pt-6">
-        <h3 className="text-lg font-semibold mb-4">פרטים רפואיים</h3>
+        <h3 className="text-lg font-semibold mb-4 flex items-center">
+          <Shield className="h-5 w-5 ml-2 text-primary" />
+          פרטים רפואיים
+        </h3>
         
         <div className="space-y-6">
           {/* Orthopedic Condition */}
-          <div className="flex items-center">
+          <div className="bg-card/50 p-4 rounded-lg border border-border/30">
+            <h4 className="text-sm font-medium text-muted-foreground mb-2">סעיף פרופיל אורטופדי</h4>
             {isEditing ? (
               <div className="flex items-center">
                 <input
@@ -230,27 +311,33 @@ const TraineeProfile: React.FC<TraineeProfileProps> = ({
                   checked={orthopedicCondition}
                   onChange={(e) => setOrthopedicCondition(e.target.checked)}
                   className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary ml-2"
+                  disabled={isSaving}
                 />
                 <label htmlFor="orthopedicCondition" className="text-sm font-medium">
-                  סעיף פרופיל אורטופדי
+                  {orthopedicCondition ? 'כן' : 'לא'}
                 </label>
               </div>
             ) : (
-              <div>
-                <h4 className="text-sm font-medium text-muted-foreground">סעיף פרופיל אורטופדי</h4>
+              <div className="flex items-center">
+                {orthopedicCondition ? (
+                  <CheckCircle2 className="h-5 w-5 text-primary ml-2" />
+                ) : (
+                  <XCircle className="h-5 w-5 text-muted-foreground ml-2" />
+                )}
                 <p className="font-medium">{orthopedicCondition ? 'כן' : 'לא'}</p>
               </div>
             )}
           </div>
           
           {/* Medical Form Score */}
-          <div>
-            <h4 className="text-sm font-medium text-muted-foreground mb-1">ציון שאלון א"ס</h4>
+          <div className="bg-card/50 p-4 rounded-lg border border-border/30">
+            <h4 className="text-sm font-medium text-muted-foreground mb-2">ציון שאלון א"ס</h4>
             {isEditing ? (
               <select
                 value={medicalFormScore}
                 onChange={(e) => setMedicalFormScore(e.target.value as MedicalFormScore)}
-                className="input-field w-full"
+                className="input-field w-full px-3 py-2 rounded-md border border-input"
+                disabled={isSaving}
               >
                 <option value="notRequired">לא נזקק/ה למילוי שאלון</option>
                 <option value="fullScore">100 נקודות</option>
@@ -264,10 +351,10 @@ const TraineeProfile: React.FC<TraineeProfileProps> = ({
           
           {/* Medical Certificate */}
           {(isEditing && medicalFormScore === 'partialScore') || (!isEditing && trainee.medicalFormScore === 'partialScore') ? (
-            <div>
-              <h4 className="text-sm font-medium text-muted-foreground mb-1">הוצג אישור רפואי</h4>
+            <div className="bg-card/50 p-4 rounded-lg border border-border/30">
+              <h4 className="text-sm font-medium text-muted-foreground mb-2">הוצג אישור רפואי</h4>
               {isEditing ? (
-                <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-4 space-x-reverse">
                   <div className="flex items-center ml-4">
                     <input
                       type="radio"
@@ -276,6 +363,7 @@ const TraineeProfile: React.FC<TraineeProfileProps> = ({
                       checked={medicalCertificateProvided}
                       onChange={() => setMedicalCertificateProvided(true)}
                       className="ml-2"
+                      disabled={isSaving}
                     />
                     <label htmlFor="certificateYes" className="text-sm">
                       כן
@@ -289,6 +377,7 @@ const TraineeProfile: React.FC<TraineeProfileProps> = ({
                       checked={!medicalCertificateProvided}
                       onChange={() => setMedicalCertificateProvided(false)}
                       className="ml-2"
+                      disabled={isSaving}
                     />
                     <label htmlFor="certificateNo" className="text-sm">
                       לא
@@ -296,20 +385,28 @@ const TraineeProfile: React.FC<TraineeProfileProps> = ({
                   </div>
                 </div>
               ) : (
-                <p className="font-medium">{trainee.medicalCertificateProvided ? 'כן' : 'לא'}</p>
+                <div className="flex items-center">
+                  {trainee.medicalCertificateProvided ? (
+                    <CheckCircle2 className="h-5 w-5 text-primary ml-2" />
+                  ) : (
+                    <XCircle className="h-5 w-5 text-muted-foreground ml-2" />
+                  )}
+                  <p className="font-medium">{trainee.medicalCertificateProvided ? 'כן' : 'לא'}</p>
+                </div>
               )}
             </div>
           ) : null}
           
           {/* Medical Limitation */}
-          <div>
-            <h4 className="text-sm font-medium text-muted-foreground mb-1">מגבלה רפואית</h4>
+          <div className="bg-card/50 p-4 rounded-lg border border-border/30">
+            <h4 className="text-sm font-medium text-muted-foreground mb-2">מגבלה רפואית</h4>
             {isEditing ? (
               <Textarea
                 value={medicalLimitation}
                 onChange={(e) => setMedicalLimitation(e.target.value)}
-                className="min-h-[80px]"
+                className="min-h-[80px] border border-input"
                 placeholder="הזן מגבלות רפואיות אם קיימות"
+                disabled={isSaving}
               />
             ) : (
               <p className="font-medium">{trainee.medicalLimitation || 'אין'}</p>

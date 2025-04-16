@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAdmin } from '../context/AdminContext';
@@ -6,11 +7,12 @@ import DashboardLayout from '../components/DashboardLayout';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
-import { Search, Filter, Calendar, Check, X } from 'lucide-react';
+import { Search, Filter, Calendar, Check, X, Loader } from 'lucide-react';
 import TraineeProfile from '../components/TraineeProfile';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { format, addMonths, isAfter, isBefore } from 'date-fns';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const MedicalApprovals = () => {
   const navigate = useNavigate();
@@ -22,6 +24,12 @@ const MedicalApprovals = () => {
   const [filteredTrainees, setFilteredTrainees] = useState<Trainee[]>([]);
   const [showOnlyExpired, setShowOnlyExpired] = useState(false);
   const [expirationDate, setExpirationDate] = useState<Date | undefined>(undefined);
+  const [isLoading, setIsLoading] = useState(false);
+  
+  // Filter trainees by admin's base if admin is gymAdmin
+  const baseFilteredTrainees = trainees.filter(trainee => 
+    admin?.role === 'generalAdmin' || trainee.baseId === admin?.baseId
+  );
   
   useEffect(() => {
     if (!admin) {
@@ -30,7 +38,7 @@ const MedicalApprovals = () => {
   }, [admin, navigate]);
   
   useEffect(() => {
-    let filtered = [...trainees];
+    let filtered = [...baseFilteredTrainees];
     
     // Filter based on search query
     if (searchQuery) {
@@ -60,7 +68,7 @@ const MedicalApprovals = () => {
     }
     
     setFilteredTrainees(filtered);
-  }, [trainees, searchQuery, showOnlyExpired, expirationDate]);
+  }, [baseFilteredTrainees, searchQuery, showOnlyExpired, expirationDate]);
   
   const clearFilters = () => {
     setShowOnlyExpired(false);
@@ -252,11 +260,31 @@ const MedicalApprovals = () => {
           </div>
           
           <div className="md:col-span-2">
-            {selectedTrainee ? (
+            {isLoading ? (
+              <div className="glass p-6 rounded-xl shadow-sm space-y-6">
+                <div className="flex justify-between items-center mb-6">
+                  <Skeleton className="h-8 w-52" />
+                  <Skeleton className="h-8 w-24" />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <Skeleton className="h-16 w-full" />
+                    <Skeleton className="h-16 w-full" />
+                    <Skeleton className="h-16 w-full" />
+                  </div>
+                  <div className="space-y-4">
+                    <Skeleton className="h-16 w-full" />
+                    <Skeleton className="h-16 w-full" />
+                    <Skeleton className="h-16 w-full" />
+                  </div>
+                </div>
+              </div>
+            ) : selectedTrainee ? (
               <TraineeProfile 
                 trainee={selectedTrainee} 
                 departments={departments} 
-                onUpdate={handleTraineeUpdate} 
+                onUpdate={handleTraineeUpdate}
+                setIsLoading={setIsLoading}
               />
             ) : (
               <div className="flex flex-col items-center justify-center h-full p-6 text-center glass rounded-xl">

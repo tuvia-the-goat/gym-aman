@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import DashboardLayout from '../components/DashboardLayout';
 import { useAdmin } from '../context/AdminContext';
@@ -201,14 +202,14 @@ const Settings = () => {
       setSelectedBaseForDepartment('');
       
       toast({
-        title: "מחלקה חדשה נוספה",
-        description: `מחלקה ${newDepartment.name} נוספה בהצלחה`,
+        title: "מסגרת חדשה נוספה",
+        description: `מסגרת ${newDepartment.name} נוספה בהצלחה`,
       });
     } catch (error) {
       console.error('Error adding department:', error);
       toast({
         title: "שגיאה",
-        description: "אירעה שגיאה בעת הוספת המחלקה",
+        description: "אירעה שגיאה בעת הוספת המסגרת",
         variant: "destructive",
       });
     }
@@ -281,7 +282,7 @@ const Settings = () => {
                 <TabsTrigger value="bases">ניהול בסיסים</TabsTrigger>
               </>
             )}
-            <TabsTrigger value="departments">ניהול מחלקות</TabsTrigger>
+            <TabsTrigger value="departments">ניהול מסגרות</TabsTrigger>
             <TabsTrigger value="medicalApproval"> אישורים רפואיים</TabsTrigger>
           </TabsList>
           
@@ -335,7 +336,7 @@ const Settings = () => {
                       {admin?.role === 'generalAdmin' && (
                         <th className="px-4 py-3 text-right">בסיס</th>
                       )}
-                      <th className="px-4 py-3 text-right">מחלקה</th>
+                      <th className="px-4 py-3 text-right">מסגרת</th>
                       <th className="px-4 py-3 text-right">מספר אישי</th>
                       <th className="px-4 py-3 text-right">שם מתאמן</th>
                     </tr>
@@ -393,14 +394,14 @@ const Settings = () => {
               
               <div className="bg-card shadow-sm rounded-lg border overflow-hidden">
                 <div className="p-4 bg-muted">
-                  <h3 className="font-semibold text-lg" style={{textAlign: "right"}}>מחלקות קיימות</h3>
+                  <h3 className="font-semibold text-lg" style={{textAlign: "right"}}>מסגרות קיימות</h3>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead className="bg-muted/50">
                       <tr>
                         <th className="px-4 py-3 text-right">בסיס</th>
-                        <th className="px-4 py-3 text-right">שם המחלקה</th>
+                        <th className="px-4 py-3 text-right">שם המסגרת</th>
                       </tr>
                     </thead>
                     <tbody style={{textAlign: "right"}}>
@@ -420,11 +421,11 @@ const Settings = () => {
                 </div>
               </div>
               <div className="bg-card shadow-sm rounded-lg border p-6">
-                <h3 className="font-semibold text-lg mb-4" style={{textAlign: "right"}}>הוספת מחלקה חדשה</h3>
+                <h3 className="font-semibold text-lg mb-4" style={{textAlign: "right"}}>הוספת מסגרת חדשה</h3>
                 <form onSubmit={handleAddDepartment} className="space-y-4">
                   <div>
                     <label htmlFor="departmentName" className="block text-sm font-medium mb-1" style={{textAlign: "right"}}>
-                      שם המחלקה
+                      שם המסגרת
                     </label>
                     <input
                       id="departmentName"
@@ -432,7 +433,7 @@ const Settings = () => {
                       value={newDepartmentName}
                       onChange={(e) => setNewDepartmentName(e.target.value)}
                       className="input-field"
-                      placeholder="הזן שם מחלקה"
+                      placeholder="הזן שם מסגרת"
                       required
                       autoComplete="off"
                       style={{textAlign: "right"}}
@@ -466,7 +467,7 @@ const Settings = () => {
                   </div>
                   
                   <button type="submit" className="btn-primary w-full">
-                    הוסף מחלקה
+                    הוסף מסגרת
                   </button>
                 </form>
               </div>
@@ -528,7 +529,7 @@ const Settings = () => {
                         <tr>
                           <th className="px-4 py-3 text-right">שם הבסיס</th>
                           <th className="px-4 py-3 text-right">מיקום</th>
-                          <th className="px-4 py-3 text-right">מספר מחלקות</th>
+                          <th className="px-4 py-3 text-right">מספר מסגרות</th>
                         </tr>
                       </thead>
                       <tbody>

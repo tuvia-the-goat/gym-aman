@@ -15,7 +15,8 @@ export const useAnalyticsFilters = () => {
   
   // Filter data based on admin role and filters
   const filteredEntries = useMemo(() => {
-    let filtered = entries;
+    // Start with only successful entries
+    let filtered = entries.filter(entry => entry.status === 'success');
     
     // Admin role filter
     if (admin?.role === 'gymAdmin' && admin.baseId) {

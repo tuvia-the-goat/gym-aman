@@ -13,9 +13,20 @@ import {
 import { addMonths, compareAsc, parseISO, format } from 'date-fns';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
-import { CalendarIcon, AlertCircle } from 'lucide-react';
+import { 
+  CalendarIcon, 
+  AlertCircle, 
+  User, 
+  Calendar as CalendarIconFull, 
+  CheckCircle, 
+  XCircle, 
+  Shield, 
+  Dumbbell, 
+  LogIn
+} from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
+import { Input } from '@/components/ui/input';
 import TraineeProfile from '../components/TraineeProfile';
 
 const TraineeEntering = () => {
@@ -318,22 +329,25 @@ const TraineeEntering = () => {
   );
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
-      <header className="bg-primary text-primary-foreground shadow-md px-6 py-4">
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-blue-50/50 to-background">
+      <header className="bg-primary text-primary-foreground py-4 px-6 shadow-md">
         <div className="container mx-auto flex justify-between items-center">
-          <h1 className="text-2xl font-bold">מערכת אימ"ון</h1>
-          <div className="flex items-center">
-            <button
-              onClick={() => navigate('/login')}
-              className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-md transition-colors"
-            >
-              התחברות מנהלים
-            </button>
+          <div className="flex items-center space-x-3 space-x-reverse">
+            <Dumbbell className="h-6 w-6" />
+            <h1 className="text-2xl font-bold">מערכת אימ"ון</h1>
           </div>
+          <Button
+            onClick={() => navigate('/login')}
+            variant="ghost"
+            className="text-primary-foreground hover:bg-primary-foreground/10"
+          >
+            <LogIn className="ml-2 h-4 w-4" />
+            התחברות מנהלים
+          </Button>
         </div>
       </header>
 
-      <main className="flex-1 container mx-auto px-6 py-8">
+      <main className="flex-1 container mx-auto px-6 py-8 max-w-5xl">
         <div className="max-w-4xl mx-auto">
           {admin?.role === 'generalAdmin' && !selectedBase && (
             <div className="glass p-8 rounded-2xl mb-8 animate-scale-in">
@@ -343,7 +357,7 @@ const TraineeEntering = () => {
                   <button
                     key={base._id}
                     onClick={() => setSelectedBase(base)}
-                    className="neomorphic p-6 text-center hover:-translate-y-1 transition-transform duration-300"
+                    className="bg-card hover:bg-card/80 p-6 rounded-xl text-center hover:-translate-y-1 transition-all duration-300 shadow-md hover:shadow-lg border border-border/30"
                   >
                     <h3 className="text-xl font-semibold mb-2">{base.name}</h3>
                     <p className="text-muted-foreground">{base.location}</p>
@@ -359,19 +373,40 @@ const TraineeEntering = () => {
                 <span className="inline-block px-4 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium mb-2">
                   בסיס: {selectedBase.name}
                 </span>
-                <h2 className="text-3xl font-bold">מערכת רישום לחדר כושר</h2>
+                <h2 className="text-3xl font-bold bg-gradient-to-b from-foreground to-foreground/70 bg-clip-text text-transparent">מערכת רישום לחדר כושר</h2>
+                <div className="flex justify-center mt-6 gap-4">
+                  <Button 
+                    variant={view === 'entry' ? "default" : "outline"}
+                    onClick={() => setView('entry')}
+                    className="flex-1 max-w-48"
+                  >
+                    <LogIn className="ml-2 h-4 w-4" />
+                    רישום כניסה
+                  </Button>
+                  <Button 
+                    variant={view === 'register' ? "default" : "outline"}
+                    onClick={() => setView('register')}
+                    className="flex-1 max-w-48"
+                  >
+                    <User className="ml-2 h-4 w-4" />
+                    הצטרפות למערכת
+                  </Button>
+                </div>
               </div>
               
               {view === 'register' && (
-                <div className="glass max-w-xl mx-auto p-8 rounded-2xl animate-fade-up">
-                  <h3 className="text-xl font-bold mb-4 text-center">הצטרפות למערכת</h3>
+                <div className="glass max-w-xl mx-auto p-6 rounded-2xl animate-fade-up shadow-lg border border-border/30">
+                  <h3 className="text-xl font-bold mb-6 text-center flex items-center justify-center">
+                    <User className="mr-2 h-5 w-5 text-primary" />
+                    הצטרפות למערכת
+                  </h3>
                   <form onSubmit={handleRegistration} className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                       <div className="space-y-2">
                         <label htmlFor="personalId" className="block text-sm font-medium">
                           מספר אישי (7 ספרות)
                         </label>
-                        <input
+                        <Input
                           id="personalId"
                           type="text"
                           inputMode="numeric"
@@ -391,7 +426,7 @@ const TraineeEntering = () => {
                         <label htmlFor="fullName" className="block text-sm font-medium">
                           שם מלא
                         </label>
-                        <input
+                        <Input
                           id="fullName"
                           type="text"
                           value={fullName}
@@ -411,7 +446,7 @@ const TraineeEntering = () => {
                           id="gender"
                           value={gender}
                           onChange={(e) => setGender(e.target.value as 'male' | 'female' | '')}
-                          className="input-field"
+                          className="input-field w-full px-3 py-2 rounded-md border border-input"
                           required
                         >
                           <option value="">בחר מין</option>
@@ -463,7 +498,7 @@ const TraineeEntering = () => {
                           id="medicalProfile"
                           value={medicalProfile}
                           onChange={(e) => setMedicalProfile(e.target.value)}
-                          className="input-field"
+                          className="input-field w-full px-3 py-2 rounded-md border border-input"
                           required
                         >
                           <option value="">בחר פרופיל</option>
@@ -484,7 +519,7 @@ const TraineeEntering = () => {
                           id="department"
                           value={departmentId}
                           onChange={(e) => setDepartmentId(e.target.value)}
-                          className="input-field"
+                          className="input-field w-full px-3 py-2 rounded-md border border-input"
                           required
                         >
                           <option value="">בחר מחלקה</option>
@@ -500,7 +535,7 @@ const TraineeEntering = () => {
                         <label htmlFor="phoneNumber" className="block text-sm font-medium">
                           מספר טלפון (מתחיל ב-05)
                         </label>
-                        <input
+                        <Input
                           id="phoneNumber"
                           type="text"
                           inputMode="numeric"
@@ -517,7 +552,7 @@ const TraineeEntering = () => {
                       </div>
                       
                       <div className="space-y-2 md:col-span-2">
-                        <div className="flex items-center space-x-2">
+                        <div className="flex items-center space-x-2 space-x-reverse">
                           <input
                             id="orthopedicCondition"
                             type="checkbox"
@@ -525,27 +560,30 @@ const TraineeEntering = () => {
                             onChange={(e) => setOrthopedicCondition(e.target.checked)}
                             className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
                           />
-                          <label htmlFor="orthopedicCondition" className="text-sm font-medium mr-2">
+                          <label htmlFor="orthopedicCondition" className="text-sm font-medium">
                             סעיף פרופיל אורטופדי
                           </label>
                         </div>
                       </div>
                     </div>
                     
-                    <button
+                    <Button
                       type="submit"
-                      className="w-full bg-primary text-primary-foreground py-3 rounded-lg font-medium shadow-md
-                      transition duration-300 hover:bg-primary/90 hover:shadow-lg"
+                      className="w-full"
+                      size="lg"
                     >
                       הצטרף
-                    </button>
+                    </Button>
                   </form>
                 </div>
               )}
               
               {view === 'entry' && (
-                <div className="glass max-w-xl mx-auto p-8 rounded-2xl animate-fade-up">
-                  <h3 className="text-xl font-bold mb-4 text-center">רישום כניסה לחדר כושר</h3>
+                <div className="glass max-w-xl mx-auto p-6 rounded-2xl animate-fade-up shadow-lg border border-border/30">
+                  <h3 className="text-xl font-bold mb-6 text-center flex items-center justify-center">
+                    <LogIn className="mr-2 h-5 w-5 text-primary" />
+                    רישום כניסה לחדר כושר
+                  </h3>
                   
                   {!confirmingEntry ? (
                     <div className="space-y-6">
@@ -553,93 +591,106 @@ const TraineeEntering = () => {
                         <label htmlFor="entryPersonalId" className="block text-sm font-medium">
                           מספר אישי (7 ספרות)
                         </label>
-                        <input
-                          id="entryPersonalId"
-                          type="text"
-                          inputMode="numeric"
-                          value={entryPersonalId}
-                          onChange={(e) => {
-                            const value = e.target.value.replace(/\D/g, '').slice(0, 7);
-                            setEntryPersonalId(value);
-                          }}
-                          className="input-field"
-                          placeholder="1234567"
-                          required
-                          autoComplete="off"
-                        />
+                        <div className="relative">
+                          <Input
+                            id="entryPersonalId"
+                            type="text"
+                            inputMode="numeric"
+                            value={entryPersonalId}
+                            onChange={(e) => {
+                              const value = e.target.value.replace(/\D/g, '').slice(0, 7);
+                              setEntryPersonalId(value);
+                            }}
+                            className="input-field pr-10"
+                            placeholder="1234567"
+                            required
+                            autoComplete="off"
+                          />
+                          <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                            <User className="h-5 w-5 text-muted-foreground" />
+                          </div>
+                        </div>
                       </div>
                       
-                      <button
+                      <Button
                         onClick={handlePersonalIdCheck}
-                        className="w-full bg-primary text-primary-foreground py-3 rounded-lg font-medium shadow-md
-                        transition duration-300 hover:bg-primary/90 hover:shadow-lg"
+                        className="w-full"
+                        size="lg"
                       >
                         בדוק
-                      </button>
+                      </Button>
                     </div>
                   ) : (
                     <div className="space-y-6">
                       {entryTrainee && (
                         <>
                           <div className="text-center mb-6">
+                            <div className="inline-flex justify-center items-center bg-primary/10 rounded-full w-16 h-16 mb-3">
+                              <User className="h-8 w-8 text-primary" />
+                            </div>
                             <p className="text-lg">האם שמך הוא</p>
                             <p className="text-2xl font-bold">{entryTrainee?.fullName}?</p>
                           </div>
                           
-                          <div className="p-4 border rounded-lg bg-secondary">
-                            <h4 className="font-semibold text-lg mb-2">הצהרת בריאות</h4>
-                            <p className="mb-2">אני מצהיר/ה בזאת כי:</p>
-                            <ul className="list-inside space-y-1 text-sm">
+                          <div className="p-5 rounded-lg bg-card border border-border">
+                            <h4 className="font-semibold text-lg mb-3 flex items-center">
+                              <Shield className="h-5 w-5 ml-2 text-primary" />
+                              הצהרת בריאות
+                            </h4>
+                            <p className="mb-3">אני מצהיר/ה בזאת כי:</p>
+                            <ul className="space-y-2 text-sm">
                               <li className="flex items-start">
-                                <span className="ml-2">•</span>
+                                <CheckCircle className="h-4 w-4 ml-2 mt-0.5 text-primary shrink-0" />
                                 <span>המספר האישי והשם הנ"ל שייכים לי.</span>
                               </li>
                               <li className="flex items-start">
-                                <span className="ml-2">•</span>
+                                <CheckCircle className="h-4 w-4 ml-2 mt-0.5 text-primary shrink-0" />
                                 <span>אני בריא/ה ואין לי מגבלות רפואיות המונעות ממני להתאמן בחדר כושר.</span>
                               </li>
                               <li className="flex items-start">
-                                <span className="ml-2">•</span>
+                                <CheckCircle className="h-4 w-4 ml-2 mt-0.5 text-primary shrink-0" />
                                 <span>אני מודע/ת לכך שהשימוש במתקני חדר הכושר הינו באחריותי הבלעדית.</span>
                               </li>
                               <li className="flex items-start">
-                                <span className="ml-2">•</span>
+                                <CheckCircle className="h-4 w-4 ml-2 mt-0.5 text-primary shrink-0" />
                                 <span>התייעצתי עם רופא לגבי פעילות גופנית אם יש לי בעיות בריאותיות.</span>
                               </li>
                             </ul>
-                            <p className="mt-3 text-sm font-medium">לחיצה על כפתור "רישום כניסה" מהווה אישור של ההצהרה הרפואית למעלה</p>
+                            <p className="mt-3 text-sm font-medium text-primary">לחיצה על כפתור "רישום כניסה" מהווה אישור של ההצהרה הרפואית למעלה</p>
                           </div>
                           
-                          
                           {isMedicalAboutToExpire() && entryTrainee.medicalApproval.approved && (
-                            <div className='w-full border-2 border-[rgb(255,220,5)] bg-[rgba(255,255,141,0.44)] text-[rgb(255,220,5)] font-bold text-center p-3 rounded-[8px]'>
-                              שימ/י לב! תוקף האישור הרפואי שלך יפוג ב-
-                              {getDateFormat(traineeMedicalExpirationDate)}
-                              , יש לחדש אותו בהקדם בברקוד הייעודי ולעדכן את צוות חדר הכושר.
+                            <div className="p-4 border-2 border-amber-400 bg-amber-50 rounded-lg flex items-start">
+                              <AlertCircle className="h-5 w-5 text-amber-500 mr-1 ml-2 shrink-0 mt-0.5" />
+                              <div className="text-amber-800">
+                                <p className="font-semibold">שימ/י לב! תוקף האישור הרפואי שלך יפוג ב-
+                                {getDateFormat(traineeMedicalExpirationDate!)}
+                                </p>
+                                <p className="text-sm">יש לחדש אותו בהקדם בברקוד הייעודי ולעדכן את צוות חדר הכושר.</p>
+                              </div>
                             </div>
                           )}
-                          
 
-                          
-                          <div className="flex space-x-4 gap-10">
-                            <button
+                          <div className="flex space-x-4 gap-4 mt-4">
+                            <Button
                               onClick={() => {
                                 setConfirmingEntry(false);
                                 setEntryTrainee(null);
                                 setEntryPersonalId('');
                               }}
-                              className="flex-1 bg-secondary text-secondary-foreground py-3 rounded-lg font-medium
-                              transition duration-300 hover:bg-secondary/80"
+                              variant="outline"
+                              className="flex-1"
                             >
+                              <XCircle className="ml-2 h-4 w-4" />
                               ביטול
-                            </button>
-                            <button
+                            </Button>
+                            <Button
                               onClick={handleEntryConfirmation}
-                              className="flex-1 bg-primary text-primary-foreground py-3 rounded-lg font-medium shadow-md
-                              transition duration-300 hover:bg-primary/90 hover:shadow-lg"
+                              className="flex-1"
                             >
+                              <CheckCircle className="ml-2 h-4 w-4" />
                               רישום כניסה
-                            </button>
+                            </Button>
                           </div>
                         </>
                       )}
@@ -652,9 +703,9 @@ const TraineeEntering = () => {
         </div>
       </main>
 
-      <footer className="bg-background border-t py-6">
+      <footer className="bg-background border-t py-6 mt-auto">
         <div className="container mx-auto px-6 text-center text-muted-foreground">
-          <p>© {new Date().getFullYear()}  מערכת אימ"ון </p>
+          <p>© {new Date().getFullYear()} מערכת אימ"ון</p>
         </div>
       </footer>
     </div>
