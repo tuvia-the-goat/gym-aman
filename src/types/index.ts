@@ -23,11 +23,6 @@ export interface Department {
   baseId: string;
 }
 
-export interface SubDepartment {
-  _id: string;
-  name: string;
-  departmentId: string;
-}
 
 export interface MedicalApproval {
   approved: boolean;
@@ -55,8 +50,6 @@ export interface AdminContextType {
   setBases: (bases: Base[]) => void;
   departments: Department[];
   setDepartments: (departments: Department[]) => void;
-  subDepartments: SubDepartment[];
-  setSubDepartments: (subDepartments: SubDepartment[]) => void;
   trainees: Trainee[];
   setTrainees: (trainees: Trainee[]) => void;
   entries: Entry[];
@@ -74,7 +67,6 @@ export interface Trainee {
   fullName: string;
   gender: 'male' | 'female';
   departmentId: string;
-  subDepartmentId?: string;
   baseId: string;
   phoneNumber: string;
   email?: string;

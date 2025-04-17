@@ -4,7 +4,7 @@ import { isWithinInterval, parseISO } from 'date-fns';
 import { useAdmin } from '../context/AdminContext';
 
 export const useBasesData = (startDate?: Date, endDate?: Date) => {
-  const { admin, entries, bases, departments, subDepartments } = useAdmin();
+  const { admin, entries, bases, departments } = useAdmin();
   const isGeneralAdmin = admin?.role === 'generalAdmin';
   
   // Helper function to get base name
@@ -19,18 +19,6 @@ export const useBasesData = (startDate?: Date, endDate?: Date) => {
     return department ? department.name : '';
   }
   
-  // Helper function to get subdepartment name
-  function getSubDepartmentName(id: string): string {
-    const subDepartment = subDepartments.find(subDept => subDept._id === id);
-    return subDepartment ? subDepartment.name : '';
-  }
-  
-  // Helper function to get subdepartments by department
-  function getSubDepartmentsByDepartment(departmentId: string): string[] {
-    return subDepartments
-      .filter(subDept => subDept.departmentId === departmentId)
-      .map(subDept => subDept._id);
-  }
 
   // Bases data (only for all bases admin)
   const basesData = useMemo(() => {
@@ -69,7 +57,5 @@ export const useBasesData = (startDate?: Date, endDate?: Date) => {
     isGeneralAdmin,
     getBaseName,
     getDepartmentName,
-    getSubDepartmentName,
-    getSubDepartmentsByDepartment
   };
 };

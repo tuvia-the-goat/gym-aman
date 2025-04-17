@@ -2,12 +2,11 @@
 import { useState, useEffect } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import { addYears } from 'date-fns';
-import { MedicalFormScore, SubDepartment, Trainee } from '../types';
+import { MedicalFormScore, Trainee } from '../types';
 import { traineeService } from '../services/api';
 
 export const useRegistrationForm = (
   selectedBaseId: string,
-  subDepartments: SubDepartment[],
   onRegistrationSuccess: (newTrainee: Trainee) => void
 ) => {
   const { toast } = useToast();
@@ -17,7 +16,6 @@ export const useRegistrationForm = (
   const [fullName, setFullName] = useState('');
   const [medicalProfile, setMedicalProfile] = useState<string>('');
   const [departmentId, setDepartmentId] = useState('');
-  const [subDepartmentId, setSubDepartmentId] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [gender, setGender] = useState<'male' | 'female' | ''>('');
   const [birthDate, setBirthDate] = useState<Date | undefined>(undefined);
@@ -26,22 +24,7 @@ export const useRegistrationForm = (
   const [medicalCertificateProvided, setMedicalCertificateProvided] = useState(false);
   const [medicalLimitation, setMedicalLimitation] = useState('');
   
-  // Filtered subdepartments based on selected department
-  const [filteredSubDepartments, setFilteredSubDepartments] = useState<SubDepartment[]>([]);
-  console.log(subDepartmentId);
-  
-  // Reset subdepartment when department changes
-  useEffect(() => {
-    setSubDepartmentId('');
-    if (departmentId) {
-      const filtered = subDepartments.filter(
-        subdept => subdept.departmentId === departmentId
-      );
-      setFilteredSubDepartments(filtered);
-    } else {
-      setFilteredSubDepartments([]);
-    }
-  }, [departmentId, subDepartments]);
+
   
   // Validate personal ID (7 digits)
   const validatePersonalId = (id: string) => {
@@ -118,15 +101,7 @@ export const useRegistrationForm = (
       return false;
     }
     
-    // Require subdepartment if available
-    if (filteredSubDepartments.length > 0 && !subDepartmentId) {
-      toast({
-        title: "שגיאה",
-        description: "יש לבחור תת-מסגרת",
-        variant: "destructive",
-      });
-      return false;
-    }
+
     
     return true;
   };
@@ -155,7 +130,6 @@ export const useRegistrationForm = (
         fullName,
         medicalProfile: medicalProfile as '97' | '82' | '72' | '64' | '45' | '25',
         departmentId,
-        subDepartmentId: subDepartmentId,
         phoneNumber,
         baseId: selectedBaseId,
         gender: gender as 'male' | 'female',
@@ -178,7 +152,6 @@ export const useRegistrationForm = (
       setFullName('');
       setMedicalProfile('');
       setDepartmentId('');
-      setSubDepartmentId('');
       setPhoneNumber('');
       setGender('');
       setBirthDate(undefined);
@@ -210,8 +183,7 @@ export const useRegistrationForm = (
     setMedicalProfile,
     departmentId,
     setDepartmentId,
-    subDepartmentId,
-    setSubDepartmentId,
+
     phoneNumber,
     setPhoneNumber,
     gender,
@@ -226,7 +198,6 @@ export const useRegistrationForm = (
     setMedicalCertificateProvided,
     medicalLimitation,
     setMedicalLimitation,
-    filteredSubDepartments,
     handleRegistration
   };
 };

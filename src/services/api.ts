@@ -107,7 +107,6 @@ export const traineeService = {
     fullName: string,
     medicalProfile: '97' | '82' | '72' | '64' | '45' | '25',
     departmentId: string,
-    subDepartmentId?: string, // Added this field to fix the type error
     phoneNumber: string,
     baseId: string,
     gender: 'male' | 'female',

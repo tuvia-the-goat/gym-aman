@@ -15,7 +15,7 @@ import {
 const Settings = () => {
   const { admin, bases, setBases, departments, setDepartments, trainees, setTrainees } = useAdmin();
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState('medicalApproval');
+  const [activeTab, setActiveTab] = useState('departments');
   
   // Medical approval states
   const [medicalFilter, setMedicalFilter] = useState('expired');
@@ -283,110 +283,9 @@ const Settings = () => {
               </>
             )}
             <TabsTrigger value="departments">ניהול מסגרות</TabsTrigger>
-            <TabsTrigger value="medicalApproval"> אישורים רפואיים</TabsTrigger>
           </TabsList>
           
-          {/* Medical Approval Tab */}
-          <TabsContent value="medicalApproval" className="pt-6">
-            <div className="bg-card shadow-sm rounded-lg border overflow-hidden">
-              <div className="p-4 bg-muted" style={{display: "flex", flexDirection:"column", alignItems: "flex-end"}}>
-                <h3 className="font-semibold text-lg" style={{textAlign: "right"}}>ניהול אישורים רפואיים</h3>
-                <p className="text-muted-foreground" style={{textAlign: "right"}}>צפה במתאמנים ללא אישור רפואי או עם אישור שעומד לפוג</p>
-                
-                <div className="flex space-x-4 mt-4">
-                  <button
-                    onClick={() => setMedicalFilter('expiringThreeMonths')}
-                    className={`px-4 py-2 rounded-md ${
-                      medicalFilter === 'expiringThreeMonths' 
-                        ? 'bg-primary text-primary-foreground' 
-                        : 'bg-secondary text-secondary-foreground'
-                    }`}
-                  >
-                    פג תוך 3 חודשים
-                  </button>
-                  <button
-                    onClick={() => setMedicalFilter('expiringOneMonth')}
-                    className={`px-4 py-2 rounded-md ${
-                      medicalFilter === 'expiringOneMonth' 
-                        ? 'bg-primary text-primary-foreground' 
-                        : 'bg-secondary text-secondary-foreground'
-                    }`}
-                  >
-                    פג תוך חודש
-                  </button>
-                  <button
-                    onClick={() => setMedicalFilter('expired')}
-                    className={`px-4 py-2 rounded-md ${
-                      medicalFilter === 'expired' 
-                        ? 'bg-primary text-primary-foreground' 
-                        : 'bg-secondary text-secondary-foreground'
-                    }`}
-                  >
-                    ללא אישור תקף
-                  </button>
-                </div>
-              </div>
-              
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-muted/50" style={{direction: "rtl"}}>
-                    <tr>
-                      <th className="px-4 py-3 text-right">פעולות</th>
-                      <th className="px-4 py-3 text-right">סטטוס אישור</th>
-                      {admin?.role === 'generalAdmin' && (
-                        <th className="px-4 py-3 text-right">בסיס</th>
-                      )}
-                      <th className="px-4 py-3 text-right">מסגרת</th>
-                      <th className="px-4 py-3 text-right">מספר אישי</th>
-                      <th className="px-4 py-3 text-right">שם מתאמן</th>
-                    </tr>
-                  </thead>
-                  <tbody style={{direction: "rtl"}}>
-                    {filteredTrainees.length > 0 ? (
-                      filteredTrainees.map((trainee) => (
-                        <tr key={trainee._id} className="border-t hover:bg-muted/30">
-                          <td className="px-4 py-3">
-                            <button
-                              onClick={() => updateMedicalApproval(trainee._id, true)}
-                              className="btn-primary text-sm py-1"
-                              >
-                              אישור לשנה
-                            </button>
-                          </td>
-                          <td className="px-4 py-3">
-                            <span className={`px-2 py-1 rounded-full text-sm ${
-                              trainee.medicalApproval.approved 
-                              ? 'bg-yellow-100 text-yellow-800' 
-                              : 'bg-red-100 text-red-800'
-                            }`}>
-                              {trainee.medicalApproval.approved 
-                                ? `פג בתאריך ${new Date(trainee.medicalApproval.expirationDate!).toLocaleDateString()}` 
-                                : 'אין אישור תקף'}
-                            </span>
-                          </td>
-                          {admin?.role === 'generalAdmin' && (
-                            <td className="px-4 py-3">{getBaseName(trainee.baseId)}</td>
-                          )}
-                          <td className="px-4 py-3">{getDepartmentName(trainee.departmentId)}</td>
-                          <td className="px-4 py-3">{trainee.personalId}</td>
-                          <td className="px-4 py-3">{trainee.fullName}</td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td 
-                          colSpan={admin?.role === 'generalAdmin' ? 6 : 5} 
-                          className="px-4 py-8 text-center text-muted-foreground"
-                        >
-                          לא נמצאו רשומות מתאימות
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </TabsContent>
+         
           
           {/* Departments Tab */}
           <TabsContent value="departments" className="pt-6">

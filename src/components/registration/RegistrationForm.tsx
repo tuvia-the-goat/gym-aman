@@ -13,7 +13,6 @@ interface RegistrationFormProps {
 }
 
 const RegistrationForm = ({ selectedBase, departments, onRegistrationSuccess }: RegistrationFormProps) => {
-  const { subDepartments } = useAdmin();
   
   // Use the custom hook to handle form state and submission
   const {
@@ -25,8 +24,6 @@ const RegistrationForm = ({ selectedBase, departments, onRegistrationSuccess }: 
     setMedicalProfile,
     departmentId,
     setDepartmentId,
-    subDepartmentId,
-    setSubDepartmentId,
     phoneNumber,
     setPhoneNumber,
     gender,
@@ -41,9 +38,8 @@ const RegistrationForm = ({ selectedBase, departments, onRegistrationSuccess }: 
     setMedicalCertificateProvided,
     medicalLimitation,
     setMedicalLimitation,
-    filteredSubDepartments,
     handleRegistration
-  } = useRegistrationForm(selectedBase._id, subDepartments, onRegistrationSuccess);
+  } = useRegistrationForm(selectedBase._id, onRegistrationSuccess);
 
   // Filter departments by selected base
   const filteredDepartments = departments.filter(
@@ -65,12 +61,9 @@ const RegistrationForm = ({ selectedBase, departments, onRegistrationSuccess }: 
           setBirthDate={setBirthDate}
           departmentId={departmentId}
           setDepartmentId={setDepartmentId}
-          subDepartmentId={subDepartmentId}
-          setSubDepartmentId={setSubDepartmentId}
           phoneNumber={phoneNumber}
           setPhoneNumber={setPhoneNumber}
           filteredDepartments={filteredDepartments}
-          filteredSubDepartments={filteredSubDepartments}
         />
         
         <div className="md:col-span-2"> </div>

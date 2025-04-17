@@ -7,7 +7,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { CalendarIcon } from 'lucide-react';
 import FormSection from './FormSection';
-import { Department, SubDepartment } from '../../types';
+import { Department } from '../../types';
 
 interface PersonalDetailsSectionProps {
   personalId: string;
@@ -20,12 +20,9 @@ interface PersonalDetailsSectionProps {
   setBirthDate: (date: Date | undefined) => void;
   departmentId: string;
   setDepartmentId: (id: string) => void;
-  subDepartmentId: string;
-  setSubDepartmentId: (id: string) => void;
   phoneNumber: string;
   setPhoneNumber: (number: string) => void;
   filteredDepartments: Department[];
-  filteredSubDepartments: SubDepartment[];
 }
 
 const PersonalDetailsSection = ({
@@ -39,12 +36,9 @@ const PersonalDetailsSection = ({
   setBirthDate,
   departmentId,
   setDepartmentId,
-  subDepartmentId,
-  setSubDepartmentId,
   phoneNumber,
   setPhoneNumber,
   filteredDepartments,
-  filteredSubDepartments
 }: PersonalDetailsSectionProps) => {
   return (
     <FormSection title="פרטים אישיים">
@@ -157,27 +151,6 @@ const PersonalDetailsSection = ({
           </select>
         </div>
         
-        {departmentId && filteredSubDepartments.length > 0 && (
-          <div className="space-y-2">
-            <label htmlFor="subDepartment" className="block text-sm font-medium">
-              תת-מסגרת
-            </label>
-            <select
-              id="subDepartment"
-              value={subDepartmentId}
-              onChange={(e) => setSubDepartmentId(e.target.value)}
-              className="input-field"
-              required
-            >
-              <option value="">בחר תת-מסגרת</option>
-              {filteredSubDepartments.map((subDept) => (
-                <option key={subDept._id} value={subDept._id}>
-                  {subDept.name}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
         
         <div className="space-y-2">
           <label htmlFor="phoneNumber" className="block text-sm font-medium">
