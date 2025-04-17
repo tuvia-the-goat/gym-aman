@@ -44,7 +44,7 @@ const ActiveFilters: React.FC<ActiveFiltersProps> = ({
       
       {selectedDepartmentIds.length > 0 && (
         <div className="bg-background border rounded-md px-2 py-1 flex items-center gap-1 text-sm">
-          <span>מחלקות: </span>
+          <span>מסגרות: </span>
           {selectedDepartmentIds.length} נבחרו
           <button onClick={clearDepartmentFilters} className="mr-1 hover:text-destructive">
             <X size={14} />

@@ -104,27 +104,27 @@ const Dashboard = () => {
     
     return { approved, notApproved };
   }, [baseFilteredTrainees]);
-
+  
   return (
     <DashboardLayout activeTab="dashboard">
       <div className="p-6">
         <h1 className="text-3xl font-bold mb-6">לוח בקרה</h1>
-        <p className="text-xl mb-6">שלום {admin?.fullName || "משתמש"}, ברוך הבא למערכת ניהול חדר הכושר</p>
+        <p className="text-xl mb-6">שלום {admin.username}, ברוך הבא למערכת ניהול חדר הכושר!</p>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-${admin?.role === 'gymAdmin' && admin.baseId ? 4 : 3} gap-4 mb-8`}>
           <StatCard 
-            title="סה״כ כניסות מוצלחות"
+            title='כניסות לחדרי הכושר באמ"ן'
             value={totalSuccessfulEntries}
-            description="כניסות מוצלחות שנרשמו במערכת"
+            description='כמות הכניסות של מתאמנים לחדרי הכושר באמ"ן'
             icon={<TrendingUp className="h-4 w-4" />}
           />
           
-          <StatCard 
-            title="כניסות מוצלחות היום"
+          {(admin?.role === 'gymAdmin' && admin.baseId) &&<StatCard 
+            title="כניסות לחדר הכושר היום"
             value={todaySuccessfulEntries}
-            description="כניסות מוצלחות שנרשמו היום"
+            description="כניסות שנרשמו היום"
             icon={<Calendar className="h-4 w-4" />}
-          />
+          />}
           
           <StatCard 
             title="מתאמנים עם אישור רפואי"

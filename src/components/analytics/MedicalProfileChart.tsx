@@ -36,7 +36,6 @@ const MedicalProfileChart: React.FC<MedicalProfileChartProps> = ({ data }) => {
                   ))}
                 </Pie>
                 <Tooltip formatter={(value) => [`${value} מתאמנים`, 'פרופיל רפואי']} />
-                <Legend />
               </PieChart>
             </ResponsiveContainer>
           </div>

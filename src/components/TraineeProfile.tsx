@@ -163,7 +163,7 @@ const TraineeProfile: React.FC<TraineeProfileProps> = ({
     <div className="glass p-6 rounded-xl border border-border/30 shadow-md">
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center">
-          <div className="bg-primary/10 p-2 rounded-full mr-3">
+          <div className="bg-primary/10 p-2 rounded-full ml-3">
             <User className="h-6 w-6 text-primary" />
           </div>
           <h2 className="text-2xl font-bold">{trainee.fullName}</h2>
@@ -238,7 +238,7 @@ const TraineeProfile: React.FC<TraineeProfileProps> = ({
           <div className="bg-card/50 p-3 rounded-lg flex items-center border border-border/30">
             <Building className="h-5 w-5 text-muted-foreground ml-3" />
             <div>
-              <h3 className="text-xs font-medium text-muted-foreground">מחלקה</h3>
+              <h3 className="text-xs font-medium text-muted-foreground">מסגרת</h3>
               <p className="font-medium">{getDepartmentName(trainee.departmentId)}</p>
             </div>
           </div>

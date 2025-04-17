@@ -137,7 +137,7 @@ const FilterDialog: React.FC<FilterDialogProps> = ({
           
           {/* Multiple Department Selection */}
           <div className="space-y-2">
-            <h3 className="font-medium">בחירת מחלקות</h3>
+            <h3 className="font-medium">בחירת מסגרות</h3>
             <Popover open={openDepartmentCommand} onOpenChange={setOpenDepartmentCommand}>
               <PopoverTrigger asChild>
                 <Button
@@ -147,16 +147,16 @@ const FilterDialog: React.FC<FilterDialogProps> = ({
                   className="w-full justify-between text-right"
                 >
                   {selectedDepartmentIds.length > 0
-                    ? `${selectedDepartmentIds.length} מחלקות נבחרו`
-                    : "בחר מחלקות"}
+                    ? `${selectedDepartmentIds.length} מסגרות נבחרו`
+                    : "בחר מסגרות"}
                   <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-full p-0">
                 <Command>
-                  <CommandInput placeholder="חפש מחלקה..." />
+                  <CommandInput placeholder="חפש מסגרת..." />
                   <CommandList>
-                    <CommandEmpty>לא נמצאו מחלקות</CommandEmpty>
+                    <CommandEmpty>לא נמצאו מסגרות</CommandEmpty>
                     <CommandGroup>
                       {availableDepartments.map((department) => (
                         <CommandItem

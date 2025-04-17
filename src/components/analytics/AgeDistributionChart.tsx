@@ -112,7 +112,7 @@ const AgeDistributionChart: React.FC<AgeDistributionProps> = ({ data, traineeDet
                     <th className="p-2 text-sm">שם מלא</th>
                     <th className="p-2 text-sm">מגדר</th>
                     <th className="p-2 text-sm">פרופיל רפואי</th>
-                    <th className="p-2 text-sm">מחלקה</th>
+                    <th className="p-2 text-sm">מסגרת</th>
                   </tr>
                 </thead>
                 <tbody>

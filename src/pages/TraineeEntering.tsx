@@ -513,7 +513,7 @@ const TraineeEntering = () => {
                       
                       <div className="space-y-2">
                         <label htmlFor="department" className="block text-sm font-medium">
-                          מחלקה
+                          מסגרת
                         </label>
                         <select
                           id="department"
@@ -522,7 +522,7 @@ const TraineeEntering = () => {
                           className="input-field w-full px-3 py-2 rounded-md border border-input"
                           required
                         >
-                          <option value="">בחר מחלקה</option>
+                          <option value="">בחר מסגרת</option>
                           {filteredDepartments.map((dept) => (
                             <option key={dept._id} value={dept._id}>
                               {dept.name}

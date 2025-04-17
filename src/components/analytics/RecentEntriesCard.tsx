@@ -35,13 +35,13 @@ const RecentEntriesCard: React.FC<RecentEntriesCardProps> = ({
             {entries.map(entry => (
               <div key={entry._id} className="flex items-center justify-between border-b pb-2">
                 <div>
-                  <p className="font-medium">{entry.traineeFullName}</p>
+                  <p className="font-medium">{entry.status === 'notRegistered'? entry.traineePersonalId : entry.traineeFullName}</p>
                   <p className="text-xs text-muted-foreground">{entry.entryTime}</p>
                 </div>
                 <div className={`px-2 py-1 rounded-full text-xs ${
                   entry.status === 'success' ? 'bg-green-100 text-green-800' :
                   entry.status === 'noMedicalApproval' ? 'bg-red-100 text-red-800' :
-                  'bg-yellow-100 text-yellow-800'
+                  'bg-blue-100 text-blue-800'
                 }`}>
                   {entry.status === 'success' ? 'מאושר' :
                    entry.status === 'noMedicalApproval' ? 'אין אישור רפואי' :

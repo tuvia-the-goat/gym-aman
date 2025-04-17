@@ -21,7 +21,7 @@ const HourlyDistributionChart: React.FC<HourlyDistributionChartProps> = ({ train
         התפלגות שעות אימון
       </h3>
       
-      <ChartContainer className="h-40" config={{
+      <ChartContainer className="w-140" config={{
         hour: {
           label: "שעות ביום",
           theme: { dark: "#0ea5e9", light: "#0ea5e9" }

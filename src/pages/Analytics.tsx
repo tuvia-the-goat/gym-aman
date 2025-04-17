@@ -119,20 +119,6 @@ const Analytics = () => {
           avgEntriesPerTrainee={avgEntriesPerTrainee}
         />
         
-        {/* New Charts - Gender, Age, and Medical Profile Distribution */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <GenderDistributionChart 
-            data={genderDistributionData} 
-            entriesData={genderEntriesDistributionData} 
-          />
-          <AgeDistributionChart 
-            data={ageDistributionData} 
-            traineeDetails={detailedTraineeAgeData}
-          />
-          <MedicalProfileChart 
-            data={medicalProfileData}
-          />
-        </div>
         
         {/* New Chart - Hourly Distribution */}
         <HourlyDistributionChart entries={filteredEntries} />
@@ -158,12 +144,26 @@ const Analytics = () => {
           {/* Top Departments - only show if no specific filters active */}
           {!hasSpecificFilters && (
             <TopDepartmentsChart 
-              data={topDepartmentsData}
-              showBaseColumn={isGeneralAdmin}
+            data={topDepartmentsData}
+            showBaseColumn={isGeneralAdmin}
             />
           )}
         </div>
         
+          <MedicalProfileChart 
+            data={medicalProfileData}
+          />
+        {/* New Charts - Gender, Age, and Medical Profile Distribution */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <GenderDistributionChart 
+            data={genderDistributionData} 
+            entriesData={genderEntriesDistributionData} 
+          />
+          <AgeDistributionChart 
+            data={ageDistributionData} 
+            traineeDetails={detailedTraineeAgeData}
+          />
+        </div>
         {/* Bases Chart (only for allBasesAdmin) and no specific filters */}
         {isGeneralAdmin && !hasSpecificFilters && basesData.length > 0 && (
           <BasesChart data={basesData} />

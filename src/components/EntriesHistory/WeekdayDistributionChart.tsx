@@ -21,7 +21,7 @@ const WeekdayDistributionChart: React.FC<WeekdayDistributionChartProps> = ({ tra
         התפלגות ימי אימון
       </h3>
       
-      <ChartContainer className="h-40" config={{
+      <ChartContainer className="w-140" config={{
         day: {
           label: "ימים בשבוע",
           theme: { dark: "#4f46e5", light: "#4f46e5" }

@@ -17,7 +17,7 @@ const ActivityStatsSummary: React.FC<ActivityStatsSummaryProps> = ({ traineeAnal
       
       <div className="grid grid-cols-2 gap-4">
         <div className="bg-primary/5 p-4 rounded-lg text-center border border-primary/10">
-          <div className="text-3xl font-bold text-primary">
+          <div className="text-3xl mt-3 font-bold text-primary">
             {traineeAnalytics.monthlyAverage}
           </div>
           <div className="text-sm text-muted-foreground">כניסות בחודש (ממוצע)</div>

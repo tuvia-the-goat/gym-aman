@@ -31,7 +31,7 @@ const TraineeProfileDialog: React.FC<TraineeProfileDialogProps> = ({
     <DialogContent className="max-w-4xl" style={{ direction: "rtl" }}>
       <DialogHeader style={{ textAlign: "right" }}>
         <DialogTitle className="flex items-center text-2xl font-bold">
-          <User className="h-6 w-6 text-primary mr-2" />
+          <User className="h-6 w-6 text-primary ml-2" />
           {trainee.fullName}
           {trainee.orthopedicCondition && (
             <span className="inline-flex items-center mr-2 px-2 py-1 bg-amber-100 text-amber-800 text-xs rounded-md">

@@ -28,6 +28,7 @@ export const useRegistrationForm = (
   
   // Filtered subdepartments based on selected department
   const [filteredSubDepartments, setFilteredSubDepartments] = useState<SubDepartment[]>([]);
+  console.log(subDepartmentId);
   
   // Reset subdepartment when department changes
   useEffect(() => {
@@ -154,7 +155,7 @@ export const useRegistrationForm = (
         fullName,
         medicalProfile: medicalProfile as '97' | '82' | '72' | '64' | '45' | '25',
         departmentId,
-        subDepartmentId: subDepartmentId || undefined,
+        subDepartmentId: subDepartmentId,
         phoneNumber,
         baseId: selectedBaseId,
         gender: gender as 'male' | 'female',
