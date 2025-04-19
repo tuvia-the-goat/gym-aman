@@ -3,6 +3,7 @@ import React from 'react';
 import { Textarea } from '@/components/ui/textarea';
 import { MedicalFormScore } from '../../types';
 import FormSection from './FormSection';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface MedicalDetailsSectionProps {
   medicalProfile: string;
@@ -32,45 +33,51 @@ const MedicalDetailsSection = ({
   return (
     <FormSection title="פרטים רפואיים">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="space-y-2">
-          <label htmlFor="medicalProfile" className="block text-sm font-medium">
-            פרופיל רפואי
-          </label>
-          <select
-            id="medicalProfile"
-            value={medicalProfile}
-            onChange={(e) => setMedicalProfile(e.target.value)}
-            className="input-field"
-            required
-          >
-            <option value="">בחר פרופיל</option>
-            <option value="97">97</option>
-            <option value="82">82</option>
-            <option value="72">72</option>
-            <option value="64">64</option>
-            <option value="45">45</option>
-            <option value="25">25</option>
-          </select>
-        </div>
-        
-        <div className="space-y-2">
-          <label htmlFor="medicalFormScore" className="block text-sm font-medium">
-            ציון שאלון א"ס
-          </label>
-          <select
-            id="medicalFormScore"
-            value={medicalFormScore}
-            onChange={(e) => setMedicalFormScore(e.target.value as MedicalFormScore | '')}
-            className="input-field"
-            required
-          >
-            <option value="">בחר ציון</option>
-            <option value="notRequired">לא נזקק/ה למילוי שאלון</option>
-            <option value="fullScore">100 נקודות</option>
-            <option value="partialScore">פחות מ-100 נקודות</option>
-            <option value="reserve">מיל' או אע"צ, מילא/ה שאלון נפרד</option>
-          </select>
-        </div>
+      <div className="space-y-2">
+  <label htmlFor="medicalProfile" className="block text-sm font-medium text-black">
+    פרופיל רפואי
+  </label>
+  <Select
+    value={medicalProfile}
+    onValueChange={(value) => value === "select_profile" ?setMedicalProfile(""):setMedicalProfile(value)}
+    required
+  >
+    <SelectTrigger className="input-field w-full text-black">
+      <SelectValue placeholder="בחר פרופיל" />
+    </SelectTrigger>
+    <SelectContent>
+      <SelectItem value="select_profile" className="flex justify-end text-black">בחר פרופיל</SelectItem>
+      <SelectItem value="97" className="flex justify-end text-black">97</SelectItem>
+      <SelectItem value="82" className="flex justify-end text-black">82</SelectItem>
+      <SelectItem value="72" className="flex justify-end text-black">72</SelectItem>
+      <SelectItem value="64" className="flex justify-end text-black">64</SelectItem>
+      <SelectItem value="45" className="flex justify-end text-black">45</SelectItem>
+      <SelectItem value="25" className="flex justify-end text-black">25</SelectItem>
+    </SelectContent>
+  </Select>
+</div>
+
+<div className="space-y-2">
+  <label htmlFor="medicalFormScore" className="block text-sm font-medium text-black">
+    ציון שאלון א"ס
+  </label>
+  <Select
+    value={medicalFormScore}
+    onValueChange={(value) => value === "select_score" ?setMedicalFormScore(""):setMedicalFormScore(value as MedicalFormScore)}
+    required
+  >
+    <SelectTrigger className="input-field w-full text-black">
+      <SelectValue placeholder="בחר ציון" />
+    </SelectTrigger>
+    <SelectContent>
+      <SelectItem value="select_score" className="flex justify-end text-black">בחר ציון</SelectItem>
+      <SelectItem value="notRequired" className="flex justify-end text-black">לא נזקק/ה למילוי שאלון</SelectItem>
+      <SelectItem value="fullScore" className="flex justify-end text-black">100 נקודות</SelectItem>
+      <SelectItem value="partialScore" className="flex justify-end text-black">פחות מ-100 נקודות</SelectItem>
+      <SelectItem value="reserve" className="flex justify-end text-black">מיל' או אע"צ, מילא/ה שאלון נפרד</SelectItem>
+    </SelectContent>
+  </Select>
+</div>
         
         {medicalFormScore === 'partialScore' && (
           <div className="space-y-2">

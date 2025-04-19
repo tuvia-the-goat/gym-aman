@@ -7,6 +7,9 @@ import { Button } from '@/components/ui/button';
 import { CalendarIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '../ui/input';
+
 
 interface EntriesFilterProps {
   searchTerm: string;
@@ -41,73 +44,87 @@ const EntriesFilter: React.FC<EntriesFilterProps> = ({
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4 p-4 bg-secondary rounded-lg">
-      <div>
-        <label htmlFor="search" className="block text-sm font-medium mb-1">חיפוש לפי שם</label>
-        <input 
-          id="search" 
-          type="text" 
-          value={searchTerm} 
-          onChange={e => setSearchTerm(e.target.value)} 
-          placeholder="חפש מתאמן..." 
-          className="input-field" 
-          autoComplete="off" 
-        />
-      </div>
+<div>
+  <label htmlFor="search" className="block text-sm font-medium mb-1 text-black">חיפוש לפי שם</label>
+  <Input
+    id="search"
+    type="text"
+    value={searchTerm}
+    onChange={(e) => setSearchTerm(e.target.value)}
+    placeholder="חפש מתאמן..."
+    className="text-sm text-black"
+    autoComplete="off"
+  />
+</div>
       
       <div>
         <label htmlFor="department" className="block text-sm font-medium mb-1">סינון לפי מסגרת</label>
-        <select 
-          id="department" 
-          value={selectedDepartment} 
-          onChange={e => setSelectedDepartment(e.target.value)} 
-          className="input-field" 
-          style={{marginLeft: "20px"}}
-        >
-          <option value="">כל המסגרות</option>
-          {departments.filter(dept => admin?.role === 'generalAdmin' || dept.baseId === admin?.baseId).map(dept => (
-            <option key={dept._id} value={dept._id}>
-              {dept.name}
-            </option>
-          ))}
-        </select>
+        <Select 
+  value={selectedDepartment} 
+  onValueChange={(value)=>{
+    value === "all" ? setSelectedDepartment('') : setSelectedDepartment(value)
+    }}
+>
+  <SelectTrigger className="input-field w-full" style={{marginLeft: "20px"}}>
+    <SelectValue placeholder="כל המסגרות" />
+  </SelectTrigger>
+  <SelectContent>
+    <SelectItem value="all" className="flex justify-end">כל המסגרות</SelectItem>
+    {departments.filter(dept => admin?.role === 'generalAdmin' || dept.baseId === admin?.baseId).map(dept => (
+      <SelectItem key={dept._id} value={dept._id} className="flex justify-end">
+        {dept.name}
+      </SelectItem>
+    ))}
+  </SelectContent>
+</Select>
       </div>
       
       {admin?.role === 'generalAdmin' && (
-        <div>
-          <label htmlFor="base" className="block text-sm font-medium mb-1">סינון לפי בסיס</label>
-          <select 
-            id="base" 
-            value={selectedBase} 
-            onChange={e => setSelectedBase(e.target.value)} 
-            className="input-field"
-          >
-            <option value="">כל הבסיסים</option>
-            {bases.map(base => (
-              <option key={base._id} value={base._id}>
-                {base.name}
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
-      
-      <div>
-        <label htmlFor="profile" className="block text-sm font-medium mb-1">סינון לפי פרופיל</label>
-        <select 
-          id="profile" 
-          value={selectedProfile} 
-          onChange={e => setSelectedProfile(e.target.value)} 
-          className="input-field"
-        >
-          <option value="">כל הפרופילים</option>
-          <option value="97">97</option>
-          <option value="82">82</option>
-          <option value="72">72</option>
-          <option value="64">64</option>
-          <option value="45">45</option>
-          <option value="25">25</option>
-        </select>
-      </div>
+  <div>
+    <label htmlFor="base" className="block text-sm font-medium mb-1">סינון לפי בסיס</label>
+    <Select 
+      value={selectedBase} 
+      onValueChange={(value)=>{
+        value === "all" ? setSelectedBase('') : setSelectedBase(value)
+        }}
+    >
+      <SelectTrigger className="input-field w-full">
+        <SelectValue placeholder="כל הבסיסים" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="all" className="flex justify-end">כל הבסיסים</SelectItem>
+        {bases.map(base => (
+          <SelectItem key={base._id} value={base._id} className="flex justify-end">
+            {base.name}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  </div>
+)}
+
+<div>
+  <label htmlFor="profile" className="block text-sm font-medium mb-1">סינון לפי פרופיל</label>
+  <Select 
+    value={selectedProfile} 
+    onValueChange={(value)=>{
+      value === "all" ? setSelectedProfile('') : setSelectedProfile(value)
+      }}
+  >
+    <SelectTrigger className="input-field w-full">
+      <SelectValue placeholder="כל הפרופילים" />
+    </SelectTrigger>
+    <SelectContent>
+      <SelectItem value="all" className="flex justify-end">כל הפרופילים</SelectItem>
+      <SelectItem value="97" className="flex justify-end">97</SelectItem>
+      <SelectItem value="82" className="flex justify-end">82</SelectItem>
+      <SelectItem value="72" className="flex justify-end">72</SelectItem>
+      <SelectItem value="64" className="flex justify-end">64</SelectItem>
+      <SelectItem value="45" className="flex justify-end">45</SelectItem>
+      <SelectItem value="25" className="flex justify-end">25</SelectItem>
+    </SelectContent>
+  </Select>
+</div>
       
       <div className="xl:col-span-2">
         <label className="block text-sm font-medium mb-1">טווח תאריכים</label>
@@ -116,8 +133,8 @@ const EntriesFilter: React.FC<EntriesFilterProps> = ({
           <div className="grid gap-2">
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant={"outline"} className={cn("w-[180px] justify-start text-right", !startDate && "text-muted-foreground")}>
-                  <CalendarIcon className="ml-2 h-4 w-4" />
+                <Button variant={"outline"} className={cn("w-[180px] justify-start text-right")}>
+                  <CalendarIcon className="ml-2 h-4 w-4 " />
                   {startDate ? format(startDate, "yyyy-MM-dd") : "תאריך התחלה"}
                 </Button>
               </PopoverTrigger>
@@ -130,7 +147,7 @@ const EntriesFilter: React.FC<EntriesFilterProps> = ({
           <div className="grid gap-2">
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant={"outline"} className={cn("w-[180px] justify-start text-right", !endDate && "text-muted-foreground")}>
+                <Button variant={"outline"} className={cn("w-[180px] justify-start text-right")}>
                   <CalendarIcon className="ml-2 h-4 w-4" />
                   {endDate ? format(endDate, "yyyy-MM-dd") : "תאריך סיום"}
                 </Button>

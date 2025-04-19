@@ -339,7 +339,7 @@ const TraineeEntering = () => {
           <Button
             onClick={() => navigate('/login')}
             variant="ghost"
-            className="text-primary-foreground hover:bg-primary-foreground/10"
+            className="text-primary-foreground bg-primary-foreground/20 hover:bg-primary-foreground/10"
           >
             <LogIn className="ml-2 h-4 w-4" />
             התחברות מנהלים
@@ -373,215 +373,14 @@ const TraineeEntering = () => {
                 <span className="inline-block px-4 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium mb-2">
                   בסיס: {selectedBase.name}
                 </span>
-                <h2 className="text-3xl font-bold bg-gradient-to-b from-foreground to-foreground/70 bg-clip-text text-transparent">מערכת רישום לחדר כושר</h2>
-                <div className="flex justify-center mt-6 gap-4">
-                  <Button 
-                    variant={view === 'entry' ? "default" : "outline"}
-                    onClick={() => setView('entry')}
-                    className="flex-1 max-w-48"
-                  >
-                    <LogIn className="ml-2 h-4 w-4" />
-                    רישום כניסה
-                  </Button>
-                  <Button 
-                    variant={view === 'register' ? "default" : "outline"}
-                    onClick={() => setView('register')}
-                    className="flex-1 max-w-48"
-                  >
-                    <User className="ml-2 h-4 w-4" />
-                    הצטרפות למערכת
-                  </Button>
-                </div>
               </div>
               
-              {view === 'register' && (
-                <div className="glass max-w-xl mx-auto p-6 rounded-2xl animate-fade-up shadow-lg border border-border/30">
-                  <h3 className="text-xl font-bold mb-6 text-center flex items-center justify-center">
-                    <User className="mr-2 h-5 w-5 text-primary" />
-                    הצטרפות למערכת
-                  </h3>
-                  <form onSubmit={handleRegistration} className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                      <div className="space-y-2">
-                        <label htmlFor="personalId" className="block text-sm font-medium">
-                          מספר אישי (7 ספרות)
-                        </label>
-                        <Input
-                          id="personalId"
-                          type="text"
-                          inputMode="numeric"
-                          value={personalId}
-                          onChange={(e) => {
-                            const value = e.target.value.replace(/\D/g, '').slice(0, 7);
-                            setPersonalId(value);
-                          }}
-                          className="input-field"
-                          placeholder="1234567"
-                          required
-                          autoComplete="off"
-                        />
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <label htmlFor="fullName" className="block text-sm font-medium">
-                          שם מלא
-                        </label>
-                        <Input
-                          id="fullName"
-                          type="text"
-                          value={fullName}
-                          onChange={(e) => setFullName(e.target.value)}
-                          className="input-field"
-                          placeholder="שם פרטי ומשפחה"
-                          required
-                          autoComplete="off"
-                        />
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <label htmlFor="gender" className="block text-sm font-medium">
-                          מין
-                        </label>
-                        <select
-                          id="gender"
-                          value={gender}
-                          onChange={(e) => setGender(e.target.value as 'male' | 'female' | '')}
-                          className="input-field w-full px-3 py-2 rounded-md border border-input"
-                          required
-                        >
-                          <option value="">בחר מין</option>
-                          <option value="male">זכר</option>
-                          <option value="female">נקבה</option>
-                        </select>
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <label htmlFor="birthDate" className="block text-sm font-medium">
-                          תאריך לידה
-                        </label>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <Button
-                              id="birthDate"
-                              variant={"outline"}
-                              className={cn(
-                                "w-full justify-start text-right",
-                                !birthDate && "text-muted-foreground"
-                              )}
-                            >
-                              <CalendarIcon className="ml-2 h-4 w-4" />
-                              {birthDate ? format(birthDate, "yyyy-MM-dd") : "בחר תאריך"}
-                            </Button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                              mode="single"
-                              selected={birthDate}
-                              onSelect={setBirthDate}
-                              initialFocus
-                              disabled={(date) => {
-                                return date > new Date();
-                              }}
-                              className={cn("p-3 pointer-events-auto")}
-                              fromYear={1940}
-                              toYear={new Date().getFullYear()}
-                            />
-                          </PopoverContent>
-                        </Popover>
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <label htmlFor="medicalProfile" className="block text-sm font-medium">
-                          פרופיל רפואי
-                        </label>
-                        <select
-                          id="medicalProfile"
-                          value={medicalProfile}
-                          onChange={(e) => setMedicalProfile(e.target.value)}
-                          className="input-field w-full px-3 py-2 rounded-md border border-input"
-                          required
-                        >
-                          <option value="">בחר פרופיל</option>
-                          <option value="97">97</option>
-                          <option value="82">82</option>
-                          <option value="72">72</option>
-                          <option value="64">64</option>
-                          <option value="45">45</option>
-                          <option value="25">25</option>
-                        </select>
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <label htmlFor="department" className="block text-sm font-medium">
-                          מסגרת
-                        </label>
-                        <select
-                          id="department"
-                          value={departmentId}
-                          onChange={(e) => setDepartmentId(e.target.value)}
-                          className="input-field w-full px-3 py-2 rounded-md border border-input"
-                          required
-                        >
-                          <option value="">בחר מסגרת</option>
-                          {filteredDepartments.map((dept) => (
-                            <option key={dept._id} value={dept._id}>
-                              {dept.name}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <label htmlFor="phoneNumber" className="block text-sm font-medium">
-                          מספר טלפון (מתחיל ב-05)
-                        </label>
-                        <Input
-                          id="phoneNumber"
-                          type="text"
-                          inputMode="numeric"
-                          value={phoneNumber}
-                          onChange={(e) => {
-                            const value = e.target.value.replace(/\D/g, '').slice(0, 10);
-                            setPhoneNumber(value);
-                          }}
-                          className="input-field"
-                          placeholder="05XXXXXXXX"
-                          required
-                          autoComplete="off"
-                        />
-                      </div>
-                      
-                      <div className="space-y-2 md:col-span-2">
-                        <div className="flex items-center space-x-2 space-x-reverse">
-                          <input
-                            id="orthopedicCondition"
-                            type="checkbox"
-                            checked={orthopedicCondition}
-                            onChange={(e) => setOrthopedicCondition(e.target.checked)}
-                            className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-                          />
-                          <label htmlFor="orthopedicCondition" className="text-sm font-medium">
-                            סעיף פרופיל אורטופדי
-                          </label>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <Button
-                      type="submit"
-                      className="w-full"
-                      size="lg"
-                    >
-                      הצטרף
-                    </Button>
-                  </form>
-                </div>
-              )}
+              
               
               {view === 'entry' && (
                 <div className="glass max-w-xl mx-auto p-6 rounded-2xl animate-fade-up shadow-lg border border-border/30">
                   <h3 className="text-xl font-bold mb-6 text-center flex items-center justify-center">
-                    <LogIn className="mr-2 h-5 w-5 text-primary" />
+                    <LogIn className="ml-2 h-5 w-5 text-primary" />
                     רישום כניסה לחדר כושר
                   </h3>
                   

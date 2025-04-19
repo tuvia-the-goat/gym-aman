@@ -8,6 +8,10 @@ import { Calendar } from '@/components/ui/calendar';
 import { CalendarIcon } from 'lucide-react';
 import FormSection from './FormSection';
 import { Department } from '../../types';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
+import { he } from 'date-fns/locale'; // Hebrew locale support
 
 interface PersonalDetailsSectionProps {
   personalId: string;
@@ -40,10 +44,50 @@ const PersonalDetailsSection = ({
   setPhoneNumber,
   filteredDepartments,
 }: PersonalDetailsSectionProps) => {
+
+  const customStyles = `
+  .react-datepicker {
+    font-family: 'Heebo', sans-serif;
+    font-weight: 600;
+    color:rgb(0, 0, 0);
+  }
+  
+  .react-datepicker__header {
+    background-color:rgb(229, 240, 247);
+  }
+  
+  .react-datepicker__day--selected {
+    background-color: #3b82f6; /* Blue color for selected date */
+    color: white;
+  }
+  
+  .react-datepicker__day:hover {
+    background-color: #dbeafe;
+  }
+  
+  .react-datepicker__day-name, 
+  .react-datepicker__day, 
+  .react-datepicker__time-name {
+    color: #1f2937; /* Dark text for better readability */
+  }
+  
+  .react-datepicker__year-dropdown {
+    font-family: 'Heebo', sans-serif;
+    background-color: white;
+    color: black;
+    font-weight: 2000;
+  }
+  
+  .react-datepicker__year-option:hover {
+    background-color: #dbeafe;
+  }
+`;
+
   return (
     <FormSection title="פרטים אישיים">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-2">
+          
           <label htmlFor="personalId" className="block text-sm font-medium">
             מספר אישי (7 ספרות)
           </label>
@@ -80,76 +124,74 @@ const PersonalDetailsSection = ({
         </div>
         
         <div className="space-y-2">
-          <label htmlFor="gender" className="block text-sm font-medium">
-            מין
-          </label>
-          <select
-            id="gender"
-            value={gender}
-            onChange={(e) => setGender(e.target.value as 'male' | 'female' | '')}
-            className="input-field"
-            required
-          >
-            <option value="">בחר מין</option>
-            <option value="male">זכר</option>
-            <option value="female">נקבה</option>
-          </select>
-        </div>
+  <label htmlFor="gender" className="block text-sm font-medium text-black">
+    מין
+  </label>
+  <Select
+    value={gender}
+    onValueChange={(value) => value==="select_gender"? setGender("") :setGender(value as 'male' | 'female')}
+    required
+  >
+    <SelectTrigger className="input-field w-full text-black">
+      <SelectValue placeholder="בחר מין" />
+    </SelectTrigger>
+    <SelectContent>
+      <SelectItem value="select_gender" className="flex justify-end text-black">בחר מין</SelectItem>
+      <SelectItem value="male" className="flex justify-end text-black">זכר</SelectItem>
+      <SelectItem value="female" className="flex justify-end text-black">נקבה</SelectItem>
+    </SelectContent>
+  </Select>
+</div>
+        
+<div className="space-y-2">
+  
+      <label htmlFor="birthDate" className="block text-sm font-medium text-black">
+        תאריך לידה
+      </label>
+      <style>{customStyles}</style>
+
+      <DatePicker
+        selected={birthDate}
+        onChange={(date : Date) => setBirthDate(date)}
+        dateFormat="dd/MM/yyyy"
+        showYearDropdown
+        scrollableYearDropdown
+        yearDropdownItemNumber={80}
+        placeholderText="בחר תאריך לידה"
+        maxDate={new Date()}
+        minDate={new Date('1940-01-01')}
+        locale={he}
+        showPopperArrow={false}
+        className="input-field w-full text-black text-sm font-[300]"
+        popperPlacement="top-end"
+        popperClassName="rtl-datepicker"
+        id="birthDate"
+        calendarClassName="font-medium text-black"
+      />
+    </div>
         
         <div className="space-y-2">
-          <label htmlFor="birthDate" className="block text-sm font-medium">
-            תאריך לידה
-          </label>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                id="birthDate"
-                variant={"outline"}
-                className={cn(
-                  "w-full justify-start text-right",
-                  !birthDate && "text-muted-foreground"
-                )}
-              >
-                <CalendarIcon className="ml-2 h-4 w-4" />
-                {birthDate ? format(birthDate, "yyyy-MM-dd") : "בחר תאריך"}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="single"
-                selected={birthDate}
-                onSelect={setBirthDate}
-                initialFocus
-                disabled={(date) => {
-                  return date > new Date();
-                }}
-                className={cn("p-3 pointer-events-auto")}
-                fromYear={1940}
-                toYear={new Date().getFullYear()}
-              />
-            </PopoverContent>
-          </Popover>
-        </div>
-        
-        <div className="space-y-2">
-          <label htmlFor="department" className="block text-sm font-medium">
-            מסגרת
-          </label>
-          <select
-            id="department"
-            value={departmentId}
-            onChange={(e) => setDepartmentId(e.target.value)}
-            className="input-field"
-            required
-          >
-            <option value="">בחר מסגרת</option>
-            {filteredDepartments.map((dept) => (
-              <option key={dept._id} value={dept._id}>
-                {dept.name}
-              </option>
-            ))}
-          </select>
-        </div>
+  <label htmlFor="department" className="block text-sm font-medium text-black">
+    מסגרת
+  </label>
+  <Select
+    value={departmentId}
+    onValueChange={(value) => value==="select_department"? setDepartmentId("") :setDepartmentId(value)}
+    required
+  >
+    <SelectTrigger className="input-field w-full text-black">
+      <SelectValue placeholder="בחר מסגרת" />
+    </SelectTrigger>
+    <SelectContent>
+      <SelectItem value="select_department" className="flex justify-end text-black">בחר מסגרת</SelectItem>
+      {filteredDepartments.map((dept) => (
+        <SelectItem key={dept._id} value={dept._id} className="flex justify-end text-black">
+          {dept.name}
+        </SelectItem>
+      ))}
+    </SelectContent>
+  </Select>
+</div>
         
         
         <div className="space-y-2">
