@@ -1,3 +1,4 @@
+// src/components/EntriesHistory/EntriesTable.tsx
 
 import React from 'react';
 import { useAdmin } from '../../context/AdminContext';
@@ -18,11 +19,17 @@ const EntriesTable: React.FC<EntriesTableProps> = ({
   hasMedicalLimitation,
   handleTraineeClick
 }) => {
-  const { admin, departments, bases } = useAdmin();
+  const { admin, departments, bases, subDepartments } = useAdmin();
 
   const getDepartmentName = (id: string) => {
     const department = departments.find(dept => dept._id === id);
     return department ? department.name : '';
+  };
+
+  const getSubDepartmentName = (id: string) => {
+    if (!id) return '-';
+    const subDepartment = subDepartments.find(subDept => subDept._id === id);
+    return subDepartment ? subDepartment.name : '-';
   };
 
   const getBaseName = (id: string) => {
@@ -75,6 +82,7 @@ const EntriesTable: React.FC<EntriesTableProps> = ({
               <th className="px-4 py-3 text-right">שם מתאמן</th>
               <th className="px-4 py-3 text-right">מספר אישי</th>
               <th className="px-4 py-3 text-right">מסגרת</th>
+              <th className="px-4 py-3 text-right">תת-מסגרת</th> {/* Add this line */}
               {admin?.role === 'generalAdmin' && <th className="px-4 py-3 text-right">בסיס</th>}
               <th className="px-4 py-3 text-right">תאריך</th>
               <th className="px-4 py-3 text-right">שעה</th>
@@ -106,6 +114,7 @@ const EntriesTable: React.FC<EntriesTableProps> = ({
                     </td>
                     <td className="px-4 py-3">{entry.traineePersonalId}</td>
                     <td className="px-4 py-3">{entry.departmentId ? getDepartmentName(entry.departmentId) : '-'}</td>
+                    <td className="px-4 py-3">{entry.subDepartmentId ? getSubDepartmentName(entry.subDepartmentId) : '-'}</td> {/* Add this line */}
                     {admin?.role === 'generalAdmin' && <td className="px-4 py-3">{getBaseName(entry.baseId)}</td>}
                     <td className="px-4 py-3">{getDateFormat(new Date(entry.entryDate))}</td>
                     <td className="px-4 py-3">{entry.entryTime}</td>
@@ -120,7 +129,7 @@ const EntriesTable: React.FC<EntriesTableProps> = ({
               })
             ) : (
               <tr>
-                <td colSpan={admin?.role === 'generalAdmin' ? 7 : 6} className="px-4 py-8 text-center text-muted-foreground">
+                <td colSpan={admin?.role === 'generalAdmin' ? 8 : 7} className="px-4 py-8 text-center text-muted-foreground">
                   לא נמצאו רשומות
                 </td>
               </tr>

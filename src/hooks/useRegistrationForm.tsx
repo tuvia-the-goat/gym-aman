@@ -1,3 +1,4 @@
+// src/hooks/useRegistrationForm.tsx
 
 import { useState, useEffect } from 'react';
 import { useToast } from '@/components/ui/use-toast';
@@ -16,6 +17,7 @@ export const useRegistrationForm = (
   const [fullName, setFullName] = useState('');
   const [medicalProfile, setMedicalProfile] = useState<string>('');
   const [departmentId, setDepartmentId] = useState('');
+  const [subDepartmentId, setSubDepartmentId] = useState(''); // Add this line
   const [phoneNumber, setPhoneNumber] = useState('');
   const [gender, setGender] = useState<'male' | 'female' | ''>('');
   const [birthDate, setBirthDate] = useState<Date | undefined>(undefined);
@@ -101,8 +103,6 @@ export const useRegistrationForm = (
       return false;
     }
     
-
-    
     return true;
   };
   
@@ -130,6 +130,7 @@ export const useRegistrationForm = (
         fullName,
         medicalProfile: medicalProfile as '97' | '82' | '72' | '64' | '45' | '25',
         departmentId,
+        subDepartmentId: subDepartmentId || undefined, // Add this line
         phoneNumber,
         baseId: selectedBaseId,
         gender: gender as 'male' | 'female',
@@ -152,6 +153,7 @@ export const useRegistrationForm = (
       setFullName('');
       setMedicalProfile('');
       setDepartmentId('');
+      setSubDepartmentId(''); // Add this line
       setPhoneNumber('');
       setGender('');
       setBirthDate(undefined);
@@ -183,7 +185,8 @@ export const useRegistrationForm = (
     setMedicalProfile,
     departmentId,
     setDepartmentId,
-
+    subDepartmentId, // Add this line
+    setSubDepartmentId, // Add this line
     phoneNumber,
     setPhoneNumber,
     gender,

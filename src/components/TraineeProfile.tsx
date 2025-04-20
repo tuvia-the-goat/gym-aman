@@ -1,6 +1,7 @@
+// src/components/TraineeProfile.tsx - Update to include subDepartment info
 
 import React, { useState, useEffect } from 'react';
-import { Trainee, Department, MedicalFormScore } from '../types';
+import { Trainee, Department, MedicalFormScore, SubDepartment } from '../types';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
@@ -19,13 +20,15 @@ import {
   FileText,
   CheckCircle2, 
   XCircle,
-  AlertTriangle
+  AlertTriangle,
+  Layers
 } from 'lucide-react';
 import { format, parseISO, addYears } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
 import { traineeService } from '../services/api';
+import { useAdmin } from '../context/AdminContext';
 
 interface TraineeProfileProps {
   trainee: Trainee;
@@ -43,6 +46,7 @@ const TraineeProfile: React.FC<TraineeProfileProps> = ({
   setIsLoading
 }) => {
   const { toast } = useToast();
+  const { subDepartments } = useAdmin(); // Add this line
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   
@@ -71,17 +75,14 @@ const TraineeProfile: React.FC<TraineeProfileProps> = ({
   
   const getDepartmentName = (departmentId: string) => {
     const department = departments.find(dept => dept._id === departmentId);
-    return department ? department.name : 'לא ידוע';
+    return department ? department.name : '';
   };
-  
-  const getMedicalFormScoreText = (score: MedicalFormScore) => {
-    switch (score) {
-      case 'notRequired': return 'לא נזקק/ה למילוי שאלון';
-      case 'fullScore': return '100 נקודות';
-      case 'partialScore': return 'פחות מ-100 נקודות';
-      case 'reserve': return 'מיל\' או אע"צ, מילא/ה שאלון נפרד';
-      default: return '';
-    }
+
+  // Get subDepartment name
+  const getSubDepartmentName = (subDepartmentId: string | undefined) => {
+    if (!subDepartmentId) return 'לא משויך';
+    const subDepartment = subDepartments.find(subDept => subDept._id === subDepartmentId);
+    return subDepartment ? subDepartment.name : 'לא ידוע';
   };
   
   const getPhoneNumberFormat = (phoneNumberToFormat : string) => {
@@ -240,6 +241,15 @@ const TraineeProfile: React.FC<TraineeProfileProps> = ({
             <div>
               <h3 className="text-xs font-medium text-muted-foreground">מסגרת</h3>
               <p className="font-medium">{getDepartmentName(trainee.departmentId)}</p>
+            </div>
+          </div>
+          
+          {/* Add SubDepartment info */}
+          <div className="bg-card/50 p-3 rounded-lg flex items-center border border-border/30">
+            <Layers className="h-5 w-5 text-muted-foreground ml-3" />
+            <div>
+              <h3 className="text-xs font-medium text-muted-foreground">תת-מסגרת</h3>
+              <p className="font-medium">{getSubDepartmentName(trainee.subDepartmentId)}</p>
             </div>
           </div>
           
@@ -417,5 +427,16 @@ const TraineeProfile: React.FC<TraineeProfileProps> = ({
     </div>
   );
 };
+
+// Helper function to get MedicalFormScore text
+function getMedicalFormScoreText(score: MedicalFormScore): string {
+  switch (score) {
+    case 'notRequired': return 'לא נזקק/ה למילוי שאלון';
+    case 'fullScore': return '100 נקודות';
+    case 'partialScore': return 'פחות מ-100 נקודות';
+    case 'reserve': return 'מיל\' או אע"צ, מילא/ה שאלון נפרד';
+    default: return '';
+  }
+}
 
 export default TraineeProfile;

@@ -1,3 +1,4 @@
+// src/components/registration/RegistrationForm.tsx
 
 import React from 'react';
 import { Base, Department } from '../../types';
@@ -24,6 +25,8 @@ const RegistrationForm = ({ selectedBase, departments, onRegistrationSuccess }: 
     setMedicalProfile,
     departmentId,
     setDepartmentId,
+    subDepartmentId, // Add this line
+    setSubDepartmentId, // Add this line
     phoneNumber,
     setPhoneNumber,
     gender,
@@ -61,6 +64,8 @@ const RegistrationForm = ({ selectedBase, departments, onRegistrationSuccess }: 
           setBirthDate={setBirthDate}
           departmentId={departmentId}
           setDepartmentId={setDepartmentId}
+          subDepartmentId={subDepartmentId} // Add this line
+          setSubDepartmentId={setSubDepartmentId} // Add this line
           phoneNumber={phoneNumber}
           setPhoneNumber={setPhoneNumber}
           filteredDepartments={filteredDepartments}

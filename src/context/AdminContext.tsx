@@ -1,10 +1,12 @@
+// src/context/AdminContext.tsx
 
 import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
-import { Admin, Base, Department, Trainee, Entry, AdminContextType } from '../types';
+import { Admin, Base, Department, SubDepartment, Trainee, Entry, AdminContextType } from '../types';
 import { 
   authService, 
   baseService, 
   departmentService, 
+  subDepartmentService, // Add this line
   traineeService, 
   entryService,
   initializeSystem
@@ -16,6 +18,7 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const [admin, setAdmin] = useState<Admin | null>(null);
   const [bases, setBases] = useState<Base[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
+  const [subDepartments, setSubDepartments] = useState<SubDepartment[]>([]); // Add this line
   const [trainees, setTrainees] = useState<Trainee[]>([]);
   const [entries, setEntries] = useState<Entry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -44,17 +47,17 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         }
         
         // Fetch initial data
-        const [basesData, departmentsData, traineesData, entriesData] = await Promise.all([
+        const [basesData, departmentsData, subDepartmentsData, traineesData, entriesData] = await Promise.all([
           baseService.getAll(),
           departmentService.getAll(),
+          subDepartmentService.getAll(), // Add this line
           traineeService.getAll(),
           entryService.getAll()
         ]);
         
-        
-        
         setBases(basesData);
         setDepartments(departmentsData);
+        setSubDepartments(subDepartmentsData); // Add this line
         setTrainees(traineesData);
         setEntries(entriesData);
       } catch (error) {
@@ -83,6 +86,8 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         setBases,
         departments,
         setDepartments,
+        subDepartments, // Add this line
+        setSubDepartments, // Add this line
         trainees,
         setTrainees,
         entries,

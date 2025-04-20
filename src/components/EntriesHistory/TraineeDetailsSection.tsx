@@ -1,3 +1,4 @@
+// src/components/EntriesHistory/TraineeDetailsSection.tsx
 
 import React from 'react';
 import { format, parseISO, differenceInYears } from 'date-fns';
@@ -7,7 +8,8 @@ import {
   Building, 
   Activity, 
   Calendar as CalendarIcon,
-  File
+  File,
+  Layers
 } from 'lucide-react';
 import { Trainee } from '@/types';
 import { useAdmin } from '../../context/AdminContext';
@@ -17,12 +19,19 @@ interface TraineeDetailsSectionProps {
 }
 
 const TraineeDetailsSection: React.FC<TraineeDetailsSectionProps> = ({ trainee }) => {
-  const { departments, bases } = useAdmin();
+  const { departments, bases, subDepartments } = useAdmin();
   
   // Get department name
   const getDepartmentName = (id: string) => {
     const department = departments.find(dept => dept._id === id);
     return department ? department.name : 'לא ידוע';
+  };
+
+  // Get subDepartment name
+  const getSubDepartmentName = (id: string) => {
+    if (!id) return 'לא ידוע';
+    const subDepartment = subDepartments.find(subDept => subDept._id === id);
+    return subDepartment ? subDepartment.name : 'לא ידוע';
   };
 
   // Get base name
@@ -70,6 +79,17 @@ const TraineeDetailsSection: React.FC<TraineeDetailsSectionProps> = ({ trainee }
           <div>
             <div className="text-xs font-medium text-muted-foreground">מסגרת</div>
             <div className="font-medium">{getDepartmentName(trainee.departmentId)}</div>
+          </div>
+        </div>
+        
+        {/* Add SubDepartment info */}
+        <div className="bg-card/50 p-3 rounded-lg flex items-center gap-3 border border-border/30">
+          <div className="bg-primary/10 p-2 rounded-full">
+            <Layers className="h-4 w-4 text-primary" />
+          </div>
+          <div>
+            <div className="text-xs font-medium text-muted-foreground">תת-מסגרת</div>
+            <div className="font-medium">{trainee.subDepartmentId ? getSubDepartmentName(trainee.subDepartmentId) : 'לא משויך'}</div>
           </div>
         </div>
         

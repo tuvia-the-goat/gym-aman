@@ -1,3 +1,4 @@
+// src/hooks/useEntriesFilter.tsx
 
 import { useState, useEffect } from 'react';
 import { useAdmin } from '../context/AdminContext';
@@ -10,6 +11,7 @@ export const useEntriesFilter = () => {
   const [displayedEntries, setDisplayedEntries] = useState<Entry[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDepartment, setSelectedDepartment] = useState('');
+  const [selectedSubDepartment, setSelectedSubDepartment] = useState(''); // Add this line
   const [selectedBase, setSelectedBase] = useState('');
   const [selectedProfile, setSelectedProfile] = useState('');
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
@@ -41,6 +43,9 @@ export const useEntriesFilter = () => {
     if (selectedDepartment) {
       filtered = filtered.filter(entry => entry.departmentId === selectedDepartment);
     }
+    if (selectedSubDepartment) { // Add this condition
+      filtered = filtered.filter(entry => entry.subDepartmentId === selectedSubDepartment);
+    }
     if (admin?.role === 'generalAdmin' && selectedBase) {
       filtered = filtered.filter(entry => entry.baseId === selectedBase);
     }
@@ -59,7 +64,7 @@ export const useEntriesFilter = () => {
     }
     setFilteredEntries(filtered);
     setCurrentPage(1);
-  }, [admin, entries, searchTerm, selectedDepartment, selectedBase, selectedProfile, startDate, endDate, trainees]);
+  }, [admin, entries, searchTerm, selectedDepartment, selectedSubDepartment, selectedBase, selectedProfile, startDate, endDate, trainees]);
 
   // Paginate entries
   useEffect(() => {
@@ -93,6 +98,8 @@ export const useEntriesFilter = () => {
     setSearchTerm,
     selectedDepartment,
     setSelectedDepartment,
+    selectedSubDepartment, // Add this line
+    setSelectedSubDepartment, // Add this line
     selectedBase,
     setSelectedBase,
     selectedProfile,

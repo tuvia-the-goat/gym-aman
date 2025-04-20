@@ -1,7 +1,7 @@
 
 // src/services/api.ts
 import axios from 'axios';
-import { Admin, Base, Department, Trainee, Entry, EntryStatus, MedicalFormScore } from '../types';
+import { Admin, Base, Department, Trainee, Entry, EntryStatus, MedicalFormScore, SubDepartment } from '../types';
 
 const API_URL = 'http://localhost:3000/api';
 
@@ -63,6 +63,26 @@ export const authService = {
   }
 };
 
+export const subDepartmentService = {
+  // Get all subDepartments
+  getAll: async (): Promise<SubDepartment[]> => {
+    const response = await api.get('/subDepartments');
+    return response.data;
+  },
+  
+  // Create new subDepartment
+  create: async (subDepartmentData: { name: string, departmentId: string }): Promise<SubDepartment> => {
+    const response = await api.post('/subDepartments', subDepartmentData);
+    return response.data;
+  },
+  
+  // Get subDepartments by departmentId
+  getByDepartment: async (departmentId: string): Promise<SubDepartment[]> => {
+    const response = await api.get(`/subDepartments/department/${departmentId}`);
+    return response.data;
+  }
+};
+
 // Base Services
 export const baseService = {
   // Get all bases
@@ -101,12 +121,13 @@ export const traineeService = {
     return response.data;
   },
   
-  // Create new trainee
+  // Create new trainee with subDepartmentId
   create: async (traineeData: {
     personalId: string,
     fullName: string,
     medicalProfile: '97' | '82' | '72' | '64' | '45' | '25',
     departmentId: string,
+    subDepartmentId?: string, // Add this line
     phoneNumber: string,
     baseId: string,
     gender: 'male' | 'female',
@@ -152,7 +173,7 @@ export const entryService = {
     return response.data;
   },
   
-  // Create new entry
+  // Create new entry with subDepartmentId
   create: async (entryData: {
     traineeId: string,
     entryDate: string,
@@ -160,6 +181,7 @@ export const entryService = {
     traineeFullName: string,
     traineePersonalId: string,
     departmentId: string,
+    subDepartmentId?: string, // Add this line
     baseId: string,
     status: EntryStatus
   }): Promise<Entry> => {

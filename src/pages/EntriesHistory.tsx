@@ -1,3 +1,4 @@
+// src/pages/EntriesHistory.tsx
 
 import React, { useState } from 'react';
 import DashboardLayout from '../components/DashboardLayout';
@@ -26,6 +27,8 @@ const EntriesHistory = () => {
     setSearchTerm,
     selectedDepartment,
     setSelectedDepartment,
+    selectedSubDepartment, // Add this line
+    setSelectedSubDepartment, // Add this line
     selectedBase,
     setSelectedBase,
     selectedProfile,
@@ -83,6 +86,8 @@ const EntriesHistory = () => {
           setSearchTerm={setSearchTerm}
           selectedDepartment={selectedDepartment}
           setSelectedDepartment={setSelectedDepartment}
+          selectedSubDepartment={selectedSubDepartment} // Add this line
+          setSelectedSubDepartment={setSelectedSubDepartment} // Add this line
           selectedBase={selectedBase}
           setSelectedBase={setSelectedBase}
           selectedProfile={selectedProfile}
