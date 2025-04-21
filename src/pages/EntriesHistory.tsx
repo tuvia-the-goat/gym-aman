@@ -93,7 +93,16 @@ const EntriesHistory = () => {
         <div className="flex justify-between items-center">
           <h2 className="text-2xl font-bold">היסטוריית כניסות</h2>
           <div className="flex gap-2 items-center">
-            <ExportButton entries={entries} isLoading={isLoading} />
+            <ExportButton
+              searchTerm={searchTerm}
+              selectedDepartment={selectedDepartment}
+              selectedSubDepartment={selectedSubDepartment}
+              selectedBase={selectedBase}
+              selectedProfile={selectedProfile}
+              startDate={startDate}
+              endDate={endDate}
+              isLoading={isLoading}
+            />
             <button
               onClick={refreshEntries}
               className="p-2 rounded-md hover:bg-muted transition-colors"
@@ -102,13 +111,6 @@ const EntriesHistory = () => {
               <Loader className={`h-5 w-5 ${isLoading ? "animate-spin" : ""}`} />
             </button>
           </div>
-          <button
-            onClick={refreshEntries}
-            className="p-2 rounded-md hover:bg-muted transition-colors"
-            title="רענן"
-          >
-            <Loader className={`h-5 w-5 ${isLoading ? "animate-spin" : ""}`} />
-          </button>
         </div>
 
         <EntriesFilter

@@ -209,7 +209,7 @@ export const entryService = {
     traineeFullName: string;
     traineePersonalId: string;
     departmentId: string;
-    subDepartmentId?: string; // Add this line
+    subDepartmentId?: string;
     baseId: string;
     status: EntryStatus;
   }): Promise<Entry> => {
@@ -228,6 +228,8 @@ export const entryService = {
     const response = await api.post("/entries/non-registered", entryData);
     return response.data;
   },
+  
+  // Get paginated entries
   getPaginated: async (params: {
     page?: number;
     limit?: number;
@@ -246,6 +248,34 @@ export const entryService = {
         queryParams.append(key, String(value));
       }
     });
+
+    const response = await api.get(
+      `/entries/paginated?${queryParams.toString()}`
+    );
+    return response.data;
+  },
+  
+  // Get all entries with filters but without pagination
+  getAllFiltered: async (params: {
+    search?: string;
+    departmentId?: string;
+    subDepartmentId?: string;
+    baseId?: string;
+    startDate?: string;
+    endDate?: string;
+    traineeId?: string;
+  }) => {
+    const queryParams = new URLSearchParams();
+
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== "") {
+        queryParams.append(key, String(value));
+      }
+    });
+
+    // Add a large limit to effectively get all entries
+    queryParams.append("limit", "10000");
+    queryParams.append("page", "1");
 
     const response = await api.get(
       `/entries/paginated?${queryParams.toString()}`
