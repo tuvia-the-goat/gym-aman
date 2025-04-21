@@ -1,15 +1,16 @@
-
 import React from 'react';
 import { format } from 'date-fns';
-import { X } from 'lucide-react';
+import { X, Layers } from 'lucide-react';
 
 interface ActiveFiltersProps {
   startDate?: Date;
   endDate?: Date;
   selectedDepartmentIds: string[];
+  selectedSubDepartmentIds?: string[];
   selectedTrainees: string[];
   clearDateFilters: () => void;
   clearDepartmentFilters: () => void;
+  clearSubDepartmentFilters?: () => void;
   clearTraineeFilters: () => void;
 }
 
@@ -17,12 +18,17 @@ const ActiveFilters: React.FC<ActiveFiltersProps> = ({
   startDate,
   endDate,
   selectedDepartmentIds,
+  selectedSubDepartmentIds = [],
   selectedTrainees,
   clearDateFilters,
   clearDepartmentFilters,
+  clearSubDepartmentFilters,
   clearTraineeFilters
 }) => {
-  const hasActiveFilters = startDate || endDate || selectedDepartmentIds.length > 0 || selectedTrainees.length > 0;
+  const hasActiveFilters = startDate || endDate || 
+    selectedDepartmentIds.length > 0 || 
+    selectedSubDepartmentIds.length > 0 || 
+    selectedTrainees.length > 0;
   
   if (!hasActiveFilters) return null;
 
@@ -47,6 +53,17 @@ const ActiveFilters: React.FC<ActiveFiltersProps> = ({
           <span>מסגרות: </span>
           {selectedDepartmentIds.length} נבחרו
           <button onClick={clearDepartmentFilters} className="mr-1 hover:text-destructive">
+            <X size={14} />
+          </button>
+        </div>
+      )}
+      
+      {selectedSubDepartmentIds.length > 0 && clearSubDepartmentFilters && (
+        <div className="bg-background border rounded-md px-2 py-1 flex items-center gap-1 text-sm">
+          <Layers className="h-3 w-3 mr-1" />
+          <span>תתי-מסגרות: </span>
+          {selectedSubDepartmentIds.length} נבחרו
+          <button onClick={clearSubDepartmentFilters} className="mr-1 hover:text-destructive">
             <X size={14} />
           </button>
         </div>
