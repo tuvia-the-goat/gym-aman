@@ -102,6 +102,13 @@ const EntriesHistory = () => {
               <Loader className={`h-5 w-5 ${isLoading ? "animate-spin" : ""}`} />
             </button>
           </div>
+          <button
+            onClick={refreshEntries}
+            className="p-2 rounded-md hover:bg-muted transition-colors"
+            title="רענן"
+          >
+            <Loader className={`h-5 w-5 ${isLoading ? "animate-spin" : ""}`} />
+          </button>
         </div>
 
         <EntriesFilter
