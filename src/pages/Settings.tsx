@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import DashboardLayout from '../components/DashboardLayout';
 import { useAdmin } from '../context/AdminContext';
@@ -8,14 +7,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   baseService, 
   departmentService, 
+  subDepartmentService,
   traineeService, 
   adminService 
 } from '../services/api';
 
 const Settings = () => {
-  const { admin, bases, setBases, departments, setDepartments, trainees, setTrainees } = useAdmin();
+  const { admin, bases, setBases, departments, setDepartments, subDepartments, setSubDepartments, trainees, setTrainees } = useAdmin();
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState('departments');
+  const [activeTab, setActiveTab] = useState('subdepartments');  
   
   // Medical approval states
   const [medicalFilter, setMedicalFilter] = useState('expired');
@@ -27,6 +27,10 @@ const Settings = () => {
   // New department
   const [newDepartmentName, setNewDepartmentName] = useState('');
   const [selectedBaseForDepartment, setSelectedBaseForDepartment] = useState('');
+  
+  // New subdepartment
+  const [newSubDepartmentName, setNewSubDepartmentName] = useState('');
+  const [selectedDepartmentForSubDepartment, setSelectedDepartmentForSubDepartment] = useState('');
   
   // New admin
   const [newAdminUsername, setNewAdminUsername] = useState('');
@@ -214,6 +218,47 @@ const Settings = () => {
       });
     }
   };
+
+  // Handle adding a new subdepartment
+  const handleAddSubDepartment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!newSubDepartmentName.trim() || !selectedDepartmentForSubDepartment) {
+      toast({
+        title: "שגיאה",
+        description: "יש למלא את כל השדות",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    try {
+      // Create subdepartment via API
+      const newSubDepartment = await subDepartmentService.create({
+        name: newSubDepartmentName,
+        departmentId: selectedDepartmentForSubDepartment
+      });
+      
+      // Update subdepartments state
+      setSubDepartments([...subDepartments, newSubDepartment]);
+      
+      // Reset form
+      setNewSubDepartmentName('');
+      setSelectedDepartmentForSubDepartment('');
+      
+      toast({
+        title: "תת-מסגרת חדשה נוספה",
+        description: `תת-מסגרת ${newSubDepartment.name} נוספה בהצלחה`,
+      });
+    } catch (error) {
+      console.error('Error adding subdepartment:', error);
+      toast({
+        title: "שגיאה",
+        description: "אירעה שגיאה בעת הוספת תת-המסגרת",
+        variant: "destructive",
+      });
+    }
+  };
   
   // Handle adding a new admin
   const handleAddAdmin = async (e: React.FormEvent) => {
@@ -283,9 +328,105 @@ const Settings = () => {
               </>
             )}
             <TabsTrigger value="departments">ניהול מסגרות</TabsTrigger>
+            <TabsTrigger value="subdepartments">ניהול תתי-מסגרות</TabsTrigger>
           </TabsList>
           
-         
+          {/* SubDepartments Tab */}
+          <TabsContent value="subdepartments" className="pt-6">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+              
+              <div className="bg-card shadow-sm rounded-lg border overflow-hidden">
+                <div className="p-4 bg-muted">
+                  <h3 className="font-semibold text-lg" style={{textAlign: "right"}}>תתי-מסגרות קיימות</h3>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-muted/50">
+                      <tr>
+                        <th className="px-4 py-3 text-right">בסיס</th>
+                        <th className="px-4 py-3 text-right">מסגרת</th>
+                        <th className="px-4 py-3 text-right">שם תת-המסגרת</th>
+                      </tr>
+                    </thead>
+                    <tbody style={{textAlign: "right"}}>
+                      {subDepartments
+                        .filter(subDept => {
+                          // Get the department for this subDepartment
+                          const dept = departments.find(d => d._id === subDept.departmentId);
+                          // Filter by base for gym admin
+                          return admin?.role === 'generalAdmin' || (dept && dept.baseId === admin?.baseId);
+                        })
+                        .map((subDept) => {
+                          // Get the department for this subDepartment
+                          const department = departments.find(d => d._id === subDept.departmentId);
+                          const baseId = department ? department.baseId : '';
+                          
+                          return (
+                            <tr key={subDept._id} className="border-t hover:bg-muted/30">
+                              <td className="px-4 py-3">{getBaseName(baseId)}</td>
+                              <td className="px-4 py-3">{getDepartmentName(subDept.departmentId)}</td>
+                              <td className="px-4 py-3">{subDept.name}</td>
+                            </tr>
+                          );
+                        })
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <div className="bg-card shadow-sm rounded-lg border p-6">
+                <h3 className="font-semibold text-lg mb-4" style={{textAlign: "right"}}>הוספת תת-מסגרת חדשה</h3>
+                <form onSubmit={handleAddSubDepartment} className="space-y-4">
+                  <div>
+                    <label htmlFor="subDepartmentName" className="block text-sm font-medium mb-1" style={{textAlign: "right"}}>
+                      שם תת-המסגרת
+                    </label>
+                    <input
+                      id="subDepartmentName"
+                      type="text"
+                      value={newSubDepartmentName}
+                      onChange={(e) => setNewSubDepartmentName(e.target.value)}
+                      className="input-field"
+                      placeholder="הזן שם תת-מסגרת"
+                      required
+                      autoComplete="off"
+                      style={{textAlign: "right"}}
+                    />
+                  </div>
+                  
+                  <div>
+                    <label htmlFor="departmentSelect" className="block text-sm font-medium mb-1" style={{textAlign: "right"}}>
+                      בחר מסגרת
+                    </label>
+                    <select
+                      id="departmentSelect"
+                      value={selectedDepartmentForSubDepartment}
+                      onChange={(e) => setSelectedDepartmentForSubDepartment(e.target.value)}
+                      className="input-field"
+                      required
+                      style={{textAlign: "right"}}
+                    >
+                      <option value="">בחר מסגרת</option>
+                      {departments
+                        .filter(dept => 
+                          admin?.role === 'generalAdmin' || dept.baseId === admin?.baseId
+                        )
+                        .map(dept => (
+                          <option key={dept._id} value={dept._id}>
+                            {dept.name} ({getBaseName(dept.baseId)})
+                          </option>
+                        ))
+                      }
+                    </select>
+                  </div>
+                  
+                  <button type="submit" className="btn-primary w-full">
+                    הוסף תת-מסגרת
+                  </button>
+                </form>
+              </div>
+            </div>
+          </TabsContent>
           
           {/* Departments Tab */}
           <TabsContent value="departments" className="pt-6">

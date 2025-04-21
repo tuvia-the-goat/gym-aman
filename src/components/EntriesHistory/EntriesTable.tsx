@@ -96,6 +96,7 @@ const EntriesTable: React.FC<EntriesTableProps> = ({
                 const hasMedical = hasMedicalLimitation(entry.traineeId);
                 const statusDisplay = getEntryStatusDisplay(entry.status || 'success');
                 
+                {console.log(entry)}
                 return (
                   <tr 
                     key={entry._id} 
@@ -105,7 +106,7 @@ const EntriesTable: React.FC<EntriesTableProps> = ({
                       statusDisplay.rowClass
                     )} 
                     onClick={() => entry.traineeId && handleTraineeClick(entry.traineeId)}
-                  >
+                    >
                     <td className="px-4 py-3 flex items-center">
                       {((hasOrthopedic || hasMedical) && entry.status === 'success') && 
                         <AlertTriangle className="h-4 w-4 text-amber-500 ml-2" aria-label="סעיף אורטופדי" />

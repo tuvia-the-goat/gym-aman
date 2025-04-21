@@ -11,6 +11,7 @@ import {
   entryService,
   initializeSystem
 } from '../services/api';
+import { log } from 'console';
 
 const AdminContext = createContext<AdminContextType | undefined>(undefined);
 
@@ -54,6 +55,7 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
           traineeService.getAll(),
           entryService.getAll()
         ]);
+        // console.log(Ent);
         
         setBases(basesData);
         setDepartments(departmentsData);

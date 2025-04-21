@@ -66,6 +66,15 @@ export const useRegistrationForm = (
       return false;
     }
     
+    if (!subDepartmentId) {
+      toast({
+        title: "שגיאה",
+        description: "חובה לבחור תת-מסגרת",
+        variant: "destructive",
+      });
+      return false;
+    }
+    
     if (!gender) {
       toast({
         title: "שגיאה",
@@ -169,7 +178,7 @@ export const useRegistrationForm = (
     } catch (error) {
       toast({
         title: "שגיאה",
-        description: "אירעה שגיאה בעת הרשמת המתאמן",
+        description: `${!!error.response.data.message ? error.response.data.message : 'אירעה שגיאה בעת רישום המשתמש'}`,
         variant: "destructive",
       });
       console.error('Registration error:', error);

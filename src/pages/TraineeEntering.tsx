@@ -224,9 +224,7 @@ const TraineeEntering = () => {
         traineePersonalId: entryPersonalId,
         baseId: selectedBase._id,
         status: 'notRegistered'
-      });
-      console.log("fewefef");
-      
+      });      
       setEntries([newEntry, ...entries]);
       toast({
         title: "משתמש לא רשום",
@@ -269,6 +267,7 @@ const TraineeEntering = () => {
           traineeFullName: entryTrainee.fullName,
           traineePersonalId: entryTrainee.personalId,
           departmentId: entryTrainee.departmentId,
+          subDepartmentId: entryTrainee.subDepartmentId,
           baseId: entryTrainee.baseId,
           status: 'noMedicalApproval'
         });
@@ -303,6 +302,7 @@ const TraineeEntering = () => {
         traineeFullName: entryTrainee.fullName,
         traineePersonalId: entryTrainee.personalId,
         departmentId: entryTrainee.departmentId,
+        subDepartmentId: entryTrainee.subDepartmentId,
         baseId: entryTrainee.baseId,
         status: 'success'
       });
@@ -368,9 +368,9 @@ const TraineeEntering = () => {
           )}
           
           {selectedBase && (
-            <div className="space-y-8">
+            <div className="space-y-3">
               <div className="text-center">
-                <span className="inline-block px-4 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium mb-2">
+                <span className="inline-block px-4 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium mb-1">
                   בסיס: {selectedBase.name}
                 </span>
               </div>
@@ -401,7 +401,7 @@ const TraineeEntering = () => {
                               setEntryPersonalId(value);
                             }}
                             className="input-field pr-10"
-                            placeholder="1234567"
+                            placeholder="הזן את מספרך האישי"
                             required
                             autoComplete="off"
                           />
@@ -434,7 +434,7 @@ const TraineeEntering = () => {
                           <div className="p-5 rounded-lg bg-card border border-border">
                             <h4 className="font-semibold text-lg mb-3 flex items-center">
                               <Shield className="h-5 w-5 ml-2 text-primary" />
-                              הצהרת בריאות
+                              הצהרת כשירות לאימון בחדר כושר
                             </h4>
                             <p className="mb-3">אני מצהיר/ה בזאת כי:</p>
                             <ul className="space-y-2 text-sm">
@@ -444,15 +444,27 @@ const TraineeEntering = () => {
                               </li>
                               <li className="flex items-start">
                                 <CheckCircle className="h-4 w-4 ml-2 mt-0.5 text-primary shrink-0" />
-                                <span>אני בריא/ה ואין לי מגבלות רפואיות המונעות ממני להתאמן בחדר כושר.</span>
+                                <span>בחתימתי הנני מתחייב <b>שקראתי את התדריך למתאמן ואעמוד בו.</b></span>
                               </li>
                               <li className="flex items-start">
                                 <CheckCircle className="h-4 w-4 ml-2 mt-0.5 text-primary shrink-0" />
-                                <span>אני מודע/ת לכך שהשימוש במתקני חדר הכושר הינו באחריותי הבלעדית.</span>
+                                <span>הנני כשיר לאימון כולל תרגילי כוח ופעילות אירובית.<b> לא ידוע לי בעיה רפואית ממנה אני סובל </b>כגון בעיות לב,
+לחץ דם, סכרת, עודף שומנים בדם, כאבים בגזה, התעלפויות, הפרעה בשיווי משקל, סחרחורות, דופק מואץ, קוצר
+נשימה, צפצופים בנשימה, אסתמה או אירוע חריג אחר.<b> כמו כן, אינני נוטל תרופות או סובל ממחלות כרוניות
+ </b> הפוגעות ביכולתי להתאמן.  </span>
                               </li>
                               <li className="flex items-start">
                                 <CheckCircle className="h-4 w-4 ml-2 mt-0.5 text-primary shrink-0" />
-                                <span>התייעצתי עם רופא לגבי פעילות גופנית אם יש לי בעיות בריאותיות.</span>
+                                <span>בכל מקרה של הופעת הסימנים הבאים- כאב או לחץ בחזה, ביד או בלסת, קוצר נשימה, תחושת עילפון,
+                                סחרחורת- אפסיק את האימון באופן מידי ואפנה להתייעצות רפואית.</span>
+                              </li>
+                              <li className="flex items-start">
+                                <CheckCircle className="h-4 w-4 ml-2 mt-0.5 text-primary shrink-0" />
+                                <span>בחתימתי בכניסה לחד"כ אני מצהירה כי <b>נמצא בידיי אישור רופא לביצוע פ"ג ואני כשיר לבצע אימון</b> בחדר כושר.
+                                </span>
+                              </li>
+                              <li className="flex items-start">
+                              <b>מתאמן- גלה אחריות למצבך הרפואי והימנע מסיכון בריאותי!</b>
                               </li>
                             </ul>
                             <p className="mt-3 text-sm font-medium text-primary">לחיצה על כפתור "רישום כניסה" מהווה אישור של ההצהרה הרפואית למעלה</p>
