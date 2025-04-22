@@ -1,10 +1,11 @@
 // src/pages/EntriesHistory.tsx
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import DashboardLayout from "../components/DashboardLayout";
 import { useAdmin } from "../context/AdminContext";
-import { Trainee } from "../types";
-import { traineeService } from "../services/api";
+import { Trainee, Entry } from "../types";
+import { traineeService, entryService } from "../services/api";
+import { socketService } from "../services/socket"; // Import socket service
 import { useToast } from "@/components/ui/use-toast";
 import { Dialog } from "@/components/ui/dialog";
 import { Loader } from "lucide-react";
@@ -12,18 +13,20 @@ import EntriesFilter from "../components/EntriesHistory/EntriesFilter";
 import EntriesTable from "../components/EntriesHistory/EntriesTable";
 import EntriesPagination from "../components/EntriesHistory/EntriesPagination";
 import TraineeProfileDialog from "../components/EntriesHistory/TraineeProfileDialog";
+import EntriesRealtimeIndicator from "../components/EntriesHistory/EntriesRealtimeIndicator"; // Import the new component
 import ExportButton from "../components/EntriesHistory/ExportButton";
 import { useEntriesFilter } from "../hooks/useEntriesFilter";
 
 const EntriesHistory = () => {
-  const { trainees } = useAdmin();
+  const { trainees, entries, setEntries } = useAdmin();
   const { toast } = useToast();
 
   const [selectedTrainee, setSelectedTrainee] = useState<Trainee | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [hasNewEntries, setHasNewEntries] = useState(false);
 
   const {
-    entries,
+    entries: displayedEntries,
     isLoading,
     error,
     searchTerm,
@@ -49,6 +52,30 @@ const EntriesHistory = () => {
     hasMedicalLimitation,
     refreshEntries,
   } = useEntriesFilter();
+
+  // Set up WebSocket event handler for new entries
+  useEffect(() => {
+    // Register handler for new entries
+    const cleanup = socketService.onNewEntry((newEntry) => {
+      setHasNewEntries(true);
+      
+      // Show toast notification
+      toast({
+        title: "כניסה חדשה",
+        description: `נרשמה כניסה חדשה: ${newEntry.traineeFullName || newEntry.traineePersonalId}`,
+      });
+    });
+    
+    return cleanup;
+  }, [toast]);
+
+  // Auto-refresh when new entries are detected
+  useEffect(() => {
+    if (hasNewEntries) {
+      refreshEntries();
+      setHasNewEntries(false);
+    }
+  }, [hasNewEntries, refreshEntries]);
 
   const handleTraineeClick = (traineeId: string) => {
     const trainee = trainees.find((t) => t._id === traineeId);
@@ -93,6 +120,9 @@ const EntriesHistory = () => {
         <div className="flex justify-between items-center">
           <h2 className="text-2xl font-bold">היסטוריית כניסות</h2>
           <div className="flex gap-2 items-center">
+            {/* Add real-time indicator */}
+            
+            <EntriesRealtimeIndicator />
             <ExportButton
               searchTerm={searchTerm}
               selectedDepartment={selectedDepartment}
@@ -103,13 +133,6 @@ const EntriesHistory = () => {
               endDate={endDate}
               isLoading={isLoading}
             />
-            <button
-              onClick={refreshEntries}
-              className="p-2 rounded-md hover:bg-muted transition-colors"
-              title="רענן"
-            >
-              <Loader className={`h-5 w-5 ${isLoading ? "animate-spin" : ""}`} />
-            </button>
           </div>
         </div>
 
@@ -144,7 +167,7 @@ const EntriesHistory = () => {
           ) : (
             <>
               <EntriesTable
-                displayedEntries={entries}
+                displayedEntries={displayedEntries}
                 hasOrthopedicCondition={hasOrthopedicCondition}
                 hasMedicalLimitation={hasMedicalLimitation}
                 handleTraineeClick={handleTraineeClick}
@@ -155,7 +178,7 @@ const EntriesHistory = () => {
                 <div className="border-t px-4 py-2 flex items-center justify-between">
                   <div className="text-sm text-muted-foreground">
                     מציג{" "}
-                    {entries.length > 0
+                    {displayedEntries.length > 0
                       ? `${(currentPage - 1) * entriesPerPage + 1}-${Math.min(
                           currentPage * entriesPerPage,
                           totalEntries
