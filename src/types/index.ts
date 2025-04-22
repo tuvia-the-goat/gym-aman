@@ -28,6 +28,27 @@ export interface SubDepartment {
   name: string;
   departmentId: string;
 }
+// src/types/socket.ts
+
+
+export interface ServerToClientEvents {
+  newEntry: (entry: Entry) => void;
+  error: (error: string) => void;
+}
+
+export interface ClientToServerEvents {
+  joinBase: (baseId: string) => void;
+  leaveBase: (baseId: string) => void;
+}
+
+export interface InterServerEvents {
+  ping: () => void;
+}
+
+export interface SocketData {
+  baseId?: string;
+  adminId?: string;
+}
 
 
 

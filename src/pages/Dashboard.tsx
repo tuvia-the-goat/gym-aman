@@ -9,7 +9,7 @@ import TopTraineesCard from '../components/dashboard/TopTraineesCard';
 import RecentEntriesCard from '../components/analytics/RecentEntriesCard';
 
 const Dashboard = () => {
-  const { admin, trainees, entries, departments } = useAdmin();
+  const { admin, trainees, entries, departments, bases, subDepartments } = useAdmin();
   
   // Current date for calculations
   const now = new Date();
@@ -72,14 +72,31 @@ const Dashboard = () => {
     const traineeCountsArray = Object.entries(traineeEntryCounts)
       .map(([traineeId, count]) => {
         const trainee = baseFilteredTrainees.find(t => t._id === traineeId);
-        return {
+
+        let topTraineeDetails : {
+          id: string;
+          name: string;
+          count: number;
+          departmentName: string;
+          subDepartmentName: string;
+          baseName?: string;
+        } = {
           id: traineeId,
           name: trainee?.fullName || 'Unknown Trainee',
           count: count as number,
           departmentName: trainee ? 
-            departments?.find(d => d._id === trainee.departmentId)?.name || 'Unknown Department' 
-            : 'Unknown Department'
-        };
+            departments?.find(d => d._id === trainee.departmentId)?.name || '-' 
+            : '-',
+          subDepartmentName: trainee ?
+          subDepartments?.find(d => d._id === trainee.subDepartmentId)?.name || '-' 
+            : '-',
+        }
+        if (admin?.role !== 'gymAdmin' && !admin.baseId) {
+          topTraineeDetails.baseName = trainee ?
+          bases?.find(d => d._id === trainee.baseId)?.name || '-' 
+            : '-'
+        }
+        return topTraineeDetails
       })
       .sort((a, b) => b.count - a.count)
       .slice(0, 7);

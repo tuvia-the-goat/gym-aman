@@ -4,7 +4,6 @@ import React, { useState } from 'react';
 import { Download, Loader } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
-import * as XLSX from 'xlsx';
 import { Entry } from '@/types';
 import { useAdmin } from '@/context/AdminContext';
 import { entryService } from '@/services/api';
@@ -59,7 +58,7 @@ const ExportButton = ({
     }
   };
 
-  const getEntryStatusDisplay = (status: string | undefined) => {
+  const getStatusDisplay = (status: string | undefined) => {
     switch (status) {
       case "success":
         return "נכנס/ה בהצלחה";
@@ -125,90 +124,198 @@ const ExportButton = ({
         return;
       }
       
+      // Get current date for the report
+      const now = new Date();
+      const formattedDate = `${now.getDate()}-${now.getMonth() + 1}-${now.getFullYear()}`;
+      const randomId = Math.random().toString(36).substring(2, 8);
+      const filename = `כניסות-חדר-כושר_${formattedDate}_${randomId}.xls`;
       
-      // Create a meaningful filename with current date
-      const today = new Date();
-      const formattedDate = `${today.getDate()}-${today.getMonth() + 1}-${today.getFullYear()}`;
-      const filename = `כניסות_חדר_כושר_${formattedDate}.xlsx`;
-
-      // Create the export data
-      const exportData = allEntries.map((entry) => ({
-        'שם מתאמן': entry.traineeFullName || "-",
-        'מספר אישי': entry.traineePersonalId,
-        'מסגרת': getDepartmentName(entry.departmentId),
-        'תת-מסגרת': getSubDepartmentName(entry.subDepartmentId || ""),
-        ...(admin?.role === "generalAdmin" ? { 'בסיס': getBaseName(entry.baseId) } : {}),
-        'תאריך': formatDate(entry.entryDate),
-        'שעה': entry.entryTime,
-        'סטטוס': getEntryStatusDisplay(entry.status),
-      }));
-
-      // Create workbook and worksheet
-      const wb = XLSX.utils.book_new();
+      // Prepare filters information for Excel export
+      const activeFilters = [];
       
-      // Create worksheet from the data
-      const ws = XLSX.utils.json_to_sheet(exportData, { header: Object.keys(exportData[0]) });
-
-      // Set column widths
-      const columnWidths = [
-        { wch: 20 }, // שם מתאמן
-        { wch: 15 }, // מספר אישי
-        { wch: 20 }, // מסגרת
-        { wch: 20 }, // תת-מסגרת
-        ...(admin?.role === "generalAdmin" ? [{ wch: 15 }] : []), // בסיס
-        { wch: 12 }, // תאריך
-        { wch: 10 }, // שעה
-        { wch: 20 }, // סטטוס
-      ];
-      ws['!cols'] = columnWidths;
-
-      // Set cell formats - all as strings except date
-      if (ws['!ref']) {
-        const range = XLSX.utils.decode_range(ws['!ref']);
-        
-        // Find the indexes for date and time columns based on the admin role
-        const dateColumnIndex = admin?.role === "generalAdmin" ? 5 : 4;
-        const timeColumnIndex = admin?.role === "generalAdmin" ? 6 : 5;
-        
-        // Add RTL Direction
-        ws['!dir'] = 'rtl';
-        
-        // Set all cells as strings except date
-        for (let R = range.s.r + 1; R <= range.e.r; ++R) {
-          for (let C = range.s.c; C <= range.e.c; ++C) {
-            const cell = XLSX.utils.encode_cell({ r: R, c: C });
-            if (ws[cell]) {
-              // Set all columns as strings except for date
-              if (C !== dateColumnIndex) {
-                ws[cell].t = 's';
-              }
-              
-              // Special format for date and time
-              if (C === dateColumnIndex) {
-                ws[cell].z = 'dd/mm/yyyy';
-              } else if (C === timeColumnIndex) {
-                ws[cell].z = 'hh:mm';
-              }
-            }
+      if (searchTerm) {
+        activeFilters.push(`חיפוש: "${searchTerm}"`);
+      }
+      
+      if (selectedDepartment) {
+        const departmentName = getDepartmentName(selectedDepartment);
+        activeFilters.push(`מסגרת: ${departmentName}`);
+      }
+      
+      if (selectedSubDepartment) {
+        const subDepartmentName = getSubDepartmentName(selectedSubDepartment);
+        activeFilters.push(`תת-מסגרת: ${subDepartmentName}`);
+      }
+      
+      if (selectedBase) {
+        const baseName = getBaseName(selectedBase);
+        activeFilters.push(`בסיס: ${baseName}`);
+      }
+      
+      if (selectedProfile) {
+        activeFilters.push(`פרופיל רפואי: ${selectedProfile}`);
+      }
+      
+      if (startDate && endDate) {
+        activeFilters.push(`טווח תאריכים: ${formatDate(startDate.toISOString())} עד ${formatDate(endDate.toISOString())}`);
+      } else if (startDate) {
+        activeFilters.push(`מתאריך: ${formatDate(startDate.toISOString())}`);
+      } else if (endDate) {
+        activeFilters.push(`עד תאריך: ${formatDate(endDate.toISOString())}`);
+      }
+      
+      // Create styled HTML table for Excel
+      let tableHtml = `
+      <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+      <head>
+        <!--[if gte mso 9]>
+        <xml>
+          <x:ExcelWorkbook>
+            <x:ExcelWorksheets>
+              <x:ExcelWorksheet>
+                <x:Name>דוח כניסות</x:Name>
+                <x:WorksheetOptions>
+                  <x:DisplayRightToLeft/>
+                </x:WorksheetOptions>
+              </x:ExcelWorksheet>
+            </x:ExcelWorksheets>
+          </x:ExcelWorkbook>
+        </xml>
+        <![endif]-->
+        <meta http-equiv="content-type" content="text/plain; charset=UTF-8"/>
+        <style>
+          table {
+            border-collapse: collapse;
+            width: 100%;
+            direction: rtl;
+            font-family: 'Assistant', 'Calibri', 'Arial', sans-serif;
           }
-        }
-      }
-      
-      // Add the worksheet to the workbook
-      XLSX.utils.book_append_sheet(wb, ws, 'היסטוריית כניסות');
-      
-      // Apply workbook-level RTL settings
-      try {
-        // This will only work in full Excel files, not CSV
-        if (!wb.Workbook) wb.Workbook = {};
-        if (!wb.Workbook.Views) wb.Workbook.Views = [];
-        wb.Workbook.Views[0] = { RTL: true };
-      } catch (error) {
-        console.error("Could not set RTL at workbook level:", error);
-      }
+          .header {
+            background-color:rgb(89, 129, 81); /* Slate-500 - more gentle color */
+            color: white;
+            font-weight: bold;
+            text-align: center;
+            padding: 8px;
+            border: 1px solidrgb(69, 123, 95); /* Slate-600 */
+          }
+          .title-row {
+            background-color:rgb(51, 101, 66); /* Blue-500 - more gentle primary color */
+            color: white;
+            font-size: 16pt;
+            font-weight: bold;
+            height: 50px;
+            text-align: center;
+          }
+          .logo-cell {
+            text-align: center;
+            vertical-align: middle;
+            width: 50px;
+          }
+          td {
+            padding: 8px;
+            border: 1px solidrgb(188, 190, 193); /* Slate-200 */
+            text-align: center; /* Center all data */
+            font-family: 'Assistant', 'Calibri', 'Arial', sans-serif;
+          }
+          th {
+            padding: 8px;
+            text-align: center;
+          }
+          .row-even {
+            background-color:rgb(227, 227, 227); /* Slate-50 - very light */
+          }
+          .row-odd {
+            background-color: #f1f5f9; /* Slate-100 - light */
+          }
+          .status-cell {
+            font-weight: bold;
+            text-align: center;
+          }
+          .footer {
+            background-color:rgb(101, 145, 103); /* Blue-100 - light blue */
+            font-style: italic;
+            text-align: center;
+            padding: 10px;
+            font-weight: bold;
+          }
+        </style>
+      </head>
+      <body>
+        <table>
+          <tr class="title-row">
+            <td colspan="${admin?.role === "generalAdmin" ? 8 : 7}">דוח כניסות - מערכת אימ"ון - ${formattedDate} &#128170;</td>
+          </tr>
+          <tr>
+            <th class="header">שם מתאמן</th>
+            <th class="header">מספר אישי</th>
+            <th class="header">מסגרת</th>
+            <th class="header">תת-מסגרת</th>
+            ${admin?.role === "generalAdmin" ? '<th class="header">בסיס</th>' : ''}
+            <th class="header">תאריך</th>
+            <th class="header">שעה</th>
+            <th class="header">סטטוס</th>
+          </tr>`;
 
-      // Generate the Excel file
-      XLSX.writeFile(wb, filename);
+      // Add rows with data and alternating row colors
+      allEntries.forEach((entry, index) => {
+        const rowClass = index % 2 === 0 ? 'row-even' : 'row-odd';
+        const statusClass = getStatusColorClass(entry.status);
+        
+        // Force all data to be strings with explicit formatting
+        tableHtml += `
+          <tr class="${rowClass}">
+            <td style="mso-number-format:'\\@'">${entry.traineeFullName || '-'}</td>
+            <td style="mso-number-format:'\\@'">${entry.traineePersonalId}</td>
+            <td style="mso-number-format:'\\@'">${getDepartmentName(entry.departmentId)}</td>
+            <td style="mso-number-format:'\\@'">${getSubDepartmentName(entry.subDepartmentId || '')}</td>
+            ${admin?.role === "generalAdmin" ? `<td style="mso-number-format:'\\@'">${getBaseName(entry.baseId)}</td>` : ''}
+            <td style="mso-number-format:'\\@'">${formatDate(entry.entryDate)}</td>
+            <td style="mso-number-format:'\\@'">${entry.entryTime}</td>
+            <td class="status-cell" style="${statusClass}; mso-number-format:'\\@'">${getStatusDisplay(entry.status)}</td>
+          </tr>
+        `;
+      });
+      
+      // Add summary footer with filter information
+      tableHtml += `
+          <tr>
+            <td colspan="${admin?.role === "generalAdmin" ? 8 : 7}" class="footer">סה"כ רשומות: ${allEntries.length}</td>
+          </tr>
+        </table>`;
+        
+      // Add filter section if there are active filters
+      if (activeFilters.length > 0) {
+        tableHtml += `
+        <div style="margin-top: 20px; direction: rtl; font-family: 'Assistant', 'Calibri', 'Arial', sans-serif;">
+          <table style="width: 60%; margin: 0 auto; border-collapse: collapse;">
+            <tr>
+              <th colspan="2" style="background-color: #e0e7ff; padding: 8px; text-align: center; border: 1px solid #c7d2fe; font-weight: bold;">
+                סינון נתונים
+              </th>
+            </tr>
+            ${activeFilters.map((filter, index) => `
+              <tr style="background-color: ${index % 2 === 0 ? '#f5f7ff' : '#ffffff'};">
+                <td style="padding: 6px 12px; border: 1px solid #e5e7eb; text-align: right; mso-number-format:'\\@';">
+                  ${filter}
+                </td>
+              </tr>
+            `).join('')}
+          </table>
+        </div>`;
+      }
+      
+      // Create a Blob with the HTML table content
+      const BOM = '\uFEFF'; // Add BOM for UTF-8 encoding to handle Hebrew characters
+      const blob = new Blob([BOM + tableHtml], { type: 'application/vnd.ms-excel;charset=utf-8' });
+      
+      // Create a temporary link and trigger download
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
       
       // Show success notification
       toast({
@@ -226,6 +333,20 @@ const ExportButton = ({
       });
     } finally {
       setIsExporting(false);
+    }
+  };
+  
+  // Helper function to get status color styling for Excel - using more gentle colors
+  const getStatusColorClass = (status: string | undefined): string => {
+    switch (status) {
+      case 'success':
+        return 'color: #10b981;'; // Emerald-500 (softer green)
+      case 'noMedicalApproval':
+        return 'color: #f87171;'; // Red-400 (softer red)
+      case 'notRegistered':
+        return 'color: #60a5fa;'; // Blue-400 (softer blue)
+      default:
+        return 'color: #94a3b8;'; // Gray
     }
   };
 

@@ -3,12 +3,15 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Medal } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useAdmin } from '@/context/AdminContext';
 
 interface TopTrainee {
   id: string;
   name: string;
   count: number;
   departmentName: string;
+  subDepartmentName: string;
+  baseName ?: string;
 }
 
 interface TopTraineesCardProps {
@@ -22,6 +25,8 @@ const TopTraineesCard: React.FC<TopTraineesCardProps> = ({
   title, 
   emptyMessage = "אין נתונים זמינים" 
 }) => {
+  const { admin } = useAdmin();
+  const isGeneralAdmin = admin?.role !== 'gymAdmin' && !admin.baseId
   return (
     <Card>
       <CardHeader>
@@ -34,7 +39,9 @@ const TopTraineesCard: React.FC<TopTraineesCardProps> = ({
               <TableRow>
                 <TableHead className="text-right">#</TableHead>
                 <TableHead className="text-right">שם</TableHead>
+                {isGeneralAdmin && <TableHead className="text-right">בסיס</TableHead>}
                 <TableHead className="text-right">מסגרת</TableHead>
+                <TableHead className="text-right">תת-מסגרת</TableHead>
                 <TableHead className="text-right">כניסות</TableHead>
               </TableRow>
             </TableHeader>
@@ -55,7 +62,9 @@ const TopTraineesCard: React.FC<TopTraineesCardProps> = ({
                     </div>
                   </TableCell>
                   <TableCell>{trainee.name}</TableCell>
+                  {isGeneralAdmin && <TableCell>{trainee.baseName}</TableCell>}
                   <TableCell>{trainee.departmentName}</TableCell>
+                  <TableCell>{trainee.subDepartmentName}</TableCell>
                   <TableCell>{trainee.count}</TableCell>
                 </TableRow>
               ))}

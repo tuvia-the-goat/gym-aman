@@ -1,4 +1,4 @@
-// src/context/AdminContext.tsx
+// src/context/AdminContext.tsx update
 
 import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
 import { Admin, Base, Department, SubDepartment, Trainee, Entry, AdminContextType } from '../types';
@@ -6,12 +6,12 @@ import {
   authService, 
   baseService, 
   departmentService, 
-  subDepartmentService, // Add this line
+  subDepartmentService,
   traineeService, 
   entryService,
   initializeSystem
 } from '../services/api';
-import { log } from 'console';
+import { socketService } from '../services/socket'; // Import socket service
 
 const AdminContext = createContext<AdminContextType | undefined>(undefined);
 
@@ -19,7 +19,7 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const [admin, setAdmin] = useState<Admin | null>(null);
   const [bases, setBases] = useState<Base[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
-  const [subDepartments, setSubDepartments] = useState<SubDepartment[]>([]); // Add this line
+  const [subDepartments, setSubDepartments] = useState<SubDepartment[]>([]);
   const [trainees, setTrainees] = useState<Trainee[]>([]);
   const [entries, setEntries] = useState<Entry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -51,15 +51,14 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         const [basesData, departmentsData, subDepartmentsData, traineesData, entriesData] = await Promise.all([
           baseService.getAll(),
           departmentService.getAll(),
-          subDepartmentService.getAll(), // Add this line
+          subDepartmentService.getAll(),
           traineeService.getAll(),
           entryService.getAll()
         ]);
-        // console.log(Ent);
         
         setBases(basesData);
         setDepartments(departmentsData);
-        setSubDepartments(subDepartmentsData); // Add this line
+        setSubDepartments(subDepartmentsData);
         setTrainees(traineesData);
         setEntries(entriesData);
       } catch (error) {
@@ -71,6 +70,37 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     
     initializeData();
   }, []);
+
+  // Initialize WebSocket connection
+  useEffect(() => {
+    // Initialize socket
+    socketService.init();
+    
+    // Set up the event listener for new entries
+    const cleanup = socketService.onNewEntry((newEntry) => {
+      // Add the new entry to the state
+      setEntries(prevEntries => [newEntry, ...prevEntries]);
+    });
+    
+    // Clean up on unmount
+    return () => {
+      cleanup();
+      socketService.disconnect();
+    };
+  }, []);
+
+  // Join base-specific room if admin is a gym admin
+  useEffect(() => {
+    if (admin?.role === 'gymAdmin' && admin.baseId) {
+      socketService.joinBase(admin.baseId);
+    }
+    
+    return () => {
+      if (admin?.role === 'gymAdmin' && admin.baseId) {
+        socketService.leaveBase(admin.baseId);
+      }
+    };
+  }, [admin]);
 
   // Update admin in localStorage when state changes
   useEffect(() => {
@@ -88,8 +118,8 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         setBases,
         departments,
         setDepartments,
-        subDepartments, // Add this line
-        setSubDepartments, // Add this line
+        subDepartments,
+        setSubDepartments,
         trainees,
         setTrainees,
         entries,
