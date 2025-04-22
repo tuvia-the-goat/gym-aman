@@ -1,7 +1,6 @@
-
 import React, { useState } from 'react';
 import { format } from 'date-fns';
-import { CalendarIcon, X, ChevronsUpDown, Check } from 'lucide-react';
+import { CalendarIcon, X, ChevronsUpDown, Check, Layers } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -14,6 +13,12 @@ interface Department {
   _id: string;
   name: string;
   baseId: string;
+}
+
+interface SubDepartment {
+  _id: string;
+  name: string;
+  departmentId: string;
 }
 
 interface Trainee {
@@ -36,12 +41,16 @@ interface FilterDialogProps {
   setEndDate: (date?: Date) => void;
   selectedDepartmentIds: string[];
   setSelectedDepartmentIds: (ids: string[]) => void;
+  selectedSubDepartmentIds?: string[];
+  setSelectedSubDepartmentIds?: (ids: string[]) => void;
   selectedTrainees: string[];
   setSelectedTrainees: (ids: string[]) => void;
   availableDepartments: Department[];
+  availableSubDepartments?: SubDepartment[];
   traineesByDepartment: TraineesByDepartment;
   clearFilters: () => void;
   toggleDepartment: (departmentId: string) => void;
+  toggleSubDepartment?: (subDepartmentId: string) => void;
   toggleTrainee: (traineeId: string) => void;
   getDepartmentName: (id: string) => string;
   getBaseName: (id: string) => string;
@@ -57,18 +66,23 @@ const FilterDialog: React.FC<FilterDialogProps> = ({
   setEndDate,
   selectedDepartmentIds,
   setSelectedDepartmentIds,
+  selectedSubDepartmentIds = [],
+  setSelectedSubDepartmentIds,
   selectedTrainees,
   setSelectedTrainees,
   availableDepartments,
+  availableSubDepartments = [],
   traineesByDepartment,
   clearFilters,
   toggleDepartment,
+  toggleSubDepartment,
   toggleTrainee,
   getDepartmentName,
   getBaseName,
   isGeneralAdmin
 }) => {
   const [openDepartmentCommand, setOpenDepartmentCommand] = useState(false);
+  const [openSubDepartmentCommand, setOpenSubDepartmentCommand] = useState(false);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -208,6 +222,89 @@ const FilterDialog: React.FC<FilterDialogProps> = ({
               </div>
             )}
           </div>
+          
+          {/* SubDepartment Selection */}
+          {setSelectedSubDepartmentIds && toggleSubDepartment && availableSubDepartments.length > 0 && (
+            <div className="space-y-2">
+              <h3 className="font-medium">בחירת תתי-מסגרות</h3>
+              <Popover open={openSubDepartmentCommand} onOpenChange={setOpenSubDepartmentCommand}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={openSubDepartmentCommand}
+                    className="w-full justify-between text-right"
+                    disabled={selectedDepartmentIds.length === 0}
+                  >
+                    {selectedSubDepartmentIds.length > 0
+                      ? `${selectedSubDepartmentIds.length} תתי-מסגרות נבחרו`
+                      : selectedDepartmentIds.length === 0 
+                        ? "יש לבחור מסגרות תחילה" 
+                        : "בחר תתי-מסגרות"}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-full p-0">
+                  <Command>
+                    <CommandInput placeholder="חפש תת-מסגרת..." />
+                    <CommandList>
+                      <CommandEmpty>לא נמצאו תתי-מסגרות</CommandEmpty>
+                      <CommandGroup>
+                        {availableSubDepartments
+                          .filter(subDept => selectedDepartmentIds.includes(subDept.departmentId))
+                          .map((subDept) => (
+                          <CommandItem
+                            key={subDept._id}
+                            value={subDept.name}
+                            onSelect={() => {
+                              toggleSubDepartment(subDept._id);
+                            }}
+                          >
+                            <Checkbox
+                              checked={selectedSubDepartmentIds.includes(subDept._id)}
+                              className="ml-2"
+                            />
+                            <span>{subDept.name}</span>
+                            <span className="mr-auto text-xs text-muted-foreground">
+                              {getDepartmentName(subDept.departmentId)}
+                            </span>
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+              
+              {selectedSubDepartmentIds.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {selectedSubDepartmentIds.map(subDeptId => {
+                    const subDept = availableSubDepartments.find(sd => sd._id === subDeptId);
+                    return (
+                      <div key={subDeptId} className="bg-muted text-sm rounded-md px-2 py-1 flex items-center gap-1">
+                        <Layers className="h-3 w-3 mr-1 text-muted-foreground" />
+                        {subDept?.name || "תת-מסגרת"}
+                        <button 
+                          onClick={() => toggleSubDepartment(subDeptId)} 
+                          className="hover:text-destructive"
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
+                    );
+                  })}
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => setSelectedSubDepartmentIds([])}
+                    className="text-xs"
+                  >
+                    נקה הכל
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
           
           {/* Trainees Selection (organized by department) */}
           <div className="space-y-2">

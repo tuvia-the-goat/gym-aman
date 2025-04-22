@@ -1,9 +1,9 @@
-
 import { useWeekdayData } from './useWeekdayData';
 import { useMonthlyData } from './useMonthlyData';
 import { useGenderDistribution } from './useGenderDistribution';
 import { useAgeDistribution } from './useAgeDistribution';
 import { useTopPerformers } from './useTopPerformers';
+import { useTopSubDepartments } from './useTopSubDepartments';
 import { useBasesData } from './useBasesData';
 import { useSummaryStats } from './useSummaryStats';
 import { useMedicalProfileDistribution } from './useMedicalProfileDistribution';
@@ -32,6 +32,9 @@ export const useAnalyticsData = (
   const { topTraineesData, topDepartmentsData, getDepartmentName, getBaseName } = 
     useTopPerformers(filteredEntries, filteredTrainees, hasSpecificFilters, startDate, endDate);
   
+  const { topSubDepartmentsData } = 
+    useTopSubDepartments(filteredEntries, startDate, endDate);
+  
   const { basesData, isGeneralAdmin } = 
     useBasesData(startDate, endDate);
   
@@ -46,6 +49,7 @@ export const useAnalyticsData = (
     monthlyData,
     topTraineesData,
     topDepartmentsData,
+    topSubDepartmentsData,
     basesData,
     genderDistributionData,
     genderEntriesDistributionData,

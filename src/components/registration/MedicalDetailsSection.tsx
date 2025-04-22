@@ -125,7 +125,7 @@ const MedicalDetailsSection = ({
               className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
             />
             <label htmlFor="orthopedicCondition" className="text-sm font-medium mr-2">
-              מעוניין להצהיר על כך שקיים סעיף פרופיל אורטופדי
+              אני מעוניין להצהיר על כך שיש לי <b> סעיף פרופיל בתחום אורטופדי</b>            
             </label>
           </div>
         </div>

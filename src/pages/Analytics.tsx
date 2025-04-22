@@ -1,4 +1,3 @@
-
 import React from 'react';
 import DashboardLayout from '../components/DashboardLayout';
 import { useAnalyticsFilters } from '../hooks/useAnalyticsFilters';
@@ -13,6 +12,7 @@ import WeekdayChart from '../components/analytics/WeekdayChart';
 import MonthlyChart from '../components/analytics/MonthlyChart';
 import TopTraineesChart from '../components/analytics/TopTraineesChart';
 import TopDepartmentsChart from '../components/analytics/TopDepartmentsChart';
+import TopSubDepartmentsChart from '../components/analytics/TopSubDepartmentsChart';
 import BasesChart from '../components/analytics/BasesChart';
 import HourlyDistributionChart from '../components/analytics/HourlyDistributionChart';
 // Import chart components
@@ -28,6 +28,8 @@ const Analytics = () => {
     setEndDate,
     selectedDepartmentIds,
     setSelectedDepartmentIds,
+    selectedSubDepartmentIds,
+    setSelectedSubDepartmentIds,
     selectedTrainees,
     setSelectedTrainees,
     showFilterDialog,
@@ -35,6 +37,7 @@ const Analytics = () => {
     filteredEntries,
     filteredTrainees,
     availableDepartments,
+    availableSubDepartments,
     traineesByDepartment,
     hasSpecificFilters,
     hasActiveFilters,
@@ -43,7 +46,8 @@ const Analytics = () => {
     clearDepartmentFilters,
     clearTraineeFilters,
     toggleTrainee,
-    toggleDepartment
+    toggleDepartment,
+    toggleSubDepartment
   } = useAnalyticsFilters();
   
   const {
@@ -51,6 +55,7 @@ const Analytics = () => {
     monthlyData,
     topTraineesData,
     topDepartmentsData,
+    topSubDepartmentsData,
     basesData,
     genderDistributionData,
     genderEntriesDistributionData,
@@ -68,6 +73,13 @@ const Analytics = () => {
     endDate,
     hasSpecificFilters
   );
+
+  // Function to clear sub-department filters
+  const clearSubDepartmentFilters = () => {
+    if (setSelectedSubDepartmentIds) {
+      setSelectedSubDepartmentIds([]);
+    }
+  };
 
   return (
     <DashboardLayout activeTab="analytics">
@@ -89,12 +101,16 @@ const Analytics = () => {
           setEndDate={setEndDate}
           selectedDepartmentIds={selectedDepartmentIds}
           setSelectedDepartmentIds={setSelectedDepartmentIds}
+          selectedSubDepartmentIds={selectedSubDepartmentIds}
+          setSelectedSubDepartmentIds={setSelectedSubDepartmentIds}
           selectedTrainees={selectedTrainees}
           setSelectedTrainees={setSelectedTrainees}
           availableDepartments={availableDepartments}
+          availableSubDepartments={availableSubDepartments}
           traineesByDepartment={traineesByDepartment}
           clearFilters={clearFilters}
           toggleDepartment={toggleDepartment}
+          toggleSubDepartment={toggleSubDepartment}
           toggleTrainee={toggleTrainee}
           getDepartmentName={getDepartmentName}
           getBaseName={getBaseName}
@@ -106,9 +122,11 @@ const Analytics = () => {
           startDate={startDate}
           endDate={endDate}
           selectedDepartmentIds={selectedDepartmentIds}
+          selectedSubDepartmentIds={selectedSubDepartmentIds}
           selectedTrainees={selectedTrainees}
           clearDateFilters={clearDateFilters}
           clearDepartmentFilters={clearDepartmentFilters}
+          clearSubDepartmentFilters={clearSubDepartmentFilters}
           clearTraineeFilters={clearTraineeFilters}
         />
         
@@ -149,10 +167,27 @@ const Analytics = () => {
             />
           )}
         </div>
+
+        {/* Top SubDepartments - our new chart */}
+        <div className="w-full">
+          {topSubDepartmentsData.length > 0 ? (
+            <TopSubDepartmentsChart
+              data={topSubDepartmentsData}
+              showBaseColumn={isGeneralAdmin}
+            />
+          ) : (
+            <div className="bg-card shadow-sm rounded-lg p-6 border">
+              <h3 className="text-lg font-medium mb-4">5 תתי-המסגרות המובילות</h3>
+              <div className="h-60 flex items-center justify-center">
+                <p className="text-center text-muted-foreground">אין נתונים זמינים על תתי-מסגרות{selectedSubDepartmentIds.length > 0 ? " עם הסינון הנוכחי" : ""}</p>
+              </div>
+            </div>
+          )}
+        </div>
         
-          <MedicalProfileChart 
-            data={medicalProfileData}
-          />
+        <MedicalProfileChart 
+          data={medicalProfileData}
+        />
         {/* New Charts - Gender, Age, and Medical Profile Distribution */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <GenderDistributionChart 

@@ -12,6 +12,7 @@ import EntriesFilter from "../components/EntriesHistory/EntriesFilter";
 import EntriesTable from "../components/EntriesHistory/EntriesTable";
 import EntriesPagination from "../components/EntriesHistory/EntriesPagination";
 import TraineeProfileDialog from "../components/EntriesHistory/TraineeProfileDialog";
+import ExportButton from "../components/EntriesHistory/ExportButton";
 import { useEntriesFilter } from "../hooks/useEntriesFilter";
 
 const EntriesHistory = () => {
@@ -91,13 +92,25 @@ const EntriesHistory = () => {
       <div className="space-y-6 animate-fade-up">
         <div className="flex justify-between items-center">
           <h2 className="text-2xl font-bold">היסטוריית כניסות</h2>
-          <button
-            onClick={refreshEntries}
-            className="p-2 rounded-md hover:bg-muted transition-colors"
-            title="רענן"
-          >
-            <Loader className={`h-5 w-5 ${isLoading ? "animate-spin" : ""}`} />
-          </button>
+          <div className="flex gap-2 items-center">
+            <ExportButton
+              searchTerm={searchTerm}
+              selectedDepartment={selectedDepartment}
+              selectedSubDepartment={selectedSubDepartment}
+              selectedBase={selectedBase}
+              selectedProfile={selectedProfile}
+              startDate={startDate}
+              endDate={endDate}
+              isLoading={isLoading}
+            />
+            <button
+              onClick={refreshEntries}
+              className="p-2 rounded-md hover:bg-muted transition-colors"
+              title="רענן"
+            >
+              <Loader className={`h-5 w-5 ${isLoading ? "animate-spin" : ""}`} />
+            </button>
+          </div>
         </div>
 
         <EntriesFilter
