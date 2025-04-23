@@ -13,7 +13,6 @@ export const useEntriesFilter = () => {
   const [selectedDepartment, setSelectedDepartment] = useState("");
   const [selectedSubDepartment, setSelectedSubDepartment] = useState("");
   const [selectedBase, setSelectedBase] = useState("");
-  const [selectedProfile, setSelectedProfile] = useState("");
   const [startDate, setStartDate] = useState(undefined);
   const [endDate, setEndDate] = useState(undefined);
 
@@ -57,16 +56,10 @@ export const useEntriesFilter = () => {
 
       // Only apply the baseId filter for gym admins
       const baseIdParam =
-        selectedBase || (admin?.role === "gymAdmin" ? admin?.baseId : undefined);
+        selectedBase ||
+        (admin?.role === "gymAdmin" ? admin?.baseId : undefined);
 
       // Filter trainees by medical profile if needed
-      let traineeIds;
-      if (selectedProfile) {
-        traineeIds = trainees
-          .filter((trainee) => trainee.medicalProfile === selectedProfile)
-          .map((trainee) => trainee._id)
-          .join(",");
-      }
 
       const result = await entryService.getPaginated({
         page: currentPage,
@@ -77,7 +70,6 @@ export const useEntriesFilter = () => {
         baseId: baseIdParam,
         startDate: formattedStartDate,
         endDate: formattedEndDate,
-        traineeId: traineeIds,
       });
 
       setEntries(result.entries);
@@ -99,7 +91,6 @@ export const useEntriesFilter = () => {
     selectedDepartment,
     selectedSubDepartment,
     selectedBase,
-    selectedProfile,
     startDate,
     endDate,
     admin,
@@ -119,7 +110,6 @@ export const useEntriesFilter = () => {
     selectedDepartment,
     selectedSubDepartment,
     selectedBase,
-    selectedProfile,
     startDate,
     endDate,
   ]);
@@ -128,66 +118,64 @@ export const useEntriesFilter = () => {
   useEffect(() => {
     const shouldRefreshForEntry = (entry) => {
       if (!entry) return false;
-      
+
       // Check if the new entry matches our current filters
-      
+
       // Base filter check
       if (selectedBase && entry.baseId !== selectedBase) {
         return false;
       }
-      
+
       // Department filter check
       if (selectedDepartment && entry.departmentId !== selectedDepartment) {
         return false;
       }
-      
+
       // SubDepartment filter check
-      if (selectedSubDepartment && entry.subDepartmentId !== selectedSubDepartment) {
+      if (
+        selectedSubDepartment &&
+        entry.subDepartmentId !== selectedSubDepartment
+      ) {
         return false;
       }
-      
-      // Profile filter check - this is more complex as we need to check the trainee
-      if (selectedProfile) {
-        const trainee = trainees.find((t) => t._id === entry.traineeId);
-        if (!trainee || trainee.medicalProfile !== selectedProfile) {
-          return false;
-        }
-      }
-      
+
       // Search term check
       if (debouncedSearch) {
         const searchLower = debouncedSearch.toLowerCase();
-        const nameMatch = entry.traineeFullName?.toLowerCase()?.includes(searchLower) || false;
-        const idMatch = entry.traineePersonalId?.toLowerCase()?.includes(searchLower) || false;
-        
+        const nameMatch =
+          entry.traineeFullName?.toLowerCase()?.includes(searchLower) || false;
+        const idMatch =
+          entry.traineePersonalId?.toLowerCase()?.includes(searchLower) ||
+          false;
+
         if (!nameMatch && !idMatch) {
           return false;
         }
       }
-      
+
       // Date range check
       if (startDate || endDate) {
         const entryDate = new Date(entry.entryDate);
-        
+
         if (startDate && entryDate < startDate) {
           return false;
         }
-        
+
         if (endDate) {
           // Set the endDate to the end of the day for comparison
           const endOfDay = new Date(endDate);
           endOfDay.setHours(23, 59, 59, 999);
-          
+
           if (entryDate > endOfDay) {
             return false;
           }
         }
       }
-      
+
       // If all filters pass, refresh
       return true;
     };
-    
+
     // Listen for new entries
     const cleanup = socketService.onNewEntry((newEntry) => {
       if (shouldRefreshForEntry(newEntry)) {
@@ -195,18 +183,17 @@ export const useEntriesFilter = () => {
         loadEntries();
       }
     });
-    
+
     return cleanup;
   }, [
     loadEntries,
     selectedBase,
     selectedDepartment,
     selectedSubDepartment,
-    selectedProfile,
     debouncedSearch,
     startDate,
     endDate,
-    trainees
+    trainees,
   ]);
 
   const goToPage = (page: number) => {
@@ -238,8 +225,6 @@ export const useEntriesFilter = () => {
     setSelectedSubDepartment,
     selectedBase,
     setSelectedBase,
-    selectedProfile,
-    setSelectedProfile,
     startDate,
     setStartDate,
     endDate,
