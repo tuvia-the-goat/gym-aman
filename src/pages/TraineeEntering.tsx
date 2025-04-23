@@ -228,7 +228,7 @@ const TraineeEntering = () => {
       setEntries([newEntry, ...entries]);
       toast({
         title: "משתמש לא רשום",
-        description: "נרשמה כניסה למשתמש לא רשום. יש לבצע רישום למערכת.",
+        description:'נרשמה כניסה למשתמש לא רשום. יש לבצע רישום למערכת אצל המד"ג/ית.',
         variant: "destructive",
       });
     } catch (error: any) {
@@ -310,6 +310,7 @@ const TraineeEntering = () => {
       toast({
         title: "כניסה נרשמה בהצלחה",
         description: `${entryTrainee.fullName} נרשם/ה בהצלחה`,
+        variant: "successful"
       });
     } catch (error: any) {
       toast({

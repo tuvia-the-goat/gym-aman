@@ -10,23 +10,10 @@ interface MonthlyChartProps {
 }
 
 const MonthlyChart: React.FC<MonthlyChartProps> = ({ data }) => {
-  const [showAverage, setShowAverage] = useState(false);
   
   return (
     <ChartCard title="כניסות לפי חודשים">
-      <div className="flex justify-between items-center mb-4">
-        <div className="flex items-center gap-2">
-          <Switch
-            id="monthly-display-mode"
-            checked={showAverage}
-            onCheckedChange={setShowAverage}
-          />
-          <Label htmlFor="monthly-display-mode" className="text-sm">
-            {showAverage ? "תצוגת ממוצע" : "תצוגת כמות כניסות"}
-          </Label>
-        </div>
-      </div>
-      <div className="h-64">
+      <div className="h-80">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data}>
             <CartesianGrid strokeDasharray="3 3" />
@@ -35,12 +22,12 @@ const MonthlyChart: React.FC<MonthlyChartProps> = ({ data }) => {
             <Tooltip 
               formatter={(value) => [
                 `${value} כניסות`, 
-                showAverage ? 'ממוצע כניסות שנתי' : 'סה״כ כניסות'
+                'סה״כ כניסות'
               ]} 
             />
             <Line 
               type="monotone" 
-              dataKey={showAverage ? "average" : "value"} 
+              dataKey={"value"} 
               stroke="#8884d8" 
               activeDot={{ r: 8 }}
               strokeWidth={2} 

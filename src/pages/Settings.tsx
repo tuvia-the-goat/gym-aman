@@ -16,6 +16,7 @@ const Settings = () => {
   const { admin, bases, setBases, departments, setDepartments, subDepartments, setSubDepartments, trainees, setTrainees } = useAdmin();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('subdepartments');  
+  console.log(activeTab);
   
   // Medical approval states
   const [medicalFilter, setMedicalFilter] = useState('expired');
@@ -38,48 +39,7 @@ const Settings = () => {
   const [newAdminRole, setNewAdminRole] = useState<'generalAdmin' | 'gymAdmin'>('gymAdmin');
   const [selectedBaseForAdmin, setSelectedBaseForAdmin] = useState('');
   
-  // Filter trainees based on medical approval status
-  const filteredTrainees = useMemo(() => {
-    let filtered = [...trainees];
-    
-    // Filter by base for gym admin
-    if (admin?.role === 'gymAdmin' && admin.baseId) {
-      filtered = filtered.filter(trainee => trainee.baseId === admin.baseId);
-    }
-    
-    const now = new Date();
-    const oneMonthLater = new Date();
-    oneMonthLater.setMonth(oneMonthLater.getMonth() + 1);
-    
-    const threeMonthsLater = new Date();
-    threeMonthsLater.setMonth(threeMonthsLater.getMonth() + 3);
-    
-    switch (medicalFilter) {
-      case 'expired':
-        return filtered.filter(trainee => 
-          !trainee.medicalApproval.approved || 
-          (trainee.medicalApproval.expirationDate && 
-            new Date(trainee.medicalApproval.expirationDate) < now)
-        );
-      case 'expiringOneMonth':
-        return filtered.filter(trainee => 
-          trainee.medicalApproval.approved && 
-          trainee.medicalApproval.expirationDate && 
-          new Date(trainee.medicalApproval.expirationDate) >= now &&
-          new Date(trainee.medicalApproval.expirationDate) <= oneMonthLater
-        );
-      case 'expiringThreeMonths':
-        return filtered.filter(trainee => 
-          trainee.medicalApproval.approved && 
-          trainee.medicalApproval.expirationDate && 
-          new Date(trainee.medicalApproval.expirationDate) >= now &&
-          new Date(trainee.medicalApproval.expirationDate) <= threeMonthsLater &&
-          new Date(trainee.medicalApproval.expirationDate) > oneMonthLater
-        );
-      default:
-        return filtered;
-    }
-  }, [admin, trainees, medicalFilter]);
+
   
   // Get department and base names
   const getDepartmentName = (id: string) => {
@@ -92,50 +52,7 @@ const Settings = () => {
     return base ? base.name : '';
   };
   
-  // Handle medical approval update
-  const updateMedicalApproval = async (traineeId: string, approved: boolean) => {
-    try {
-      // Create a proper expirationDate (1 year from now)
-      const expirationDate = new Date();
-      expirationDate.setFullYear(expirationDate.getFullYear() + 1);
-      
-      // Update medical approval via API with the correct object structure
-      await traineeService.updateMedicalApproval(traineeId, {
-        approved: approved,
-        expirationDate: expirationDate.toISOString()
-      });
-      
-      // Update local state to reflect the change
-      const updatedTrainees = trainees.map(trainee => {
-        if (trainee._id === traineeId) {
-          return {
-            ...trainee,
-            medicalApproval: {
-              approved: approved,
-              expirationDate: expirationDate.toISOString()
-            }
-          };
-        }
-        return trainee;
-      });
-      
-      // Update the state with the modified trainees array
-      setTrainees(updatedTrainees);
-      toast({
-        title: approved ? "אישור רפואי עודכן" : "אישור רפואי בוטל",
-        description: approved 
-          ? "האישור הרפואי עודכן בהצלחה לשנה" 
-          : "האישור הרפואי בוטל בהצלחה",
-      });
-    } catch (error) {
-      console.error('Error updating medical approval:', error);
-      toast({
-        title: "שגיאה",
-        description: "אירעה שגיאה בעת עדכון האישור הרפואי",
-        variant: "destructive",
-      });
-    }
-  };
+
   
   // Handle adding a new base
   const handleAddBase = async (e: React.FormEvent) => {
@@ -305,12 +222,7 @@ const Settings = () => {
     }
   };
   
-  // Default tab selection based on admin role
-  useEffect(() => {
-    if (admin?.role === 'gymAdmin') {
-      setActiveTab('medicalApproval');
-    }
-  }, [admin]);
+
 
   return (
     <DashboardLayout activeTab="settings">

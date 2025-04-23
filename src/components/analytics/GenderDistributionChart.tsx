@@ -1,9 +1,9 @@
 
 import React, { useState } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import ChartCard from './ChartCard';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
+
 
 interface GenderChartProps {
   data: {
@@ -26,14 +26,18 @@ const GenderDistributionChart: React.FC<GenderChartProps> = ({ data, entriesData
   return (
     <ChartCard title="התפלגות מגדרית">
       <div className="flex justify-end mb-4 gap-2">
-        <Label htmlFor="hourly-display-mode" className="text-sm">
-          {dataType === "trainees" ? "כמות מתאמנים" : "כמות כניסות"}
-        </Label>
-        <Switch
-          id="hourly-display-mode"
-          checked={dataType === "trainees"}
-          onCheckedChange={(checked) => setDataType(checked ? "trainees" : "entries")}
-          />
+      <Select
+  value={dataType}
+  onValueChange={(value) => setDataType(value as "trainees" | "entries")}
+>
+  <SelectTrigger id="data-type" className="w-[180px]">
+    <SelectValue placeholder="בחר סוג נתון" />
+  </SelectTrigger>
+  <SelectContent>
+    <SelectItem value="trainees">כמות מתאמנים</SelectItem>
+    <SelectItem value="entries">כמות כניסות</SelectItem>
+  </SelectContent>
+</Select>
       </div>
       <div className="h-[250px] flex items-center justify-center">
         {displayData.length > 0 ? (

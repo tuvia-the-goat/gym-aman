@@ -10,23 +10,10 @@ interface WeekdayChartProps {
 }
 
 const WeekdayChart: React.FC<WeekdayChartProps> = ({ data }) => {
-  const [showAverage, setShowAverage] = useState(false);
   
   return (
     <ChartCard title="כניסות לפי ימים בשבוע">
-      <div className="flex justify-between items-center mb-4">
-        <div className="flex items-center gap-2">
-          <Switch
-            id="weekday-display-mode"
-            checked={showAverage}
-            onCheckedChange={setShowAverage}
-          />
-          <Label htmlFor="weekday-display-mode" className="text-sm">
-            {showAverage ? "תצוגת ממוצע" : "תצוגת כמות כניסות"}
-          </Label>
-        </div>
-      </div>
-      <div className="h-64">
+      <div className="h-80">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data}>
             <CartesianGrid strokeDasharray="3 3" />
@@ -35,11 +22,11 @@ const WeekdayChart: React.FC<WeekdayChartProps> = ({ data }) => {
             <Tooltip 
               formatter={(value) => [
                 `${value} כניסות`, 
-                showAverage ? 'ממוצע כניסות שבועי' : 'סה״כ כניסות'
+                'סה״כ כניסות'
               ]} 
             />
             <Bar 
-              dataKey={showAverage ? "average" : "value"} 
+              dataKey={"value"} 
               fill="#3b82f6" 
             />
           </BarChart>

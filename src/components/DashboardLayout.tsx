@@ -151,7 +151,7 @@ const DashboardLayout = ({ children, activeTab }: DashboardLayoutProps) => {
       icon: <Settings className="h-5 w-5" />, 
       label: 'הגדרות', 
       active: activeTab === 'settings',
-      showFor: ['generalAdmin']
+      showFor: ['generalAdmin', 'gymAdmin']
     }
   ];
   
