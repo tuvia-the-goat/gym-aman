@@ -13,7 +13,6 @@ interface ExportButtonProps {
   selectedDepartment: string;
   selectedSubDepartment: string;
   selectedBase: string;
-  selectedProfile: string;
   startDate?: Date;
   endDate?: Date;
   isLoading: boolean;
@@ -24,7 +23,6 @@ const ExportButton = ({
   selectedDepartment,
   selectedSubDepartment,
   selectedBase,
-  selectedProfile,
   startDate,
   endDate,
   isLoading
@@ -93,15 +91,6 @@ const ExportButton = ({
       const baseIdParam =
         selectedBase || (admin?.role === "gymAdmin" ? admin.baseId : undefined);
       
-      // Filter trainees by medical profile if needed
-      let traineeIds;
-      if (selectedProfile) {
-        traineeIds = trainees
-          .filter((trainee) => trainee.medicalProfile === selectedProfile)
-          .map((trainee) => trainee._id)
-          .join(",");
-      }
-      
       // Fetch all entries with current filters but without pagination
       const response = await entryService.getAllFiltered({
         search: searchTerm,
@@ -110,7 +99,6 @@ const ExportButton = ({
         baseId: baseIdParam,
         startDate: formattedStartDate,
         endDate: formattedEndDate,
-        traineeId: traineeIds,
       });
       
       const allEntries = response.entries;
@@ -150,10 +138,6 @@ const ExportButton = ({
       if (selectedBase) {
         const baseName = getBaseName(selectedBase);
         activeFilters.push(`בסיס: ${baseName}`);
-      }
-      
-      if (selectedProfile) {
-        activeFilters.push(`פרופיל רפואי: ${selectedProfile}`);
       }
       
       if (startDate && endDate) {

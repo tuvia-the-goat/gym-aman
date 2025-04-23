@@ -228,7 +228,7 @@ export const entryService = {
     const response = await api.post("/entries/non-registered", entryData);
     return response.data;
   },
-  
+
   // Get paginated entries
   getPaginated: async (params: {
     page?: number;
@@ -239,7 +239,6 @@ export const entryService = {
     baseId?: string;
     startDate?: string;
     endDate?: string;
-    traineeId?: string;
   }) => {
     const queryParams = new URLSearchParams();
 
@@ -254,7 +253,7 @@ export const entryService = {
     );
     return response.data;
   },
-  
+
   // Get all entries with filters but without pagination
   getAllFiltered: async (params: {
     search?: string;

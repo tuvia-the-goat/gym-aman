@@ -37,8 +37,6 @@ const EntriesHistory = () => {
     setSelectedSubDepartment,
     selectedBase,
     setSelectedBase,
-    selectedProfile,
-    setSelectedProfile,
     startDate,
     setStartDate,
     endDate,
@@ -128,7 +126,6 @@ const EntriesHistory = () => {
               selectedDepartment={selectedDepartment}
               selectedSubDepartment={selectedSubDepartment}
               selectedBase={selectedBase}
-              selectedProfile={selectedProfile}
               startDate={startDate}
               endDate={endDate}
               isLoading={isLoading}
@@ -145,8 +142,6 @@ const EntriesHistory = () => {
           setSelectedSubDepartment={setSelectedSubDepartment}
           selectedBase={selectedBase}
           setSelectedBase={setSelectedBase}
-          selectedProfile={selectedProfile}
-          setSelectedProfile={setSelectedProfile}
           startDate={startDate}
           setStartDate={setStartDate}
           endDate={endDate}
