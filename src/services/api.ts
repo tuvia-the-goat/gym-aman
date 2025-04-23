@@ -192,6 +192,12 @@ export const traineeService = {
     return response.data;
   },
 
+  // get trainee that trained last week
+  traineesLastWeek: async (): Promise<Trainee[]> => {
+    const response = await api.get("/trainees/last-week");
+    return response.data;
+  },
+
   // Get paginated trainees with filters
   getPaginated: async (params: {
     page?: number;
