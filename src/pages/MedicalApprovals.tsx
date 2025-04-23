@@ -41,13 +41,6 @@ const MedicalApprovals = () => {
     [admin, trainees]
   );
 
-  // Check if user is authenticated
-  useEffect(() => {
-    if (!admin) {
-      navigate("/login");
-    }
-  }, [admin, navigate]);
-
   // Clear all filters
   const clearFilters = () => {
     setShowOnlyExpired(false);
