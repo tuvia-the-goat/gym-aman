@@ -31,7 +31,25 @@ export const useLazyTrainees = ({
 
   // Observer references
   const observer = useRef<IntersectionObserver | null>(null);
-  const lastTraineeElementRef = useRef<HTMLLIElement | null>(null);
+  const lastTraineeElementRef = useCallback(
+    (node: HTMLLIElement | null) => {
+      if (isLoading) return;
+
+      if (observer.current) observer.current.disconnect();
+
+      observer.current = new IntersectionObserver(
+        (entries) => {
+          if (entries[0].isIntersecting && hasMore) {
+            loadMoreTrainees();
+          }
+        },
+        { threshold: 0.5 }
+      );
+
+      if (node) observer.current.observe(node);
+    },
+    [isLoading, hasMore]
+  );
 
   // Load trainees method
   const loadMoreTrainees = useCallback(
@@ -84,32 +102,6 @@ export const useLazyTrainees = ({
     setHasMore(true);
     loadMoreTrainees(1);
   }, [searchQuery, showOnlyExpired, expirationDate, baseId]);
-
-  // Setup intersection observer for infinite scroll
-  useEffect(() => {
-    if (isLoading || !hasMore) return;
-
-    if (observer.current) observer.current.disconnect();
-
-    observer.current = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && hasMore) {
-          loadMoreTrainees();
-        }
-      },
-      { threshold: 0.5 }
-    );
-
-    if (lastTraineeElementRef.current) {
-      observer.current.observe(lastTraineeElementRef.current);
-    }
-
-    return () => {
-      if (observer.current) {
-        observer.current.disconnect();
-      }
-    };
-  }, [isLoading, hasMore, loadMoreTrainees, visibleTrainees]);
 
   // Clear all filters
   const clearFilters = useCallback(() => {

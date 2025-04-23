@@ -1,5 +1,5 @@
 // src/components/medical/LazyTraineeList.tsx
-import React from "react";
+import React, { useEffect } from "react";
 import { Trainee } from "../../types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Search } from "lucide-react";
@@ -41,6 +41,7 @@ const LazyTraineeList = ({
     showOnlyExpired: hookShowOnlyExpired,
     setShowOnlyExpired: hookSetShowOnlyExpired,
     expirationDate: hookExpirationDate,
+    setExpirationDate: hookSetExpirationDate,
     lastTraineeElementRef,
   } = useLazyTrainees({
     baseTrainees: trainees,
@@ -59,6 +60,25 @@ const LazyTraineeList = ({
     externalExpirationDate !== undefined
       ? externalExpirationDate
       : hookExpirationDate;
+
+  // Sync external state changes to hook state
+  useEffect(() => {
+    if (externalSearchQuery !== undefined) {
+      hookSetSearchQuery(externalSearchQuery);
+    }
+  }, [externalSearchQuery, hookSetSearchQuery]);
+
+  useEffect(() => {
+    if (externalShowOnlyExpired !== undefined) {
+      hookSetShowOnlyExpired(externalShowOnlyExpired);
+    }
+  }, [externalShowOnlyExpired, hookSetShowOnlyExpired]);
+
+  useEffect(() => {
+    if (externalExpirationDate !== undefined) {
+      hookSetExpirationDate(externalExpirationDate);
+    }
+  }, [externalExpirationDate, hookSetExpirationDate]);
 
   // Get medical status CSS class
   const getMedicalStatusClass = (trainee: Trainee) => {

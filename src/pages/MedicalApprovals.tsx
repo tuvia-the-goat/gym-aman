@@ -51,7 +51,7 @@ const MedicalApprovals = () => {
   // Clear all filters
   const clearFilters = () => {
     setShowOnlyExpired(false);
-    setExpirationDate(undefined);
+    setExpirationDate(null);
     setSearchQuery("");
   };
 
