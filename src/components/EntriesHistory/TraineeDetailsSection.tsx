@@ -62,13 +62,23 @@ const TraineeDetailsSection: React.FC<TraineeDetailsSectionProps> = ({ trainee }
       </h3>
       
       <div className="grid grid-cols-2 gap-4">
-        <div className="col-span-2 bg-card/50 p-3 rounded-lg flex items-center gap-3 border border-border/30">
+        <div className="bg-card/50 p-3 rounded-lg flex items-center gap-3 border border-border/30">
           <div className="bg-primary/10 p-2 rounded-full">
             <File className="h-4 w-4 text-primary" />
           </div>
           <div>
             <div className="text-xs font-medium text-muted-foreground">מספר אישי</div>
             <div className="font-medium">{trainee.personalId}</div>
+          </div>
+        </div>
+
+        <div className="bg-card/50 p-3 rounded-lg flex items-center gap-3 border border-border/30">
+          <div className="bg-primary/10 p-2 rounded-full">
+            <Building className="h-4 w-4 text-primary" />
+          </div>
+          <div>
+            <div className="text-xs font-medium text-muted-foreground">בסיס</div>
+            <div className="font-medium">{getBaseName(trainee.baseId)}</div>
           </div>
         </div>
         
@@ -93,15 +103,6 @@ const TraineeDetailsSection: React.FC<TraineeDetailsSectionProps> = ({ trainee }
           </div>
         </div>
         
-        <div className="bg-card/50 p-3 rounded-lg flex items-center gap-3 border border-border/30">
-          <div className="bg-primary/10 p-2 rounded-full">
-            <Building className="h-4 w-4 text-primary" />
-          </div>
-          <div>
-            <div className="text-xs font-medium text-muted-foreground">בסיס</div>
-            <div className="font-medium">{getBaseName(trainee.baseId)}</div>
-          </div>
-        </div>
         
         <div className="bg-card/50 p-3 rounded-lg flex items-center gap-3 border border-border/30">
           <div className="bg-primary/10 p-2 rounded-full">
@@ -127,6 +128,15 @@ const TraineeDetailsSection: React.FC<TraineeDetailsSectionProps> = ({ trainee }
         
         <div className="bg-card/50 p-3 rounded-lg flex items-center gap-3 border border-border/30">
           <div className="bg-primary/10 p-2 rounded-full">
+            <Activity className="h-4 w-4 text-primary" />
+          </div>
+          <div>
+            <div className="text-xs font-medium text-muted-foreground">פרופיל רפואי</div>
+            <div className="font-medium">{trainee.medicalProfile}</div>
+          </div>
+        </div>
+        <div className="bg-card/50 p-3 rounded-lg flex items-center gap-3 border border-border/30">
+          <div className="bg-primary/10 p-2 rounded-full">
             <Phone className="h-4 w-4 text-primary" />
           </div>
           <div>
@@ -134,16 +144,6 @@ const TraineeDetailsSection: React.FC<TraineeDetailsSectionProps> = ({ trainee }
             <div className="font-medium direction-ltr">
               {formatPhoneNumber(trainee.phoneNumber)}
             </div>
-          </div>
-        </div>
-        
-        <div className="col-span-2 bg-card/50 p-3 rounded-lg flex items-center gap-3 border border-border/30">
-          <div className="bg-primary/10 p-2 rounded-full">
-            <Activity className="h-4 w-4 text-primary" />
-          </div>
-          <div>
-            <div className="text-xs font-medium text-muted-foreground">פרופיל רפואי</div>
-            <div className="font-medium">{trainee.medicalProfile}</div>
           </div>
         </div>
       </div>

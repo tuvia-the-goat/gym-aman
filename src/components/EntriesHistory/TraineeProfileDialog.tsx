@@ -28,7 +28,7 @@ const TraineeProfileDialog: React.FC<TraineeProfileDialogProps> = ({
   if (!trainee) return null;
 
   return (
-    <DialogContent className="max-w-4xl" style={{ direction: "rtl" }}>
+    <DialogContent className="w-[1600] h-[1000] max-w-none" style={{ direction: "rtl" }}>
       <DialogHeader style={{ textAlign: "right" }}>
         <DialogTitle className="flex items-center text-2xl font-bold">
           <User className="h-6 w-6 text-primary ml-2" />

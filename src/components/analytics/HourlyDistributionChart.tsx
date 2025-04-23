@@ -22,7 +22,6 @@ const dayNames = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמיש�
 
 const HourlyDistributionChart: React.FC<HourlyDistributionChartProps> = ({ entries }) => {
   const [selectedDay, setSelectedDay] = React.useState('כל הימים');
-  const [showAverage, setShowAverage] = useState(false);
 
   // Generate hourly data based on selected day
   const hourlyData = React.useMemo(() => { 
@@ -84,16 +83,7 @@ const HourlyDistributionChart: React.FC<HourlyDistributionChartProps> = ({ entri
     >
       <div className="flex flex-row-reverse justify-between items-center ml-16 mb-4">
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <Label htmlFor="hourly-display-mode" className="text-sm">
-              {showAverage ? "תצוגת ממוצע" : "תצוגת כמות כניסות"}
-            </Label>
-            <Switch
-              id="hourly-display-mode"
-              checked={showAverage}
-              onCheckedChange={setShowAverage}
-            />
-          </div>
+
           <Select value={selectedDay} onValueChange={setSelectedDay}>
   <SelectTrigger className="w-[180px]">
     <SelectValue placeholder="בחר יום" />
@@ -132,14 +122,14 @@ const HourlyDistributionChart: React.FC<HourlyDistributionChartProps> = ({ entri
           <Tooltip 
             formatter={(value) => [
               `${value} כניסות`, 
-              showAverage ? 'ממוצע כניסות יומי' : 'סה״כ כניסות'
+              "סה״כ כניסות"
             ]}
             labelFormatter={(label) => `שעה: ${label}`}
           />
           <Bar 
-            dataKey={showAverage ? "average" : "count"} 
+            dataKey={"count"} 
             fill="#4f46e5" 
-            name={showAverage ? "ממוצע כניסות יומי" : "סה״כ כניסות"}
+            name={"סה״כ כניסות"}
             radius={[4, 4, 0, 0]} 
           />
         </BarChart>
