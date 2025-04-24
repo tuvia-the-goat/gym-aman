@@ -130,6 +130,7 @@ const EntriesFilter: React.FC<EntriesFilterProps> = ({
         <Select
           value={selectedDepartment}
           onValueChange={(value) => {
+            setSelectedSubDepartment("");
             value === "all"
               ? setSelectedDepartment("")
               : setSelectedDepartment(value);

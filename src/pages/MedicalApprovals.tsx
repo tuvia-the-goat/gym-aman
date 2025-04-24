@@ -64,97 +64,100 @@ const MedicalApprovals = () => {
   return (
     <DashboardLayout activeTab="medical-approvals">
       <div className="p-6">
-        <h1 className="text-3xl font-bold mb-6">ניהול אישורים רפואיים</h1>
-
-        <div className="flex flex-col md:flex-row gap-4 mb-6">
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant={expirationDate ? "default" : "outline"}
-                className="w-full md:w-auto"
-              >
-                <Calendar className="mr-2 h-4 w-4" />
-                {expirationDate
-                  ? `יפוג עד ${format(expirationDate, "dd/MM/yyyy")}`
-                  : "סינון לפי תאריך פקיעה"}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <div className="p-3">
-                <h3 className="mb-2 font-medium text-right">בחר תאריך פקיעה</h3>
-                <div className="flex flex-col gap-2">
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      const oneMonth = addMonths(new Date(), 1);
-                      setExpirationDate(oneMonth);
-                    }}
-                    className="justify-start"
-                  >
-                    יפוג תוך חודש
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      const threeMonths = addMonths(new Date(), 3);
-                      setExpirationDate(threeMonths);
-                    }}
-                    className="justify-start"
-                  >
-                    יפוג תוך 3 חודשים
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      const sixMonths = addMonths(new Date(), 6);
-                      setExpirationDate(sixMonths);
-                    }}
-                    className="justify-start"
-                  >
-                    יפוג תוך 6 חודשים
-                  </Button>
+        <div className="flex flex-col md:flex-row gap-4 mb-6 justify-between">
+          <h1 className="text-3xl font-bold mb-6">ניהול אישורים רפואיים</h1>
+          <div className="flex flex-col md:flex-row gap-4 mb-6 justify-between">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant={expirationDate ? "default" : "outline"}
+                  className="w-full md:w-auto"
+                >
+                  <Calendar className="mr-2 h-4 w-4" />
+                  {expirationDate
+                    ? `יפוג עד ${format(expirationDate, "dd/MM/yyyy")}`
+                    : "סינון לפי תאריך פקיעה"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <div className="p-3">
+                  <h3 className="mb-2 font-medium text-right">
+                    בחר תאריך פקיעה
+                  </h3>
+                  <div className="flex flex-col gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        const oneMonth = addMonths(new Date(), 1);
+                        setExpirationDate(oneMonth);
+                      }}
+                      className="justify-start"
+                    >
+                      יפוג תוך חודש
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        const threeMonths = addMonths(new Date(), 3);
+                        setExpirationDate(threeMonths);
+                      }}
+                      className="justify-start"
+                    >
+                      יפוג תוך 3 חודשים
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        const sixMonths = addMonths(new Date(), 6);
+                        setExpirationDate(sixMonths);
+                      }}
+                      className="justify-start"
+                    >
+                      יפוג תוך 6 חודשים
+                    </Button>
+                  </div>
+                  <CalendarComponent
+                    mode="single"
+                    selected={expirationDate}
+                    onSelect={setExpirationDate}
+                    className="p-3 pointer-events-auto mt-2"
+                  />
+                  <div className="flex justify-between mt-2">
+                    <Button
+                      variant="ghost"
+                      onClick={() => setExpirationDate(undefined)}
+                      size="sm"
+                    >
+                      נקה סינון
+                    </Button>
+                  </div>
                 </div>
-                <CalendarComponent
-                  mode="single"
-                  selected={expirationDate}
-                  onSelect={setExpirationDate}
-                  className="p-3 pointer-events-auto mt-2"
-                />
-                <div className="flex justify-between mt-2">
-                  <Button
-                    variant="ghost"
-                    onClick={() => setExpirationDate(undefined)}
-                    size="sm"
-                  >
-                    נקה סינון
-                  </Button>
-                </div>
-              </div>
-            </PopoverContent>
-          </Popover>
+              </PopoverContent>
+            </Popover>
 
-          <Button
-            variant={showOnlyExpired ? "default" : "outline"}
-            onClick={() => {
-              setShowOnlyExpired(!showOnlyExpired);
-              if (expirationDate) setExpirationDate(undefined);
-            }}
-            className="w-full md:w-auto"
-          >
-            <Filter className="mr-2 h-4 w-4" />
-            {showOnlyExpired ? "הצג את כולם" : "הצג רק פגי תוקף"}
-          </Button>
-
-          {(showOnlyExpired || expirationDate || searchQuery) && (
             <Button
-              variant="ghost"
-              onClick={clearFilters}
+              variant={showOnlyExpired ? "default" : "outline"}
+              onClick={() => {
+                setShowOnlyExpired(!showOnlyExpired);
+                if (expirationDate) setExpirationDate(undefined);
+              }}
               className="w-full md:w-auto"
             >
-              <X className="mr-2 h-4 w-4" />
-              נקה סינונים
+              <Filter className="mr-2 h-4 w-4" />
+              {showOnlyExpired ? "הצג את כולם" : "הצג רק פגי תוקף"}
             </Button>
-          )}
+
+            {(showOnlyExpired || expirationDate || searchQuery) && (
+              <Button
+                variant="ghost"
+                onClick={clearFilters}
+                className="w-full md:w-auto"
+              >
+                <X className="mr-2 h-4 w-4" />
+                נקה סינונים
+              </Button>
+            )}
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

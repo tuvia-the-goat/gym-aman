@@ -5,6 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import useLazyTrainees from "../../hooks/useLazyTrainees";
+import { useAdmin } from "@/context/AdminContext";
 
 interface LazyTraineeListProps {
   trainees: Trainee[];
@@ -30,6 +31,8 @@ const LazyTraineeList = ({
   expirationDate: externalExpirationDate,
   setExpirationDate: externalSetExpirationDate,
 }: LazyTraineeListProps) => {
+  const { admin } = useAdmin();
+
   // Use our custom hook for trainee lazy loading
   const {
     filteredTraineesCount,
@@ -45,6 +48,7 @@ const LazyTraineeList = ({
     lastTraineeElementRef,
   } = useLazyTrainees({
     baseTrainees: trainees,
+    baseId: admin?.baseId,
     itemsPerPage: 20,
   });
 
