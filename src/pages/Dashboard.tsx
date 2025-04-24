@@ -104,6 +104,10 @@ const Dashboard = () => {
       .map(([traineeId, count]) => {
         const trainee = baseFilteredTrainees.find((t) => t._id === traineeId);
 
+        if (!trainee) {
+          return undefined;
+        }
+
         let topTraineeDetails: {
           id: string;
           name: string;
@@ -131,6 +135,7 @@ const Dashboard = () => {
         }
         return topTraineeDetails;
       })
+      .filter((trainee) => !!trainee)
       .sort((a, b) => b.count - a.count)
       .slice(0, 7);
 
