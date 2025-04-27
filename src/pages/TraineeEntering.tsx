@@ -70,16 +70,18 @@ const TraineeEntering = () => {
   const [traineeMedicalExpirationDate, setTraineeMedicalExpirationDate] =
     useState<Date | null>(null);
 
+  const baseFromStorage = localStorage.getItem("base");
+
   useEffect(() => {
-    if (admin?.role && admin.baseId) {
-      const base = bases.find((b) => b._id === admin.baseId);
+    if (baseFromStorage) {
+      const base = bases.find((b) => b._id === baseFromStorage);
       if (base) {
         setSelectedBase(base);
       }
-    } else if (admin?.role === "generalAdmin" && bases.length > 0) {
+    } else if (bases.length > 0) {
       setSelectedBase(null);
     }
-  }, [admin, bases]);
+  }, [baseFromStorage, bases, setSelectedBase]);
 
   useEffect(() => {
     window.history.pushState(null, "", window.location.pathname);
@@ -423,10 +425,9 @@ const TraineeEntering = () => {
           </Button>
         </div>
       </header>
-
       <main className="flex-1 container mx-auto px-6 py-8 max-w-5xl">
         <div className="max-w-4xl mx-auto">
-          {admin?.role === "generalAdmin" && !selectedBase && (
+          {!baseFromStorage && !selectedBase && (
             <div className="glass p-8 rounded-2xl mb-8 animate-scale-in">
               <h2 className="text-2xl font-bold mb-6 text-center">
                 בחר בסיס לרישום
@@ -435,7 +436,10 @@ const TraineeEntering = () => {
                 {bases.map((base) => (
                   <button
                     key={base._id}
-                    onClick={() => setSelectedBase(base)}
+                    onClick={() => {
+                      setSelectedBase(base);
+                      localStorage.setItem("base", base?._id);
+                    }}
                     className="bg-card hover:bg-card/80 p-6 rounded-xl text-center hover:-translate-y-1 transition-all duration-300 shadow-md hover:shadow-lg border border-border/30"
                   >
                     <h3 className="text-xl font-semibold mb-2">{base.name}</h3>
