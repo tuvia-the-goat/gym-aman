@@ -263,7 +263,7 @@ const EntriesTable: React.FC<EntriesTableProps> = ({
                   {entry.status === "noMedicalApproval" &&
                     "אין אישור רפואי בתוקף"}
                   {entry.status === "notRegistered" && "משתמש לא רשום"}
-                  {entry.status === "notAssociated" && "משתמש לא מהבסיס"}
+                  {entry.status === "notAssociated" && "מתאמן מבסיס אחר"}
                 </td>
               </tr>
             );
