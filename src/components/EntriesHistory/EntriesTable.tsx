@@ -1,6 +1,6 @@
 // src/components/EntriesHistory/EntriesTable.tsx
 
-import React from "react";
+import React, { useMemo } from "react";
 import { useAdmin } from "../../context/AdminContext";
 import { Entry, EntryStatus } from "@/types";
 import {
@@ -28,7 +28,15 @@ const EntriesTable: React.FC<EntriesTableProps> = ({
   handleTraineeClick,
   isLoading,
 }) => {
-  const { admin, departments, bases, subDepartments } = useAdmin();
+  const { admin, departments, bases, subDepartments, trainees } = useAdmin();
+
+  // Filter trainees and entries for the current base if admin is a base admin
+  const baseFilteredTrainees = useMemo(() => {
+    if (admin?.role === "gymAdmin" && admin.baseId) {
+      return trainees.filter((trainee) => trainee.baseId === admin.baseId);
+    }
+    return trainees;
+  }, [admin, trainees]);
 
   const getDepartmentName = (id: string) => {
     const department = departments.find((dept) => dept._id === id);
@@ -77,6 +85,12 @@ const EntriesTable: React.FC<EntriesTableProps> = ({
           icon: <User className="h-4 w-4 text-blue-500 ml-2" />,
           textClass: "text-blue-600",
           rowClass: "bg-blue-50",
+        };
+      case "notAssociated":
+        return {
+          icon: <User className="h-4 w-4 text-purple-500 ml-2" />,
+          textClass: "text-purple-600",
+          rowClass: "bg-purple-100",
         };
       default:
         return {
@@ -188,6 +202,11 @@ const EntriesTable: React.FC<EntriesTableProps> = ({
             const hasMedical = entry.traineeId
               ? hasMedicalLimitation(entry.traineeId)
               : false;
+
+            const isInThisBase = baseFilteredTrainees.some(
+              (trainee) => trainee._id === entry.traineeId
+            );
+
             const statusDisplay = getEntryStatusDisplay(
               entry.status || "success"
             );
@@ -215,13 +234,19 @@ const EntriesTable: React.FC<EntriesTableProps> = ({
                   {entry.traineeFullName || "-"}
                 </td>
                 <td className="px-4 py-3">{entry.traineePersonalId}</td>
-                <td className="px-4 py-3">
-                  {entry.departmentId
+                <td
+                  className={`px-4 py-3 ${
+                    entry.status === "notAssociated" ? "text-purple-600" : ""
+                  }`}
+                >
+                  {entry.status === "notAssociated"
+                    ? "מחוץ ליחידה"
+                    : entry.departmentId
                     ? getDepartmentName(entry.departmentId)
                     : "-"}
                 </td>
                 <td className="px-4 py-3">
-                  {entry.subDepartmentId
+                  {entry.subDepartmentId && entry.status !== "notAssociated"
                     ? getSubDepartmentName(entry.subDepartmentId)
                     : "-"}
                 </td>
@@ -238,6 +263,7 @@ const EntriesTable: React.FC<EntriesTableProps> = ({
                   {entry.status === "noMedicalApproval" &&
                     "אין אישור רפואי בתוקף"}
                   {entry.status === "notRegistered" && "משתמש לא רשום"}
+                  {entry.status === "notAssociated" && "מתאמן מבסיס אחר"}
                 </td>
               </tr>
             );
