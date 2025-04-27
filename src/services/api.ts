@@ -94,6 +94,20 @@ export const subDepartmentService = {
     );
     return response.data;
   },
+
+  update: async (subDepartmentId: string, subDepartmentData: {
+    name: string;
+    departmentId: string;
+  }): Promise<SubDepartment> => {
+    const response = await api.put(`/subDepartments/${subDepartmentId}`, subDepartmentData);
+    
+    return response.data;
+  },
+  
+  // Delete subDepartment
+  delete: async (subDepartmentId: string): Promise<void> => {
+    await api.delete(`/subDepartments/${subDepartmentId}`);
+  },
 };
 
 // Base Services
@@ -112,6 +126,20 @@ export const baseService = {
     const response = await api.post("/bases", baseData);
     return response.data;
   },
+
+  update: async (baseId: string, baseData: {
+    name: string;
+    location: string;
+  }): Promise<Base> => {
+    const response = await api.put(`/bases/${baseId}`, baseData);
+    return response.data;
+  },
+  
+  // Delete base
+  delete: async (baseId: string): Promise<void> => {
+    await api.delete(`/bases/${baseId}`);
+  },
+
 };
 
 // Department Services
@@ -129,6 +157,20 @@ export const departmentService = {
   }): Promise<Department> => {
     const response = await api.post("/departments", departmentData);
     return response.data;
+  },
+
+  // Update department
+  update: async (departmentId: string, departmentData: {
+    name: string;
+    baseId: string;
+  }): Promise<Department> => {
+    const response = await api.put(`/departments/${departmentId}`, departmentData);
+    return response.data;
+  },
+  
+  // Delete department
+  delete: async (departmentId: string): Promise<void> => {
+    await api.delete(`/departments/${departmentId}`);
   },
 };
 
@@ -183,6 +225,7 @@ export const traineeService = {
     return response.data;
   },
 
+  
   // Update trainee profile
   updateProfile: async (
     traineeId: string,
@@ -192,6 +235,16 @@ export const traineeService = {
     return response.data;
   },
 
+  // Transfer trainees from one subdepartment to another
+  transferSubDepartment: async (
+    oldSubDepartmentId: string,
+    newSubDepartmentId: string
+  ): Promise<void> => {
+    await api.put(`/trainees/transfer-subdepartment`, {
+      oldSubDepartmentId,
+      newSubDepartmentId
+    });
+  },
   // get trainee that trained last week
   traineesLastWeek: async (): Promise<Trainee[]> => {
     const response = await api.get("/trainees/last-week");
