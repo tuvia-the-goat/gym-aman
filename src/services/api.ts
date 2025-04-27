@@ -244,7 +244,43 @@ export const traineeService = {
       oldSubDepartmentId,
       newSubDepartmentId
     });
-  }
+  },
+  // get trainee that trained last week
+  traineesLastWeek: async (): Promise<Trainee[]> => {
+    const response = await api.get("/trainees/last-week");
+    return response.data;
+  },
+
+  // Get paginated trainees with filters
+  getPaginated: async (params: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    baseId?: string;
+    showOnlyExpired?: boolean;
+    expirationDate?: string;
+  }): Promise<{
+    trainees: Trainee[];
+    pagination: {
+      total: number;
+      page: number;
+      limit: number;
+      pages: number;
+    };
+  }> => {
+    const queryParams = new URLSearchParams();
+
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== "") {
+        queryParams.append(key, String(value));
+      }
+    });
+
+    const response = await api.get(
+      `/trainees/paginated?${queryParams.toString()}`
+    );
+    return response.data;
+  },
 };
 
 // Entry Services
