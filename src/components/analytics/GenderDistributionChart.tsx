@@ -34,8 +34,8 @@ const GenderDistributionChart: React.FC<GenderChartProps> = ({ data, entriesData
     <SelectValue placeholder="בחר סוג נתון" />
   </SelectTrigger>
   <SelectContent>
-    <SelectItem value="trainees">כמות מתאמנים</SelectItem>
-    <SelectItem value="entries">כמות כניסות</SelectItem>
+    <SelectItem value="trainees" className="flex justify-end">כמות מתאמנים</SelectItem>
+    <SelectItem value="entries" className="flex justify-end">כמות כניסות</SelectItem>
   </SelectContent>
 </Select>
       </div>
