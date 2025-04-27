@@ -268,7 +268,7 @@ const TraineeEntering = () => {
           traineePersonalId: entryTrainee.personalId,
           departmentId: entryTrainee.departmentId,
           subDepartmentId: entryTrainee.subDepartmentId,
-          baseId: entryTrainee.baseId,
+          baseId: selectedBase._id,
           status: 'noMedicalApproval'
         });
         
@@ -303,7 +303,7 @@ const TraineeEntering = () => {
         traineePersonalId: entryTrainee.personalId,
         departmentId: entryTrainee.departmentId,
         subDepartmentId: entryTrainee.subDepartmentId,
-        baseId: entryTrainee.baseId,
+        baseId: selectedBase._id,
         status: 'success'
       });
       setEntries([newEntry, ...entries]);

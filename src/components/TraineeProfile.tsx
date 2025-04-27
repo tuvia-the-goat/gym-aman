@@ -81,7 +81,10 @@ const TraineeProfile: React.FC<TraineeProfileProps> = ({
   // Get subDepartment name
   const getSubDepartmentName = (subDepartmentId: string | undefined) => {
     if (!subDepartmentId) return 'לא משויך';
+    console.log(subDepartmentId);
+    
     const subDepartment = subDepartments.find(subDept => subDept._id === subDepartmentId);
+    console.log(subDepartment);
     return subDepartment ? subDepartment.name : 'לא ידוע';
   };
   
