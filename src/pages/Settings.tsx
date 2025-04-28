@@ -899,6 +899,55 @@ const Settings = () => {
       (input) => input.name.trim() !== ""
     );
 
+    // Calculate the sum of all subdepartments' numOfPeople
+    const totalSubDepartmentsPeople = validSubDepartments.reduce(
+      (sum, subDept) => sum + subDept.numOfPeople,
+      0
+    );
+
+    // Check if the sum exceeds the department's numOfPeople
+    if (totalSubDepartmentsPeople > newDepartmentNumOfPeople) {
+      setValidationAction(() => async () => {
+        try {
+          const result = await departmentService.createWithSubDepartments({
+            name: newDepartmentName,
+            baseId,
+            subDepartments: validSubDepartments,
+            numOfPeople: newDepartmentNumOfPeople,
+          });
+
+          // Update local state
+          setDepartments([...departments, result.department]);
+          setSubDepartments([...subDepartments, ...result.subDepartments]);
+
+          // Reset form
+          setNewDepartmentName("");
+          setSelectedBaseForNewDepartment("");
+          setNewDepartmentNumOfPeople(0);
+          setSubDepartmentInputs([{ name: "", numOfPeople: 0 }]);
+          setShowSubDepartmentsForm(false);
+
+          toast({
+            title: "מסגרת ותתי-מסגרות נוספו",
+            description: `מסגרת ${result.department.name} ותתי-המסגרות שלה נוספו בהצלחה`,
+          });
+        } catch (error) {
+          console.error(
+            "Error creating department with subdepartments:",
+            error
+          );
+          toast({
+            title: "שגיאה",
+            description: "אירעה שגיאה בעת יצירת המסגרת ותתי-המסגרות",
+            variant: "destructive",
+          });
+        }
+      });
+      setShowValidationAlert(true);
+      return;
+    }
+
+    // If validation passes, proceed with creation
     try {
       const result = await departmentService.createWithSubDepartments({
         name: newDepartmentName,
@@ -1073,6 +1122,85 @@ const Settings = () => {
   const saveEditDepartmentWithSubDepartments = async () => {
     if (!editingDepartmentWithSubDepartments) return;
 
+    // Calculate the sum of all subdepartments' numOfPeople
+    const totalSubDepartmentsPeople =
+      editDepartmentWithSubDepartmentsSubDepartments.reduce(
+        (sum, subDept) => sum + subDept.numOfPeople,
+        0
+      );
+
+    // Check if the sum exceeds the department's numOfPeople
+    if (
+      totalSubDepartmentsPeople > editDepartmentWithSubDepartmentsNumOfPeople
+    ) {
+      setValidationAction(() => async () => {
+        try {
+          // Update department
+          const updatedDepartment = await departmentService.update(
+            editingDepartmentWithSubDepartments,
+            {
+              name: editDepartmentWithSubDepartmentsName,
+              numOfPeople: editDepartmentWithSubDepartmentsNumOfPeople,
+            }
+          );
+
+          // Update subdepartments
+          const updatedSubDepartments = await Promise.all(
+            editDepartmentWithSubDepartmentsSubDepartments.map(
+              async (subDept) => {
+                return await subDepartmentService.update(subDept._id, {
+                  name: subDept.name,
+                  numOfPeople: subDept.numOfPeople,
+                  departmentId: editingDepartmentWithSubDepartments,
+                });
+              }
+            )
+          );
+
+          // Update local state
+          setDepartments(
+            departments.map((d) =>
+              d._id === editingDepartmentWithSubDepartments
+                ? updatedDepartment
+                : d
+            )
+          );
+          setSubDepartments(
+            subDepartments.map((subDept) => {
+              const updatedSubDept = updatedSubDepartments.find(
+                (usd) => usd._id === subDept._id
+              );
+              return updatedSubDept || subDept;
+            })
+          );
+
+          // Reset editing state
+          setEditingDepartmentWithSubDepartments(null);
+          setEditDepartmentWithSubDepartmentsName("");
+          setEditDepartmentWithSubDepartmentsNumOfPeople(0);
+          setEditDepartmentWithSubDepartmentsSubDepartments([]);
+
+          toast({
+            title: "הצלחה",
+            description: "המסגרת ותתי-המסגרות עודכנו בהצלחה",
+          });
+        } catch (error) {
+          console.error(
+            "Error updating department with subdepartments:",
+            error
+          );
+          toast({
+            title: "שגיאה",
+            description: "אירעה שגיאה בעת עדכון המסגרת ותתי-המסגרות",
+            variant: "destructive",
+          });
+        }
+      });
+      setShowValidationAlert(true);
+      return;
+    }
+
+    // If validation passes, proceed with update
     try {
       // Update department
       const updatedDepartment = await departmentService.update(
@@ -1153,9 +1281,47 @@ const Settings = () => {
     setEditDepartmentWithSubDepartmentsSubDepartments(newSubDepartments);
   };
 
+  // Add new state for validation alert
+  const [showValidationAlert, setShowValidationAlert] = useState(false);
+  const [validationAction, setValidationAction] = useState<(() => void) | null>(
+    null
+  );
+
   return (
     <DashboardLayout activeTab="settings">
       <div className="space-y-6 animate-fade-up">
+        {/* Validation Alert Dialog */}
+        <AlertDialog
+          open={showValidationAlert}
+          onOpenChange={setShowValidationAlert}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle className="flex items-end">
+                אזהרה
+              </AlertDialogTitle>
+              <AlertDialogDescription className="flex items-end text-right">
+                סכום מספר האנשים בתתי-המסגרות גדול ממספר האנשים במסגרת. האם אתה
+                בטוח שברצונך להמשיך?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter className="flex justify-start w-full gap-5">
+              <AlertDialogCancel>ביטול</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => {
+                  if (validationAction) {
+                    validationAction();
+                  }
+                  setShowValidationAlert(false);
+                  setValidationAction(null);
+                }}
+              >
+                המשך
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
         {/* Delete Confirmation Dialog */}
         <AlertDialog
           open={showDeleteConfirm}
