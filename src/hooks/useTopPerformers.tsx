@@ -103,7 +103,7 @@ export const useTopPerformers = (
       .map((dept) => ({
         name: dept.name,
         value: dept.rawValue, // Keep showing the actual number of entries
-        percentage: dept.value.toFixed(1), // Add percentage info
+        percentage: Math.round(dept.value).toString(), // Round to whole number and convert to string
         baseName: getBaseName(dept.baseId),
         numOfPeople: dept.numOfPeople,
       }));

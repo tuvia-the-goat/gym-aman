@@ -25,19 +25,40 @@ interface TopDepartmentsChartProps {
 
 const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#A478E8"];
 
+// Custom tooltip to show percentage
+const CustomTooltip = ({ active, payload }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-background border rounded-lg shadow-lg p-2">
+        <p className="text-right">{`${payload[0].payload.name}: ${payload[0].payload.percentage}%`}</p>
+      </div>
+    );
+  }
+  return null;
+};
+
 const TopDepartmentsChart: React.FC<TopDepartmentsChartProps> = ({
   data,
   showBaseColumn,
 }) => {
+  // Transform data for pie chart to use percentages
+  const pieChartData = data.map((dept) => ({
+    ...dept,
+    value: parseInt(dept.percentage), // Use parseInt instead of parseFloat
+  }));
+
   return (
-    <ChartCard title="5 המסגרות המובילות (לפי אחוז כניסות מתוך כמות אנשים)">
+    <ChartCard title="5 המסגרות המובילות">
       {data.length > 0 ? (
         <div className="space-y-4">
+          <div className="text-sm text-muted-foreground text-right mb-2">
+            * לפי אחוז כניסות מתוך כמות אנשים
+          </div>
           <div className="h-60">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  data={data}
+                  data={pieChartData}
                   cx="50%"
                   cy="50%"
                   labelLine={false}
@@ -45,14 +66,14 @@ const TopDepartmentsChart: React.FC<TopDepartmentsChartProps> = ({
                   fill="#8884d8"
                   dataKey="value"
                 >
-                  {data.map((entry, index) => (
+                  {pieChartData.map((entry, index) => (
                     <Cell
                       key={`cell-${index}`}
                       fill={COLORS[index % COLORS.length]}
                     />
                   ))}
                 </Pie>
-                <Tooltip />
+                <Tooltip content={<CustomTooltip />} />
               </PieChart>
             </ResponsiveContainer>
           </div>
