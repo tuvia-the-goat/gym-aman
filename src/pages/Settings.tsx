@@ -87,12 +87,14 @@ const Settings = () => {
 
   // Department states
   const [newDepartmentName, setNewDepartmentName] = useState("");
+  const [newDepartmentNumOfPeople, setNewDepartmentNumOfPeople] = useState(0);
   const [selectedBaseForDepartment, setSelectedBaseForDepartment] =
     useState("");
   const [editingDepartmentId, setEditingDepartmentId] = useState<string | null>(
     null
   );
   const [editDepartmentName, setEditDepartmentName] = useState("");
+  const [editDepartmentNumOfPeople, setEditDepartmentNumOfPeople] = useState(0);
   const [editDepartmentBaseId, setEditDepartmentBaseId] = useState("");
   const [deletingDepartmentId, setDeletingDepartmentId] = useState<
     string | null
@@ -100,6 +102,8 @@ const Settings = () => {
 
   // SubDepartment states
   const [newSubDepartmentName, setNewSubDepartmentName] = useState("");
+  const [newSubDepartmentNumOfPeople, setNewSubDepartmentNumOfPeople] =
+    useState(0);
   const [
     selectedDepartmentForSubDepartment,
     setSelectedDepartmentForSubDepartment,
@@ -108,6 +112,8 @@ const Settings = () => {
     string | null
   >(null);
   const [editSubDepartmentName, setEditSubDepartmentName] = useState("");
+  const [editSubDepartmentNumOfPeople, setEditSubDepartmentNumOfPeople] =
+    useState(0);
   const [editSubDepartmentDepartmentId, setEditSubDepartmentDepartmentId] =
     useState("");
   const [deletingSubDepartmentId, setDeletingSubDepartmentId] = useState<
@@ -137,9 +143,9 @@ const Settings = () => {
 
   // New states for creating departments with subdepartments
   const [showSubDepartmentsForm, setShowSubDepartmentsForm] = useState(false);
-  const [subDepartmentInputs, setSubDepartmentInputs] = useState<string[]>([
-    "",
-  ]);
+  const [subDepartmentInputs, setSubDepartmentInputs] = useState<
+    { name: string; numOfPeople: number }[]
+  >([{ name: "", numOfPeople: 0 }]);
   const [selectedBaseForNewDepartment, setSelectedBaseForNewDepartment] =
     useState("");
   const [selectedBaseFilter, setSelectedBaseFilter] = useState("all");
@@ -147,8 +153,8 @@ const Settings = () => {
     string | null
   >(null);
   const [newSubDepartmentInputs, setNewSubDepartmentInputs] = useState<
-    string[]
-  >([""]);
+    { name: string; numOfPeople: number }[]
+  >([{ name: "", numOfPeople: 0 }]);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<{
     departments: Department[];
@@ -403,8 +409,7 @@ const Settings = () => {
   // Handle adding a new department
   const handleAddDepartment = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!newDepartmentName.trim() || !selectedBaseForDepartment) {
+    if (!newDepartmentName || !selectedBaseForDepartment) {
       toast({
         title: "שגיאה",
         description: "יש למלא את כל השדות",
@@ -414,28 +419,24 @@ const Settings = () => {
     }
 
     try {
-      // Create department via API
       const newDepartment = await departmentService.create({
         name: newDepartmentName,
         baseId: selectedBaseForDepartment,
+        numOfPeople: newDepartmentNumOfPeople,
       });
-
-      // Update departments state
       setDepartments([...departments, newDepartment]);
-
-      // Reset form
       setNewDepartmentName("");
+      setNewDepartmentNumOfPeople(0);
       setSelectedBaseForDepartment("");
-
       toast({
-        title: "מסגרת חדשה נוספה",
-        description: `מסגרת ${newDepartment.name} נוספה בהצלחה`,
+        title: "הצלחה",
+        description: "המחלקה נוספה בהצלחה",
       });
     } catch (error) {
       console.error("Error adding department:", error);
       toast({
         title: "שגיאה",
-        description: "אירעה שגיאה בעת הוספת המסגרת",
+        description: "אירעה שגיאה בעת הוספת המחלקה",
         variant: "destructive",
       });
     }
@@ -443,13 +444,12 @@ const Settings = () => {
 
   // Start editing a department
   const startEditDepartment = (departmentId: string) => {
-    const departmentToEdit = departments.find(
-      (dept) => dept._id === departmentId
-    );
-    if (departmentToEdit) {
+    const department = departments.find((d) => d._id === departmentId);
+    if (department) {
       setEditingDepartmentId(departmentId);
-      setEditDepartmentName(departmentToEdit.name);
-      setEditDepartmentBaseId(departmentToEdit.baseId);
+      setEditDepartmentName(department.name);
+      setEditDepartmentNumOfPeople(department.numOfPeople);
+      setEditDepartmentBaseId(department.baseId);
     }
   };
 
@@ -458,11 +458,12 @@ const Settings = () => {
     setEditingDepartmentId(null);
     setEditDepartmentName("");
     setEditDepartmentBaseId("");
+    setEditDepartmentNumOfPeople(0);
   };
 
   // Save edited department
   const saveEditDepartment = async (departmentId: string) => {
-    if (!editDepartmentName.trim() || !editDepartmentBaseId) {
+    if (!editDepartmentName || !editDepartmentBaseId) {
       toast({
         title: "שגיאה",
         description: "יש למלא את כל השדות",
@@ -475,30 +476,21 @@ const Settings = () => {
       const updatedDepartment = await departmentService.update(departmentId, {
         name: editDepartmentName,
         baseId: editDepartmentBaseId,
+        numOfPeople: editDepartmentNumOfPeople,
       });
-
-      const updatedDepartments = departments.map((dept) =>
-        dept._id === departmentId
-          ? { ...dept, name: editDepartmentName, baseId: editDepartmentBaseId }
-          : dept
+      setDepartments(
+        departments.map((d) => (d._id === departmentId ? updatedDepartment : d))
       );
-
-      setDepartments(updatedDepartments);
-
-      // Reset editing state
       setEditingDepartmentId(null);
-      setEditDepartmentName("");
-      setEditDepartmentBaseId("");
-
       toast({
-        title: "מסגרת עודכנה",
-        description: `מסגרת ${editDepartmentName} עודכנה בהצלחה`,
+        title: "הצלחה",
+        description: "המחלקה עודכנה בהצלחה",
       });
     } catch (error) {
       console.error("Error updating department:", error);
       toast({
         title: "שגיאה",
-        description: "אירעה שגיאה בעת עדכון המסגרת",
+        description: "אירעה שגיאה בעת עדכון המחלקה",
         variant: "destructive",
       });
     }
@@ -550,8 +542,7 @@ const Settings = () => {
   // Handle adding a new subdepartment
   const handleAddSubDepartment = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!newSubDepartmentName.trim() || !selectedDepartmentForSubDepartment) {
+    if (!newSubDepartmentName || !selectedDepartmentForSubDepartment) {
       toast({
         title: "שגיאה",
         description: "יש למלא את כל השדות",
@@ -561,28 +552,24 @@ const Settings = () => {
     }
 
     try {
-      // Create subdepartment via API
       const newSubDepartment = await subDepartmentService.create({
         name: newSubDepartmentName,
         departmentId: selectedDepartmentForSubDepartment,
+        numOfPeople: newSubDepartmentNumOfPeople,
       });
-
-      // Update subdepartments state
       setSubDepartments([...subDepartments, newSubDepartment]);
-
-      // Reset form
       setNewSubDepartmentName("");
+      setNewSubDepartmentNumOfPeople(0);
       setSelectedDepartmentForSubDepartment("");
-
       toast({
-        title: "תת-מסגרת חדשה נוספה",
-        description: `תת-מסגרת ${newSubDepartment.name} נוספה בהצלחה`,
+        title: "הצלחה",
+        description: "תת-המחלקה נוספה בהצלחה",
       });
     } catch (error) {
       console.error("Error adding subdepartment:", error);
       toast({
         title: "שגיאה",
-        description: "אירעה שגיאה בעת הוספת תת-המסגרת",
+        description: "אירעה שגיאה בעת הוספת תת-המחלקה",
         variant: "destructive",
       });
     }
@@ -590,32 +577,26 @@ const Settings = () => {
 
   // Start editing a subdepartment
   const startEditSubDepartment = (subDepartmentId: string) => {
-    const subDepartmentToEdit = subDepartments.find(
-      (subDept) => subDept._id === subDepartmentId
-    );
-    if (subDepartmentToEdit) {
+    const subDepartment = subDepartments.find((s) => s._id === subDepartmentId);
+    if (subDepartment) {
       setEditingSubDepartmentId(subDepartmentId);
-      setEditSubDepartmentName(subDepartmentToEdit.name);
-      setEditSubDepartmentDepartmentId(subDepartmentToEdit.departmentId);
+      setEditSubDepartmentName(subDepartment.name);
+      setEditSubDepartmentNumOfPeople(subDepartment.numOfPeople);
+      setEditSubDepartmentDepartmentId(subDepartment.departmentId);
     }
   };
-
-  useEffect(() => {
-    if (admin?.role === "gymAdmin") {
-      setSelectedBaseForDepartment(admin?.baseId);
-    }
-  }, [admin]);
 
   // Cancel editing a subdepartment
   const cancelEditSubDepartment = () => {
     setEditingSubDepartmentId(null);
     setEditSubDepartmentName("");
     setEditSubDepartmentDepartmentId("");
+    setEditSubDepartmentNumOfPeople(0);
   };
 
   // Save edited subdepartment
   const saveEditSubDepartment = async (subDepartmentId: string) => {
-    if (!editSubDepartmentName.trim() || !editSubDepartmentDepartmentId) {
+    if (!editSubDepartmentName || !editSubDepartmentDepartmentId) {
       toast({
         title: "שגיאה",
         description: "יש למלא את כל השדות",
@@ -630,36 +611,24 @@ const Settings = () => {
         {
           name: editSubDepartmentName,
           departmentId: editSubDepartmentDepartmentId,
+          numOfPeople: editSubDepartmentNumOfPeople,
         }
       );
-
-      // For now, update locally
-      const updatedSubDepartments = subDepartments.map((subDept) =>
-        subDept._id === subDepartmentId
-          ? {
-              ...subDept,
-              name: editSubDepartmentName,
-              departmentId: editSubDepartmentDepartmentId,
-            }
-          : subDept
+      setSubDepartments(
+        subDepartments.map((s) =>
+          s._id === subDepartmentId ? updatedSubDepartment : s
+        )
       );
-
-      setSubDepartments(updatedSubDepartments);
-
-      // Reset editing state
       setEditingSubDepartmentId(null);
-      setEditSubDepartmentName("");
-      setEditSubDepartmentDepartmentId("");
-
       toast({
-        title: "תת-מסגרת עודכנה",
-        description: `תת-מסגרת ${editSubDepartmentName} עודכנה בהצלחה`,
+        title: "הצלחה",
+        description: "תת-המחלקה עודכנה בהצלחה",
       });
     } catch (error) {
       console.error("Error updating subdepartment:", error);
       toast({
         title: "שגיאה",
-        description: "אירעה שגיאה בעת עדכון תת-המסגרת",
+        description: "אירעה שגיאה בעת עדכון תת-המחלקה",
         variant: "destructive",
       });
     }
@@ -866,13 +835,26 @@ const Settings = () => {
 
   // Handle adding a new subdepartment input
   const handleAddSubDepartmentInput = () => {
-    setSubDepartmentInputs([...subDepartmentInputs, ""]);
+    setSubDepartmentInputs([
+      ...subDepartmentInputs,
+      { name: "", numOfPeople: 0 },
+    ]);
   };
 
   // Handle subdepartment input change
   const handleSubDepartmentInputChange = (index: number, value: string) => {
     const newInputs = [...subDepartmentInputs];
-    newInputs[index] = value;
+    newInputs[index] = { ...newInputs[index], name: value };
+    setSubDepartmentInputs(newInputs);
+  };
+
+  // Handle subdepartment numOfPeople change
+  const handleSubDepartmentNumOfPeopleChange = (
+    index: number,
+    value: number
+  ) => {
+    const newInputs = [...subDepartmentInputs];
+    newInputs[index] = { ...newInputs[index], numOfPeople: value };
     setSubDepartmentInputs(newInputs);
   };
 
@@ -882,7 +864,10 @@ const Settings = () => {
   ) => {
     e.preventDefault();
 
-    if (!newDepartmentName.trim() || !selectedBaseForNewDepartment) {
+    if (
+      !newDepartmentName.trim() ||
+      (!selectedBaseForNewDepartment && admin?.role === "generalAdmin")
+    ) {
       toast({
         title: "שגיאה",
         description: "יש למלא את כל השדות",
@@ -891,16 +876,36 @@ const Settings = () => {
       return;
     }
 
+    // Check if a department with the same name exists in the selected base
+    const baseId =
+      admin?.role === "generalAdmin"
+        ? selectedBaseForNewDepartment
+        : admin?.baseId;
+
+    const existingDepartment = departments.find(
+      (dept) => dept.name === newDepartmentName.trim() && dept.baseId === baseId
+    );
+
+    if (existingDepartment) {
+      toast({
+        title: "שגיאה",
+        description: "כבר קיימת מסגרת עם שם זה בבסיס זה",
+        variant: "destructive",
+      });
+      return;
+    }
+
     // Filter out empty subdepartment names
     const validSubDepartments = subDepartmentInputs.filter(
-      (name) => name.trim() !== ""
+      (input) => input.name.trim() !== ""
     );
 
     try {
       const result = await departmentService.createWithSubDepartments({
         name: newDepartmentName,
-        baseId: selectedBaseForNewDepartment,
+        baseId,
         subDepartments: validSubDepartments,
+        numOfPeople: newDepartmentNumOfPeople,
       });
 
       // Update local state
@@ -910,7 +915,8 @@ const Settings = () => {
       // Reset form
       setNewDepartmentName("");
       setSelectedBaseForNewDepartment("");
-      setSubDepartmentInputs([""]);
+      setNewDepartmentNumOfPeople(0);
+      setSubDepartmentInputs([{ name: "", numOfPeople: 0 }]);
       setShowSubDepartmentsForm(false);
 
       toast({
@@ -947,13 +953,26 @@ const Settings = () => {
 
   // Add new function to handle adding subdepartment inputs
   const handleNewSubDepartmentInput = () => {
-    setNewSubDepartmentInputs([...newSubDepartmentInputs, ""]);
+    setNewSubDepartmentInputs([
+      ...newSubDepartmentInputs,
+      { name: "", numOfPeople: 0 },
+    ]);
   };
 
   // Add new function to handle subdepartment input changes
   const handleNewSubDepartmentInputChange = (index: number, value: string) => {
     const newInputs = [...newSubDepartmentInputs];
-    newInputs[index] = value;
+    newInputs[index] = { ...newInputs[index], name: value };
+    setNewSubDepartmentInputs(newInputs);
+  };
+
+  // Add new function to handle subdepartment numOfPeople changes
+  const handleNewSubDepartmentNumOfPeopleChange = (
+    index: number,
+    value: number
+  ) => {
+    const newInputs = [...newSubDepartmentInputs];
+    newInputs[index] = { ...newInputs[index], numOfPeople: value };
     setNewSubDepartmentInputs(newInputs);
   };
 
@@ -965,7 +984,7 @@ const Settings = () => {
 
     // Filter out empty subdepartment names
     const validSubDepartments = newSubDepartmentInputs.filter(
-      (name) => name.trim() !== ""
+      (input) => input.name.trim() !== ""
     );
 
     if (validSubDepartments.length === 0) {
@@ -980,10 +999,11 @@ const Settings = () => {
     try {
       // Create all subdepartments
       const createdSubDepartments = await Promise.all(
-        validSubDepartments.map(async (name) => {
+        validSubDepartments.map(async (input) => {
           const newSubDepartment = await subDepartmentService.create({
-            name,
+            name: input.name,
             departmentId: addingSubDepartmentsTo,
+            numOfPeople: input.numOfPeople,
           });
           return newSubDepartment;
         })
@@ -994,7 +1014,7 @@ const Settings = () => {
 
       // Reset form
       setAddingSubDepartmentsTo(null);
-      setNewSubDepartmentInputs([""]);
+      setNewSubDepartmentInputs([{ name: "", numOfPeople: 0 }]);
 
       toast({
         title: "תתי-מסגרות נוספו",
@@ -1442,7 +1462,7 @@ const Settings = () => {
                         {newSubDepartmentInputs.map((input, index) => (
                           <div key={index} className="flex gap-2">
                             <Input
-                              value={input}
+                              value={input.name}
                               onChange={(e) =>
                                 handleNewSubDepartmentInputChange(
                                   index,
@@ -1450,6 +1470,19 @@ const Settings = () => {
                                 )
                               }
                               placeholder="שם תת-מסגרת"
+                            />
+                            <Input
+                              type="number"
+                              min="0"
+                              value={input.numOfPeople}
+                              onChange={(e) =>
+                                handleNewSubDepartmentNumOfPeopleChange(
+                                  index,
+                                  Number(e.target.value)
+                                )
+                              }
+                              placeholder="מספר אנשים"
+                              className="w-24"
                             />
                             {index === newSubDepartmentInputs.length - 1 && (
                               <Button
@@ -1474,7 +1507,9 @@ const Settings = () => {
                           variant="outline"
                           onClick={() => {
                             setAddingSubDepartmentsTo(null);
-                            setNewSubDepartmentInputs([""]);
+                            setNewSubDepartmentInputs([
+                              { name: "", numOfPeople: 0 },
+                            ]);
                           }}
                         >
                           ביטול
@@ -1513,37 +1548,49 @@ const Settings = () => {
                       {admin?.role === "generalAdmin" && (
                         <div>
                           <label
-                            htmlFor="baseSelectForNewDepartment"
+                            htmlFor="newDepartmentBase"
                             className="block text-sm font-medium mb-1"
                           >
                             בסיס
                           </label>
-                          <Select
+                          <select
+                            id="newDepartmentBase"
                             value={selectedBaseForNewDepartment}
-                            onValueChange={(value) =>
-                              setSelectedBaseForNewDepartment(value)
+                            onChange={(e) =>
+                              setSelectedBaseForNewDepartment(e.target.value)
                             }
+                            className="input-field"
+                            required
                           >
-                            <SelectTrigger
-                              id="baseSelectForNewDepartment"
-                              className="input-field"
-                            >
-                              <SelectValue placeholder="בחר בסיס" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {bases.map((base) => (
-                                <SelectItem
-                                  key={base._id}
-                                  value={base._id}
-                                  className="flex justify-end"
-                                >
-                                  {base.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                            <option value="">בחר בסיס</option>
+                            {bases.map((base) => (
+                              <option key={base._id} value={base._id}>
+                                {base.name}
+                              </option>
+                            ))}
+                          </select>
                         </div>
                       )}
+
+                      <div>
+                        <label
+                          htmlFor="newDepartmentNumOfPeople"
+                          className="block text-sm font-medium mb-1"
+                        >
+                          מספר אנשים
+                        </label>
+                        <input
+                          id="newDepartmentNumOfPeople"
+                          type="number"
+                          min="0"
+                          value={newDepartmentNumOfPeople}
+                          onChange={(e) =>
+                            setNewDepartmentNumOfPeople(Number(e.target.value))
+                          }
+                          className="input-field"
+                          placeholder="הזן מספר אנשים"
+                        />
+                      </div>
 
                       <div className="space-y-4">
                         <Button
@@ -1564,7 +1611,7 @@ const Settings = () => {
                             {subDepartmentInputs.map((input, index) => (
                               <div key={index} className="flex gap-2">
                                 <Input
-                                  value={input}
+                                  value={input.name}
                                   onChange={(e) =>
                                     handleSubDepartmentInputChange(
                                       index,
@@ -1572,6 +1619,19 @@ const Settings = () => {
                                     )
                                   }
                                   placeholder="שם תת-מסגרת"
+                                />
+                                <Input
+                                  type="number"
+                                  min="0"
+                                  value={input.numOfPeople}
+                                  onChange={(e) =>
+                                    handleSubDepartmentNumOfPeopleChange(
+                                      index,
+                                      Number(e.target.value)
+                                    )
+                                  }
+                                  placeholder="מספר אנשים"
+                                  className="w-24"
                                 />
                                 {index === subDepartmentInputs.length - 1 && (
                                   <Button
@@ -1697,8 +1757,11 @@ const Settings = () => {
                               value={department._id}
                             >
                               <AccordionTrigger className="flex justify-between">
-                                <div className="flex flex-row-reverse gap-2 items-center">
+                                <div className="flex flex-row gap-2 items-center">
                                   <span>{department.name}</span>
+                                  <span className="text-sm text-muted-foreground">
+                                    ({department.numOfPeople} אנשים)
+                                  </span>
                                   {admin?.role === "generalAdmin" && (
                                     <span className="text-sm text-muted-foreground">
                                       ({getBaseName(department.baseId)})
@@ -1715,6 +1778,9 @@ const Settings = () => {
                                         className="flex items-center gap-2"
                                       >
                                         <span>{subDept.name}</span>
+                                        <span className="text-sm text-muted-foreground">
+                                          ({subDept.numOfPeople} אנשים)
+                                        </span>
                                       </li>
                                     )
                                   )}
@@ -1726,7 +1792,9 @@ const Settings = () => {
                                         setAddingSubDepartmentsTo(
                                           department._id
                                         );
-                                        setNewSubDepartmentInputs([""]);
+                                        setNewSubDepartmentInputs([
+                                          { name: "", numOfPeople: 0 },
+                                        ]);
                                       }}
                                     >
                                       <PlusIcon className="h-4 w-4" />
@@ -1756,8 +1824,11 @@ const Settings = () => {
                             value={department._id}
                           >
                             <AccordionTrigger className="flex justify-between">
-                              <div className="flex flex-row-reverse gap-2 items-center">
+                              <div className="flex flex-row gap-2 items-center">
                                 <span>{department.name}</span>
+                                <span className="text-sm text-muted-foreground">
+                                  ({department.numOfPeople} אנשים)
+                                </span>
                                 {admin?.role === "generalAdmin" && (
                                   <span className="text-sm text-muted-foreground">
                                     ({getBaseName(department.baseId)})
@@ -1780,6 +1851,9 @@ const Settings = () => {
                                     }`}
                                   >
                                     <span>{subDept.name}</span>
+                                    <span className="text-sm text-muted-foreground">
+                                      ({subDept.numOfPeople} אנשים)
+                                    </span>
                                   </li>
                                 ))}
                                 <li>
@@ -1788,7 +1862,9 @@ const Settings = () => {
                                     className="w-full flex items-center gap-2 justify-center text-muted-foreground hover:text-foreground"
                                     onClick={() => {
                                       setAddingSubDepartmentsTo(department._id);
-                                      setNewSubDepartmentInputs([""]);
+                                      setNewSubDepartmentInputs([
+                                        { name: "", numOfPeople: 0 },
+                                      ]);
                                     }}
                                   >
                                     <PlusIcon className="h-4 w-4" />
@@ -2006,6 +2082,28 @@ const Settings = () => {
                     </Select>
                   </div>
 
+                  <div>
+                    <label
+                      htmlFor="subDepartmentNumOfPeople"
+                      className="block text-sm font-medium mb-1"
+                      style={{ textAlign: "right" }}
+                    >
+                      מספר אנשים
+                    </label>
+                    <input
+                      id="subDepartmentNumOfPeople"
+                      type="number"
+                      min="0"
+                      value={newSubDepartmentNumOfPeople}
+                      onChange={(e) =>
+                        setNewSubDepartmentNumOfPeople(Number(e.target.value))
+                      }
+                      placeholder="הזן מספר אנשים"
+                      className="input-field"
+                      style={{ textAlign: "right" }}
+                    />
+                  </div>
+
                   <button type="submit" className="btn-primary w-full">
                     הוסף תת-מסגרת
                   </button>
@@ -2035,6 +2133,7 @@ const Settings = () => {
                           <th className="px-4 py-3 text-right">בסיס</th>
                         )}
                         <th className="px-4 py-3 text-right">שם המסגרת</th>
+                        <th className="px-4 py-3 text-right">מספר אנשים</th>
                       </tr>
                     </thead>
                     <tbody style={{ textAlign: "right" }}>
@@ -2116,6 +2215,9 @@ const Settings = () => {
                                 department.name
                               )}
                             </td>
+                            <td className="px-4 py-3">
+                              {department.numOfPeople}
+                            </td>
                           </tr>
                         ))}
                     </tbody>
@@ -2151,48 +2253,54 @@ const Settings = () => {
                     />
                   </div>
 
-                  {admin?.role === "generalAdmin" && (
-                    <div>
-                      <label
-                        htmlFor="baseSelect"
-                        className="block text-sm font-medium mb-1"
-                        style={{ textAlign: "right" }}
-                      >
-                        בסיס
-                      </label>
-                      <Select
-                        value={selectedBaseForDepartment}
-                        onValueChange={(value) =>
-                          setSelectedBaseForDepartment(value)
-                        }
-                      >
-                        <SelectTrigger
-                          id="baseSelect"
-                          className="input-field"
-                          style={{ textAlign: "right" }}
-                        >
-                          <SelectValue placeholder="בחר בסיס" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {bases
-                            .filter(
-                              (base) =>
-                                admin?.role === "generalAdmin" ||
-                                base._id === admin?.baseId
-                            )
-                            .map((base) => (
-                              <SelectItem
-                                key={base._id}
-                                value={base._id}
-                                className="flex justify-end"
-                              >
-                                {base.name}
-                              </SelectItem>
-                            ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
+                  <div>
+                    <label
+                      htmlFor="departmentBase"
+                      className="block text-sm font-medium mb-1"
+                      style={{ textAlign: "right" }}
+                    >
+                      בסיס
+                    </label>
+                    <select
+                      id="departmentBase"
+                      value={selectedBaseForDepartment}
+                      onChange={(e) =>
+                        setSelectedBaseForDepartment(e.target.value)
+                      }
+                      className="input-field"
+                      required
+                      style={{ textAlign: "right" }}
+                    >
+                      <option value="">בחר בסיס</option>
+                      {bases.map((base) => (
+                        <option key={base._id} value={base._id}>
+                          {base.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="departmentNumOfPeople"
+                      className="block text-sm font-medium mb-1"
+                      style={{ textAlign: "right" }}
+                    >
+                      מספר אנשים
+                    </label>
+                    <input
+                      id="departmentNumOfPeople"
+                      type="number"
+                      min="0"
+                      value={newDepartmentNumOfPeople}
+                      onChange={(e) =>
+                        setNewDepartmentNumOfPeople(Number(e.target.value))
+                      }
+                      placeholder="הזן מספר אנשים"
+                      className="input-field"
+                      style={{ textAlign: "right" }}
+                    />
+                  </div>
 
                   <button type="submit" className="btn-primary w-full">
                     הוסף מסגרת

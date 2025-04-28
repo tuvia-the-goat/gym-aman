@@ -9,6 +9,7 @@ import {
   EntryStatus,
   MedicalFormScore,
   SubDepartment,
+  SubDepartmentCreateData,
 } from "../types";
 
 const API_URL = "http://localhost:3000/api";
@@ -82,6 +83,7 @@ export const subDepartmentService = {
   create: async (subDepartmentData: {
     name: string;
     departmentId: string;
+    numOfPeople: number;
   }): Promise<SubDepartment> => {
     const response = await api.post("/subDepartments", subDepartmentData);
     return response.data;
@@ -100,6 +102,7 @@ export const subDepartmentService = {
     subDepartmentData: {
       name: string;
       departmentId: string;
+      numOfPeople: number;
     }
   ): Promise<SubDepartment> => {
     const response = await api.put(
@@ -162,6 +165,7 @@ export const departmentService = {
   create: async (departmentData: {
     name: string;
     baseId: string;
+    numOfPeople: number;
   }): Promise<Department> => {
     const response = await api.post("/departments", departmentData);
     return response.data;
@@ -171,7 +175,8 @@ export const departmentService = {
   createWithSubDepartments: async (data: {
     name: string;
     baseId: string;
-    subDepartments: string[];
+    subDepartments: SubDepartmentCreateData[];
+    numOfPeople: number;
   }): Promise<{
     department: Department;
     subDepartments: SubDepartment[];
@@ -186,6 +191,7 @@ export const departmentService = {
     departmentData: {
       name: string;
       baseId: string;
+      numOfPeople: number;
     }
   ): Promise<Department> => {
     const response = await api.put(
