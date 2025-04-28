@@ -1,13 +1,21 @@
-
-import React from 'react';
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
-import ChartCard from './ChartCard';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import React from "react";
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
+import ChartCard from "./ChartCard";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 interface Department {
   name: string;
   value: number;
+  percentage: string;
   baseName: string;
+  numOfPeople: number;
 }
 
 interface TopDepartmentsChartProps {
@@ -15,11 +23,14 @@ interface TopDepartmentsChartProps {
   showBaseColumn: boolean;
 }
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#A478E8'];
+const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#A478E8"];
 
-const TopDepartmentsChart: React.FC<TopDepartmentsChartProps> = ({ data, showBaseColumn }) => {
+const TopDepartmentsChart: React.FC<TopDepartmentsChartProps> = ({
+  data,
+  showBaseColumn,
+}) => {
   return (
-    <ChartCard title="5 המסגרות המובילות">
+    <ChartCard title="5 המסגרות המובילות (לפי אחוז כניסות מתוך כמות אנשים)">
       {data.length > 0 ? (
         <div className="space-y-4">
           <div className="h-60">
@@ -35,7 +46,10 @@ const TopDepartmentsChart: React.FC<TopDepartmentsChartProps> = ({ data, showBas
                   dataKey="value"
                 >
                   {data.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={COLORS[index % COLORS.length]}
+                    />
                   ))}
                 </Pie>
                 <Tooltip />
@@ -51,16 +65,18 @@ const TopDepartmentsChart: React.FC<TopDepartmentsChartProps> = ({ data, showBas
                     <TableHead className="text-right">בסיס</TableHead>
                   )}
                   <TableHead className="text-right">כניסות</TableHead>
+                  <TableHead className="text-right">כמות תקנים</TableHead>
+                  <TableHead className="text-right">אחוז מכמות אנשים</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {data.map((dept, index) => (
                   <TableRow key={index}>
                     <TableCell>{dept.name}</TableCell>
-                    {showBaseColumn && (
-                      <TableCell>{dept.baseName}</TableCell>
-                    )}
+                    {showBaseColumn && <TableCell>{dept.baseName}</TableCell>}
                     <TableCell>{dept.value}</TableCell>
+                    <TableCell>{dept.numOfPeople}</TableCell>
+                    <TableCell>{dept.percentage}%</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -68,7 +84,9 @@ const TopDepartmentsChart: React.FC<TopDepartmentsChartProps> = ({ data, showBas
           </div>
         </div>
       ) : (
-        <p className="text-center py-8 text-muted-foreground">אין נתונים זמינים</p>
+        <p className="text-center py-8 text-muted-foreground">
+          אין נתונים זמינים
+        </p>
       )}
     </ChartCard>
   );
