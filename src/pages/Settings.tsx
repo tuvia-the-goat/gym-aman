@@ -475,7 +475,6 @@ const Settings = () => {
     try {
       const updatedDepartment = await departmentService.update(departmentId, {
         name: editDepartmentName,
-        baseId: editDepartmentBaseId,
         numOfPeople: editDepartmentNumOfPeople,
       });
       setDepartments(
@@ -1030,6 +1029,130 @@ const Settings = () => {
     }
   };
 
+  const [
+    editingDepartmentWithSubDepartments,
+    setEditingDepartmentWithSubDepartments,
+  ] = useState<string | null>(null);
+  const [
+    editDepartmentWithSubDepartmentsName,
+    setEditDepartmentWithSubDepartmentsName,
+  ] = useState("");
+  const [
+    editDepartmentWithSubDepartmentsNumOfPeople,
+    setEditDepartmentWithSubDepartmentsNumOfPeople,
+  ] = useState(0);
+  const [
+    editDepartmentWithSubDepartmentsSubDepartments,
+    setEditDepartmentWithSubDepartmentsSubDepartments,
+  ] = useState<{ _id: string; name: string; numOfPeople: number }[]>([]);
+
+  // Add new function to handle editing department with subdepartments
+  const startEditDepartmentWithSubDepartments = (departmentId: string) => {
+    const department = departments.find((d) => d._id === departmentId);
+    if (department) {
+      setEditingDepartmentWithSubDepartments(departmentId);
+      setEditDepartmentWithSubDepartmentsName(department.name);
+      setEditDepartmentWithSubDepartmentsNumOfPeople(department.numOfPeople);
+
+      // Get all subdepartments for this department
+      const departmentSubDepartments = subDepartments
+        .filter((subDept) => subDept.departmentId === departmentId)
+        .map((subDept) => ({
+          _id: subDept._id,
+          name: subDept.name,
+          numOfPeople: subDept.numOfPeople,
+        }));
+
+      setEditDepartmentWithSubDepartmentsSubDepartments(
+        departmentSubDepartments
+      );
+    }
+  };
+
+  // Add new function to handle saving edited department with subdepartments
+  const saveEditDepartmentWithSubDepartments = async () => {
+    if (!editingDepartmentWithSubDepartments) return;
+
+    try {
+      // Update department
+      const updatedDepartment = await departmentService.update(
+        editingDepartmentWithSubDepartments,
+        {
+          name: editDepartmentWithSubDepartmentsName,
+          numOfPeople: editDepartmentWithSubDepartmentsNumOfPeople,
+        }
+      );
+
+      // Update subdepartments
+      const updatedSubDepartments = await Promise.all(
+        editDepartmentWithSubDepartmentsSubDepartments.map(async (subDept) => {
+          return await subDepartmentService.update(subDept._id, {
+            name: subDept.name,
+            numOfPeople: subDept.numOfPeople,
+            departmentId: editingDepartmentWithSubDepartments,
+          });
+        })
+      );
+
+      // Update local state
+      setDepartments(
+        departments.map((d) =>
+          d._id === editingDepartmentWithSubDepartments ? updatedDepartment : d
+        )
+      );
+      setSubDepartments(
+        subDepartments.map((subDept) => {
+          const updatedSubDept = updatedSubDepartments.find(
+            (usd) => usd._id === subDept._id
+          );
+          return updatedSubDept || subDept;
+        })
+      );
+
+      // Reset editing state
+      setEditingDepartmentWithSubDepartments(null);
+      setEditDepartmentWithSubDepartmentsName("");
+      setEditDepartmentWithSubDepartmentsNumOfPeople(0);
+      setEditDepartmentWithSubDepartmentsSubDepartments([]);
+
+      toast({
+        title: "הצלחה",
+        description: "המסגרת ותתי-המסגרות עודכנו בהצלחה",
+      });
+    } catch (error) {
+      console.error("Error updating department with subdepartments:", error);
+      toast({
+        title: "שגיאה",
+        description: "אירעה שגיאה בעת עדכון המסגרת ותתי-המסגרות",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Add new function to handle canceling edit
+  const cancelEditDepartmentWithSubDepartments = () => {
+    setEditingDepartmentWithSubDepartments(null);
+    setEditDepartmentWithSubDepartmentsName("");
+    setEditDepartmentWithSubDepartmentsNumOfPeople(0);
+    setEditDepartmentWithSubDepartmentsSubDepartments([]);
+  };
+
+  // Add new function to handle subdepartment input changes
+  const handleEditSubDepartmentChange = (
+    index: number,
+    field: "name" | "numOfPeople",
+    value: string | number
+  ) => {
+    const newSubDepartments = [
+      ...editDepartmentWithSubDepartmentsSubDepartments,
+    ];
+    newSubDepartments[index] = {
+      ...newSubDepartments[index],
+      [field]: value,
+    };
+    setEditDepartmentWithSubDepartmentsSubDepartments(newSubDepartments);
+  };
+
   return (
     <DashboardLayout activeTab="settings">
       <div className="space-y-6 animate-fade-up">
@@ -1414,7 +1537,102 @@ const Settings = () => {
                 className="bg-card shadow-sm rounded-lg border p-6"
                 style={{ direction: "rtl" }}
               >
-                {addingSubDepartmentsTo ? (
+                {editingDepartmentWithSubDepartments ? (
+                  <>
+                    <h3 className="font-semibold text-lg mb-4">עריכת מסגרת</h3>
+                    <form
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        saveEditDepartmentWithSubDepartments();
+                      }}
+                      className="space-y-4"
+                    >
+                      <div>
+                        <label className="block text-sm font-medium mb-1">
+                          שם המסגרת
+                        </label>
+                        <input
+                          type="text"
+                          value={editDepartmentWithSubDepartmentsName}
+                          onChange={(e) =>
+                            setEditDepartmentWithSubDepartmentsName(
+                              e.target.value
+                            )
+                          }
+                          className="input-field"
+                          placeholder="שם המסגרת"
+                          required
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium mb-1">
+                          מספר אנשים
+                        </label>
+                        <input
+                          type="number"
+                          min="0"
+                          value={editDepartmentWithSubDepartmentsNumOfPeople}
+                          onChange={(e) =>
+                            setEditDepartmentWithSubDepartmentsNumOfPeople(
+                              Number(e.target.value)
+                            )
+                          }
+                          className="input-field"
+                          placeholder="מספר אנשים"
+                        />
+                      </div>
+
+                      <div className="space-y-4">
+                        <h4 className="font-medium">תתי-מסגרות</h4>
+                        {editDepartmentWithSubDepartmentsSubDepartments.map(
+                          (subDept, index) => (
+                            <div key={subDept._id} className="flex gap-2">
+                              <Input
+                                value={subDept.name}
+                                onChange={(e) =>
+                                  handleEditSubDepartmentChange(
+                                    index,
+                                    "name",
+                                    e.target.value
+                                  )
+                                }
+                                placeholder="שם תת-מסגרת"
+                              />
+                              <Input
+                                type="number"
+                                min="0"
+                                value={subDept.numOfPeople}
+                                onChange={(e) =>
+                                  handleEditSubDepartmentChange(
+                                    index,
+                                    "numOfPeople",
+                                    Number(e.target.value)
+                                  )
+                                }
+                                placeholder="מספר אנשים"
+                                className="w-24"
+                              />
+                            </div>
+                          )
+                        )}
+                      </div>
+
+                      <div className="flex gap-2">
+                        <Button type="submit" className="flex-1">
+                          שמירה
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={cancelEditDepartmentWithSubDepartments}
+                        >
+                          ביטול
+                        </Button>
+                      </div>
+                    </form>
+                  </>
+                ) : addingSubDepartmentsTo ? (
                   <>
                     <h3 className="font-semibold text-lg mb-4">
                       הוספת תתי-מסגרות
@@ -1780,21 +1998,35 @@ const Settings = () => {
                                     )
                                   )}
                                   <li>
-                                    <Button
-                                      variant="ghost"
-                                      className="w-full flex items-center gap-2 justify-center text-muted-foreground hover:text-foreground"
-                                      onClick={() => {
-                                        setAddingSubDepartmentsTo(
-                                          department._id
-                                        );
-                                        setNewSubDepartmentInputs([
-                                          { name: "", numOfPeople: 0 },
-                                        ]);
-                                      }}
-                                    >
-                                      <PlusIcon className="h-4 w-4" />
-                                      <span>הוספת תת-מסגרת חדשה</span>
-                                    </Button>
+                                    <div className="flex gap-2">
+                                      <Button
+                                        variant="ghost"
+                                        className="flex-1 flex items-center gap-2 justify-center text-muted-foreground hover:text-foreground"
+                                        onClick={() => {
+                                          setAddingSubDepartmentsTo(
+                                            department._id
+                                          );
+                                          setNewSubDepartmentInputs([
+                                            { name: "", numOfPeople: 0 },
+                                          ]);
+                                        }}
+                                      >
+                                        <PlusIcon className="h-4 w-4" />
+                                        <span>הוספת תת-מסגרת חדשה</span>
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        className="flex items-center gap-2 justify-center text-muted-foreground hover:text-foreground"
+                                        onClick={() =>
+                                          startEditDepartmentWithSubDepartments(
+                                            department._id
+                                          )
+                                        }
+                                      >
+                                        <PencilIcon className="h-4 w-4" />
+                                        <span>עריכה</span>
+                                      </Button>
+                                    </div>
                                   </li>
                                 </ul>
                               </AccordionContent>
@@ -1852,19 +2084,35 @@ const Settings = () => {
                                   </li>
                                 ))}
                                 <li>
-                                  <Button
-                                    variant="ghost"
-                                    className="w-full flex items-center gap-2 justify-center text-muted-foreground hover:text-foreground"
-                                    onClick={() => {
-                                      setAddingSubDepartmentsTo(department._id);
-                                      setNewSubDepartmentInputs([
-                                        { name: "", numOfPeople: 0 },
-                                      ]);
-                                    }}
-                                  >
-                                    <PlusIcon className="h-4 w-4" />
-                                    <span>הוספת תת-מסגרת חדשה</span>
-                                  </Button>
+                                  <div className="flex gap-2">
+                                    <Button
+                                      variant="ghost"
+                                      className="flex-1 flex items-center gap-2 justify-center text-muted-foreground hover:text-foreground"
+                                      onClick={() => {
+                                        setAddingSubDepartmentsTo(
+                                          department._id
+                                        );
+                                        setNewSubDepartmentInputs([
+                                          { name: "", numOfPeople: 0 },
+                                        ]);
+                                      }}
+                                    >
+                                      <PlusIcon className="h-4 w-4" />
+                                      <span>הוספת תת-מסגרת חדשה</span>
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      className="flex items-center gap-2 justify-center text-muted-foreground hover:text-foreground"
+                                      onClick={() =>
+                                        startEditDepartmentWithSubDepartments(
+                                          department._id
+                                        )
+                                      }
+                                    >
+                                      <PencilIcon className="h-4 w-4" />
+                                      <span>עריכה</span>
+                                    </Button>
+                                  </div>
                                 </li>
                               </ul>
                             </AccordionContent>

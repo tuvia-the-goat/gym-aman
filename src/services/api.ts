@@ -190,7 +190,6 @@ export const departmentService = {
     departmentId: string,
     departmentData: {
       name: string;
-      baseId: string;
       numOfPeople: number;
     }
   ): Promise<Department> => {
