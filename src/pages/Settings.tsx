@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import DashboardLayout from "../components/DashboardLayout";
 import { useAdmin } from "../context/AdminContext";
 import { useToast } from "@/components/ui/use-toast";
@@ -17,6 +17,24 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Department, SubDepartment } from "../types";
+import Fuse from "fuse.js";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Search, X } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 import {
   baseService,
@@ -25,8 +43,6 @@ import {
   traineeService,
   adminService,
 } from "../services/api";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   PencilIcon,
   TrashIcon,
@@ -142,6 +158,94 @@ const Settings = () => {
     null
   );
   const [openAccordionItems, setOpenAccordionItems] = useState<string[]>([]);
+
+  // New search states
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchSuggestions, setSearchSuggestions] = useState<{
+    departments: Department[];
+    subDepartments: SubDepartment[];
+  }>({ departments: [], subDepartments: [] });
+  const [searchHistory, setSearchHistory] = useState<string[]>([]);
+  const searchTimeoutRef = useRef<NodeJS.Timeout>();
+
+  // Initialize Fuse instances
+  const departmentsFuse = new Fuse(departments, {
+    keys: ["name"],
+    threshold: 0.3,
+    includeScore: true,
+  });
+
+  const subDepartmentsFuse = new Fuse(subDepartments, {
+    keys: ["name"],
+    threshold: 0.3,
+    includeScore: true,
+  });
+
+  // Update Fuse instances when data changes
+  useEffect(() => {
+    departmentsFuse.setCollection(departments);
+    subDepartmentsFuse.setCollection(subDepartments);
+  }, [departments, subDepartments]);
+
+  // Enhanced search function
+  const handleSearch = async (query: string) => {
+    setSearchQuery(query);
+
+    // Clear any existing timeout
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    // If query is empty, clear results and open items
+    if (!query.trim()) {
+      setSearchResults(null);
+      setSearchSuggestions({ departments: [], subDepartments: [] });
+      setOpenAccordionItems([]);
+      return;
+    }
+
+    // Set a new timeout for the search
+    searchTimeoutRef.current = setTimeout(async () => {
+      try {
+        // Local fuzzy search for suggestions
+        const deptResults = departmentsFuse.search(query);
+        const subDeptResults = subDepartmentsFuse.search(query);
+
+        setSearchSuggestions({
+          departments: deptResults.map((result) => result.item),
+          subDepartments: subDeptResults.map((result) => result.item),
+        });
+
+        // API search for full results
+        const results = await departmentService.search(query);
+        setSearchResults(results);
+
+        // Get unique department IDs that contain matching subdepartments
+        const departmentsWithMatchingSubdepartments = new Set(
+          results.subDepartments.map((subDept) => subDept.departmentId)
+        );
+
+        // Set the open accordion items (only departments with matching subdepartments)
+        setOpenAccordionItems([...departmentsWithMatchingSubdepartments]);
+      } catch (error) {
+        console.error("Error searching departments:", error);
+        toast({
+          title: "שגיאה",
+          description: "אירעה שגיאה בעת החיפוש",
+          variant: "destructive",
+        });
+      }
+    }, 300);
+  };
+
+  // Cleanup search timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Get department and base names
   const getDepartmentName = (id: string) => {
@@ -823,6 +927,24 @@ const Settings = () => {
     }
   };
 
+  useEffect(() => {
+    if (searchQuery?.trim() === "") {
+      setSearchQuery("");
+      setSearchResults(null);
+      setSearchSuggestions({
+        departments: [],
+        subDepartments: [],
+      });
+      setOpenAccordionItems([]);
+    }
+  }, [
+    searchQuery,
+    setSearchQuery,
+    setSearchResults,
+    setSearchSuggestions,
+    setOpenAccordionItems,
+  ]);
+
   // Add new function to handle adding subdepartment inputs
   const handleNewSubDepartmentInput = () => {
     setNewSubDepartmentInputs([...newSubDepartmentInputs, ""]);
@@ -887,58 +1009,6 @@ const Settings = () => {
       });
     }
   };
-
-  // Add new function to handle search
-  const handleSearch = async (query: string) => {
-    setSearchQuery(query);
-
-    // Clear any existing timeout
-    if (searchTimeout) {
-      clearTimeout(searchTimeout);
-      setSearchTimeout(null);
-    }
-
-    // If query is empty, clear results and open items
-    if (!query.trim()) {
-      setSearchResults(null);
-      setOpenAccordionItems([]);
-      return;
-    }
-
-    // Set a new timeout for the search
-    const timeout = setTimeout(async () => {
-      try {
-        const results = await departmentService.search(query);
-        setSearchResults(results);
-
-        // Get unique department IDs that contain matching subdepartments
-        const departmentsWithMatchingSubdepartments = new Set(
-          results.subDepartments.map((subDept) => subDept.departmentId)
-        );
-
-        // Set the open accordion items (only departments with matching subdepartments)
-        setOpenAccordionItems([...departmentsWithMatchingSubdepartments]);
-      } catch (error) {
-        console.error("Error searching departments:", error);
-        toast({
-          title: "שגיאה",
-          description: "אירעה שגיאה בעת החיפוש",
-          variant: "destructive",
-        });
-      }
-    }, 300);
-
-    setSearchTimeout(timeout);
-  };
-
-  // Cleanup search timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (searchTimeout) {
-        clearTimeout(searchTimeout);
-      }
-    };
-  }, [searchTimeout]);
 
   return (
     <DashboardLayout activeTab="settings">
@@ -1562,13 +1632,32 @@ const Settings = () => {
                   </div>
 
                   <div className="mb-4">
-                    <Input
-                      type="text"
-                      placeholder="חיפוש מסגרות ותתי-מסגרות..."
-                      value={searchQuery}
-                      onChange={(e) => handleSearch(e.target.value)}
-                      className="w-full"
-                    />
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                      <Input
+                        type="text"
+                        placeholder="חיפוש מסגרות ותתי-מסגרות..."
+                        value={searchQuery}
+                        onChange={(e) => handleSearch(e.target.value)}
+                        className="pl-10 pr-8"
+                      />
+                      {searchQuery && (
+                        <button
+                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                          onClick={() => {
+                            setSearchQuery("");
+                            setSearchResults(null);
+                            setSearchSuggestions({
+                              departments: [],
+                              subDepartments: [],
+                            });
+                            setOpenAccordionItems([]);
+                          }}
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   <Accordion
