@@ -1025,6 +1025,7 @@ const Settings = () => {
   };
 
   // Add new function to handle creating subdepartments
+
   const handleCreateSubDepartments = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -1044,6 +1045,75 @@ const Settings = () => {
       return;
     }
 
+    // Get the department
+    const department = departments.find(
+      (dept) => dept._id === addingSubDepartmentsTo
+    );
+    if (!department) {
+      toast({
+        title: "שגיאה",
+        description: "לא נמצאה המסגרת המבוקשת",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Calculate total numOfPeople from existing subdepartments
+    const existingSubDepartments = subDepartments.filter(
+      (subDept) => subDept.departmentId === addingSubDepartmentsTo
+    );
+    const existingTotalPeople = existingSubDepartments.reduce(
+      (sum, subDept) => sum + subDept.numOfPeople,
+      0
+    );
+
+    // Calculate total numOfPeople from new subdepartments
+    const newTotalPeople = validSubDepartments.reduce(
+      (sum, subDept) => sum + subDept.numOfPeople,
+      0
+    );
+
+    // Check if the total sum exceeds the department's numOfPeople
+    if (existingTotalPeople + newTotalPeople > department.numOfPeople) {
+      setValidationAction(() => async () => {
+        try {
+          // Create all subdepartments
+          const createdSubDepartments = await Promise.all(
+            validSubDepartments.map(async (input) => {
+              const newSubDepartment = await subDepartmentService.create({
+                name: input.name,
+                departmentId: addingSubDepartmentsTo,
+                numOfPeople: input.numOfPeople,
+              });
+              return newSubDepartment;
+            })
+          );
+
+          // Update local state
+          setSubDepartments([...subDepartments, ...createdSubDepartments]);
+
+          // Reset form
+          setAddingSubDepartmentsTo(null);
+          setNewSubDepartmentInputs([{ name: "", numOfPeople: 0 }]);
+
+          toast({
+            title: "תתי-מסגרות נוספו",
+            description: `${createdSubDepartments.length} תתי-מסגרות נוספו בהצלחה`,
+          });
+        } catch (error) {
+          console.error("Error creating subdepartments:", error);
+          toast({
+            title: "שגיאה",
+            description: "אירעה שגיאה בעת יצירת תתי-המסגרות",
+            variant: "destructive",
+          });
+        }
+      });
+      setShowValidationAlert(true);
+      return;
+    }
+
+    // If validation passes, proceed with creation
     try {
       // Create all subdepartments
       const createdSubDepartments = await Promise.all(
@@ -2169,6 +2239,10 @@ const Settings = () => {
                                         variant="ghost"
                                         className="flex-1 flex items-center gap-2 justify-center text-muted-foreground hover:text-foreground"
                                         onClick={() => {
+                                          setEditingDepartmentWithSubDepartments(null);
+                                          setEditDepartmentWithSubDepartmentsName("");
+                                          setEditDepartmentWithSubDepartmentsNumOfPeople(0);
+                                    
                                           setAddingSubDepartmentsTo(
                                             department._id
                                           );
