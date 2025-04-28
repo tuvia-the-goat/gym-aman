@@ -192,15 +192,7 @@ const DashboardLayout = ({ children, activeTab }: DashboardLayoutProps) => {
       </AlertDialog>
 
       <div className="flex h-screen overflow-hidden w-full">
-        {/* Mobile Sidebar Toggle - only visible on mobile */}
-        {true && (
-          <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="fixed right-4 top-4 z-50 p-2 bg-primary text-primary-foreground rounded-md shadow-lg md:hidden"
-          >
-            {sidebarOpen ? <X /> : <Menu />}
-          </button>
-        )}
+
         
         {/* Sidebar - wider and always visible on desktop */}
         <Sidebar

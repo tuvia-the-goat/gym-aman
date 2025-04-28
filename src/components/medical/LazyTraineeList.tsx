@@ -124,7 +124,7 @@ const LazyTraineeList = ({
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="חיפוש מתאמנים..."
+            placeholder='חיפוש מתאמנים לפי מ"א או שם...'
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10 pr-4"

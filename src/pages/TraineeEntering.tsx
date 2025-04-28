@@ -27,7 +27,6 @@ import {
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
-import TraineeProfile from '../components/TraineeProfile';
 
 const TraineeEntering = () => {
   const navigate = useNavigate();

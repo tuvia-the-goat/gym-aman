@@ -16,6 +16,7 @@ import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { format, addMonths } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
 import LazyTraineeList from "../components/medical/LazyTraineeList";
+import { traineeService } from "../services/api";
 
 const MedicalApprovals = () => {
   const navigate = useNavigate();
@@ -53,12 +54,34 @@ const MedicalApprovals = () => {
     setSelectedTrainee(trainee);
   };
 
-  const handleTraineeUpdate = (updatedTrainee: Trainee) => {
-    const updatedTrainees = trainees.map((t) =>
-      t._id === updatedTrainee._id ? updatedTrainee : t
-    );
-    setTrainees(updatedTrainees);
-    setSelectedTrainee(updatedTrainee);
+  const handleTraineeUpdate = async (updatedTrainee: Trainee) => {
+    try {
+      // Set loading state
+      setIsLoading(true);
+
+      // Fetch fresh data to ensure everything is in sync
+      const allTrainees = await traineeService.getAll();
+      
+      // Update all data in context
+      setTrainees(allTrainees);
+      
+      // Find and set the updated trainee in the refreshed data
+      const refreshedTrainee = allTrainees.find(t => t._id === updatedTrainee._id);
+      setSelectedTrainee(refreshedTrainee || null);
+
+      // Clear any filters to show fresh data
+      clearFilters();
+
+    } catch (error) {
+      console.error("Error refreshing data:", error);
+      toast({
+        title: "שגיאה",
+        description: "אירעה שגיאה בעת רענון הנתונים",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
