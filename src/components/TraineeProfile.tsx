@@ -773,7 +773,7 @@ const TraineeProfile: React.FC<TraineeProfileProps> = ({
           ) : null}
 
           {/* Medical Limitation */}
-          <div className={isEditing && medicalFormScore !== "partialScore" ? "col-span-2 bg-card/50 p-4 rounded-lg border border-border/30" : "bg-card/50 p-4 rounded-lg border border-border/30"}>
+          <div className={isEditing && medicalFormScore === "partialScore" && !medicalCertificateProvided ? "col-span-2 bg-card/50 p-4 rounded-lg border border-border/30" : "bg-card/50 p-4 rounded-lg border border-border/30"}>
             <h4 className="text-sm font-medium text-muted-foreground mb-2">
               מגבלה רפואית
             </h4>
@@ -798,7 +798,7 @@ const TraineeProfile: React.FC<TraineeProfileProps> = ({
           </div>
 
           {/* Medical Approval Expiration Date */}
-          {isEditing && (
+          {isEditing && (medicalFormScore !== "partialScore" || medicalCertificateProvided) && (
             <div className="bg-card/50 p-4 rounded-lg border border-border/30 flex flex-col gap-2 justify-center">
               <h4 className="text-sm font-medium text-muted-foreground mb-2">
                 תאריך פקיעת האישור הרפואי
@@ -806,7 +806,7 @@ const TraineeProfile: React.FC<TraineeProfileProps> = ({
               <div className="flex flex-col md:flex-row gap-2">
                 {!showMedicalApproval ? (
                   <div className="w-full h-24 bg-black/50 rounded-lg flex items-center justify-center text-center cursor-pointer" onClick={() => setShowMedicalApproval(true)}>
-                    <p className="text-white">לחץ כדי לערוך את פרטי האישור הרפואי</p>
+                    <p className="text-white p-4">לחץ כדי לערוך את פרטי האישור הרפואי</p>
                   </div>
                 ) : (
                   <>
