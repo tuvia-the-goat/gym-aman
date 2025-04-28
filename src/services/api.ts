@@ -95,15 +95,21 @@ export const subDepartmentService = {
     return response.data;
   },
 
-  update: async (subDepartmentId: string, subDepartmentData: {
-    name: string;
-    departmentId: string;
-  }): Promise<SubDepartment> => {
-    const response = await api.put(`/subDepartments/${subDepartmentId}`, subDepartmentData);
-    
+  update: async (
+    subDepartmentId: string,
+    subDepartmentData: {
+      name: string;
+      departmentId: string;
+    }
+  ): Promise<SubDepartment> => {
+    const response = await api.put(
+      `/subDepartments/${subDepartmentId}`,
+      subDepartmentData
+    );
+
     return response.data;
   },
-  
+
   // Delete subDepartment
   delete: async (subDepartmentId: string): Promise<void> => {
     await api.delete(`/subDepartments/${subDepartmentId}`);
@@ -127,19 +133,21 @@ export const baseService = {
     return response.data;
   },
 
-  update: async (baseId: string, baseData: {
-    name: string;
-    location: string;
-  }): Promise<Base> => {
+  update: async (
+    baseId: string,
+    baseData: {
+      name: string;
+      location: string;
+    }
+  ): Promise<Base> => {
     const response = await api.put(`/bases/${baseId}`, baseData);
     return response.data;
   },
-  
+
   // Delete base
   delete: async (baseId: string): Promise<void> => {
     await api.delete(`/bases/${baseId}`);
   },
-
 };
 
 // Department Services
@@ -159,18 +167,49 @@ export const departmentService = {
     return response.data;
   },
 
-  // Update department
-  update: async (departmentId: string, departmentData: {
+  // Create department with multiple subdepartments
+  createWithSubDepartments: async (data: {
     name: string;
     baseId: string;
-  }): Promise<Department> => {
-    const response = await api.put(`/departments/${departmentId}`, departmentData);
+    subDepartments: string[];
+  }): Promise<{
+    department: Department;
+    subDepartments: SubDepartment[];
+  }> => {
+    const response = await api.post("/departments/with-subdepartments", data);
     return response.data;
   },
-  
+
+  // Update department
+  update: async (
+    departmentId: string,
+    departmentData: {
+      name: string;
+      baseId: string;
+    }
+  ): Promise<Department> => {
+    const response = await api.put(
+      `/departments/${departmentId}`,
+      departmentData
+    );
+    return response.data;
+  },
+
   // Delete department
   delete: async (departmentId: string): Promise<void> => {
     await api.delete(`/departments/${departmentId}`);
+  },
+
+  search: async (
+    query: string
+  ): Promise<{
+    departments: Department[];
+    subDepartments: SubDepartment[];
+  }> => {
+    const response = await api.get("/departments/search", {
+      params: { query },
+    });
+    return response.data;
   },
 };
 
@@ -225,7 +264,6 @@ export const traineeService = {
     return response.data;
   },
 
-  
   // Update trainee profile
   updateProfile: async (
     traineeId: string,
@@ -242,7 +280,7 @@ export const traineeService = {
   ): Promise<void> => {
     await api.put(`/trainees/transfer-subdepartment`, {
       oldSubDepartmentId,
-      newSubDepartmentId
+      newSubDepartmentId,
     });
   },
   // get trainee that trained last week
