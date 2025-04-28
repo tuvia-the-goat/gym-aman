@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Textarea } from '@/components/ui/textarea';
 import { MedicalFormScore } from '../../types';
@@ -131,9 +130,15 @@ const MedicalDetailsSection = ({
         </div>
 
         <div className="space-y-2 md:col-span-2">
-          <label htmlFor="medicalLimitation" className="block text-sm font-medium">
-            מגבלה רפואית
-          </label>
+          <div className="flex items-center gap-1">
+            <label htmlFor="medicalLimitation" className="block text-sm font-medium">
+              מגבלה רפואית
+            </label>
+            <span className="text-xs text-muted-foreground">(רשות)</span>
+          </div>
+          <p className="text-xs text-muted-foreground mb-1">
+            <span className="text-red-500">*</span> מידע רפואי הרלוונטי לפעילות הגופנית בלבד (סכרת, אסטמה, יתר לחץ דם...)
+          </p>
           <Textarea
             id="medicalLimitation"
             value={medicalLimitation}

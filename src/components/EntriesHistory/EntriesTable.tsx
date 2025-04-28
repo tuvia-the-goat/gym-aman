@@ -110,11 +110,11 @@ const EntriesTable: React.FC<EntriesTableProps> = ({
             <tr>
               <th className="px-4 py-3 text-right">שם מתאמן</th>
               <th className="px-4 py-3 text-right">מספר אישי</th>
-              <th className="px-4 py-3 text-right">מסגרת</th>
-              <th className="px-4 py-3 text-right">תת-מסגרת</th>
               {admin?.role === "generalAdmin" && (
                 <th className="px-4 py-3 text-right">בסיס</th>
               )}
+              <th className="px-4 py-3 text-right">מסגרת</th>
+              <th className="px-4 py-3 text-right">תת-מסגרת</th>
               <th className="px-4 py-3 text-right">תאריך</th>
               <th className="px-4 py-3 text-right">שעה</th>
               <th className="px-4 py-3 text-right">סטטוס</th>
@@ -131,17 +131,17 @@ const EntriesTable: React.FC<EntriesTableProps> = ({
                   <td className="px-4 py-3">
                     <Skeleton className="h-5 w-20" />
                   </td>
-                  <td className="px-4 py-3">
-                    <Skeleton className="h-5 w-24" />
-                  </td>
-                  <td className="px-4 py-3">
-                    <Skeleton className="h-5 w-24" />
-                  </td>
                   {admin?.role === "generalAdmin" && (
                     <td className="px-4 py-3">
                       <Skeleton className="h-5 w-20" />
                     </td>
                   )}
+                  <td className="px-4 py-3">
+                    <Skeleton className="h-5 w-24" />
+                  </td>
+                  <td className="px-4 py-3">
+                    <Skeleton className="h-5 w-24" />
+                  </td>
                   <td className="px-4 py-3">
                     <Skeleton className="h-5 w-20" />
                   </td>
@@ -184,11 +184,11 @@ const EntriesTable: React.FC<EntriesTableProps> = ({
           <tr>
             <th className="px-4 py-3 text-right">שם מתאמן</th>
             <th className="px-4 py-3 text-right">מספר אישי</th>
-            <th className="px-4 py-3 text-right">מסגרת</th>
-            <th className="px-4 py-3 text-right">תת-מסגרת</th>
             {admin?.role === "generalAdmin" && (
               <th className="px-4 py-3 text-right">בסיס</th>
             )}
+            <th className="px-4 py-3 text-right">מסגרת</th>
+            <th className="px-4 py-3 text-right">תת-מסגרת</th>
             <th className="px-4 py-3 text-right">תאריך</th>
             <th className="px-4 py-3 text-right">שעה</th>
             <th className="px-4 py-3 text-right">סטטוס</th>
@@ -234,6 +234,9 @@ const EntriesTable: React.FC<EntriesTableProps> = ({
                   {entry.traineeFullName || "-"}
                 </td>
                 <td className="px-4 py-3">{entry.traineePersonalId}</td>
+                  {admin?.role === "generalAdmin" && (
+                    <td className="px-4 py-3">{getBaseName(entry.baseId)}</td>
+                  )}
                 <td
                   className={`px-4 py-3 ${
                     entry.status === "notAssociated" ? "text-purple-600" : ""
@@ -250,9 +253,6 @@ const EntriesTable: React.FC<EntriesTableProps> = ({
                     ? getSubDepartmentName(entry.subDepartmentId)
                     : "-"}
                 </td>
-                {admin?.role === "generalAdmin" && (
-                  <td className="px-4 py-3">{getBaseName(entry.baseId)}</td>
-                )}
                 <td className="px-4 py-3">{getDateFormat(entry.entryDate)}</td>
                 <td className="px-4 py-3">{entry.entryTime}</td>
                 <td

@@ -1,4 +1,15 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
+import { 
+  CalendarIcon, 
+  AlertCircle, 
+  User, 
+  Calendar as CalendarIconFull, 
+  CheckCircle, 
+  XCircle, 
+  Shield, 
+  Dumbbell, 
+  LogIn
+} from 'lucide-react';
 import { useNavigate } from "react-router-dom";
 import { useAdmin } from "../context/AdminContext";
 import {
@@ -23,17 +34,6 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import {
-  CalendarIcon,
-  AlertCircle,
-  User,
-  Calendar as CalendarIconFull,
-  CheckCircle,
-  XCircle,
-  Shield,
-  Dumbbell,
-  LogIn,
-} from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";

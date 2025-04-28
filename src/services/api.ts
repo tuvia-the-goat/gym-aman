@@ -267,7 +267,24 @@ export const traineeService = {
   // Update trainee profile
   updateProfile: async (
     traineeId: string,
-    profileData: Partial<Trainee>
+    profileData: {
+      personalId: string;
+      fullName: string;
+      medicalProfile: "97" | "82" | "72" | "64" | "45" | "25";
+      departmentId: string;
+      subDepartmentId: string;
+      baseId: string;
+      gender: "male" | "female";
+      birthDate: string;
+      orthopedicCondition: boolean;
+      medicalFormScore: MedicalFormScore;
+      medicalCertificateProvided?: boolean;
+      medicalLimitation?: string;
+      medicalApproval: {
+        approved: boolean;
+        expirationDate: string | null;
+      };
+    }
   ): Promise<Trainee> => {
     const response = await api.put(`/trainees/${traineeId}`, profileData);
     return response.data;
