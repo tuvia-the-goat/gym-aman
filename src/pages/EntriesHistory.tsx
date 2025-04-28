@@ -56,14 +56,26 @@ const EntriesHistory = () => {
     // Register handler for new entries
     const cleanup = socketService.onNewEntry((newEntry) => {
       setHasNewEntries(true);
-      
+
+      if (newEntry.status === "notAssociated") {
+        toast({
+          title: "משתמש לא משויך לבסיס",
+          description: `לא משוייך לבסיס זה: ${
+            newEntry.traineeFullName || newEntry.traineePersonalId
+          }`,
+          color: "purple",
+        });
+      }
+
       // Show toast notification
       toast({
         title: "כניסה חדשה",
-        description: `נרשמה כניסה חדשה: ${newEntry.traineeFullName || newEntry.traineePersonalId}`,
+        description: `נרשמה כניסה חדשה: ${
+          newEntry.traineeFullName || newEntry.traineePersonalId
+        }`,
       });
     });
-    
+
     return cleanup;
   }, [toast]);
 
@@ -119,7 +131,7 @@ const EntriesHistory = () => {
           <h2 className="text-2xl font-bold">היסטוריית כניסות</h2>
           <div className="flex gap-2 items-center">
             {/* Add real-time indicator */}
-            
+
             <EntriesRealtimeIndicator />
             <ExportButton
               searchTerm={searchTerm}

@@ -1,9 +1,8 @@
-
 export interface Admin {
   _id: string;
   personalId: string;
   fullName: string;
-  role: 'generalAdmin' | 'gymAdmin';
+  role: "generalAdmin" | "gymAdmin";
   baseId?: string;
   email: string;
   password?: string;
@@ -30,7 +29,6 @@ export interface SubDepartment {
 }
 // src/types/socket.ts
 
-
 export interface ServerToClientEvents {
   newEntry: (entry: Entry) => void;
   error: (error: string) => void;
@@ -50,14 +48,16 @@ export interface SocketData {
   adminId?: string;
 }
 
-
-
 export interface MedicalApproval {
   approved: boolean;
   expirationDate?: string;
 }
 
-export type EntryStatus = 'success' | 'noMedicalApproval' | 'notRegistered';
+export type EntryStatus =
+  | "success"
+  | "noMedicalApproval"
+  | "notRegistered"
+  | "notAssociated";
 
 export interface Entry {
   _id: string;
@@ -90,13 +90,17 @@ export interface AdminContextType {
 }
 
 // Adding MedicalFormScore type
-export type MedicalFormScore = 'notRequired' | 'fullScore' | 'partialScore' | 'reserve';
+export type MedicalFormScore =
+  | "notRequired"
+  | "fullScore"
+  | "partialScore"
+  | "reserve";
 
 export interface Trainee {
   _id: string;
   personalId: string;
   fullName: string;
-  gender: 'male' | 'female';
+  gender: "male" | "female";
   departmentId: string;
   subDepartmentId?: string; // Add this line
   baseId: string;
