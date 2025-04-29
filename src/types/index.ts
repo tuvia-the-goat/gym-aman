@@ -14,19 +14,28 @@ export interface Base {
   _id: string;
   name: string;
   location: string; // Added location property
+  isActive: boolean;
 }
 
 export interface Department {
   _id: string;
   name: string;
   baseId: string;
+  numOfPeople: number;
 }
 
 export interface SubDepartment {
   _id: string;
   name: string;
   departmentId: string;
+  numOfPeople: number;
 }
+
+export interface SubDepartmentCreateData {
+  name: string;
+  numOfPeople: number;
+}
+
 // src/types/socket.ts
 
 export interface ServerToClientEvents {
@@ -120,4 +129,35 @@ export interface Trainee {
   // Add missing properties
   medicalFormScore: MedicalFormScore;
   medicalCertificateProvided?: boolean;
+}
+
+export interface DepartmentService {
+  getAll: () => Promise<Department[]>;
+  create: (departmentData: {
+    name: string;
+    baseId: string;
+    numOfPeople: number;
+  }) => Promise<Department>;
+  createWithSubDepartments: (data: {
+    name: string;
+    baseId: string;
+    subDepartments: SubDepartmentCreateData[];
+    numOfPeople: number;
+  }) => Promise<{
+    department: Department;
+    subDepartments: SubDepartment[];
+  }>;
+  update: (
+    departmentId: string,
+    departmentData: {
+      name: string;
+      baseId: string;
+      numOfPeople: number;
+    }
+  ) => Promise<Department>;
+  delete: (departmentId: string) => Promise<void>;
+  search: (query: string) => Promise<{
+    departments: Department[];
+    subDepartments: SubDepartment[];
+  }>;
 }
