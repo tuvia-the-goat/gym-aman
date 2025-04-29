@@ -27,7 +27,7 @@ const TopTraineesChart: React.FC<TopTraineesChartProps> = ({ data, hasSpecificFi
               <BarChart layout="vertical" data={data}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis type="number"/>
-                <YAxis dataKey="name" type="category" width={150} tickMargin={100}/>
+                <YAxis dataKey="name" type="category" width={130} tickMargin={100}/>
                 <Tooltip />
                 <Bar dataKey="value" fill="#3b82f6" />
               </BarChart>
