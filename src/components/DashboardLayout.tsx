@@ -273,6 +273,11 @@ const DashboardLayout = ({ children, activeTab }: DashboardLayoutProps) => {
           </SidebarContent>
 
           <SidebarFooter className="px-4 py-5">
+            <div className="flex justify-center gap-4 mb-4">
+              <img src="/amanLogo.png" alt="Aman Logo" className="h-10" />
+              <img src="/artechLogo.png" alt="Artech Logo" className="h-10" />
+              <img src="/hadrahaLogo.png" alt="Hadraha Logo" className="h-10" />
+            </div>
             <Button
               variant="outline"
               className="w-full py-3 text-base"

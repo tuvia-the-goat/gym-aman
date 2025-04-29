@@ -244,7 +244,7 @@ const TraineeProfile: React.FC<TraineeProfileProps> = ({
       return;
     }
 
-    if (!medicalApprovalExpiration) {
+    if (!medicalApprovalExpiration && (medicalFormScore !== "partialScore" || medicalCertificateProvided)) {
       toast({
         title: "שגיאה",
         description: "חובה לבחור תאריך לתפוקת אישור רפואי",

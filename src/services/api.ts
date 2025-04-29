@@ -445,6 +445,17 @@ export const adminService = {
     const response = await api.post("/admins", adminData);
     return response.data;
   },
+
+  // Get all admins
+  getAll: async (): Promise<Admin[]> => {
+    const response = await api.get("/admins");
+    return response.data;
+  },
+
+  // Reset admin password
+  resetPassword: async (adminId: string, newPassword: string): Promise<void> => {
+    await api.put(`/admins/${adminId}/reset-password`, { newPassword });
+  },
 };
 
 // System initialization

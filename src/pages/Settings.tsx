@@ -50,6 +50,7 @@ import {
   AlertCircleIcon,
   CheckIcon,
   XIcon,
+  KeyIcon,
 } from "lucide-react";
 import {
   AlertDialog,
@@ -61,6 +62,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const Settings = () => {
   const {
@@ -133,6 +138,9 @@ const Settings = () => {
     "gymAdmin"
   );
   const [selectedBaseForAdmin, setSelectedBaseForAdmin] = useState("");
+  const [admins, setAdmins] = useState([]);
+  const [resettingPasswordFor, setResettingPasswordFor] = useState<string | null>(null);
+  const [newPassword, setNewPassword] = useState("");
 
   // Confirm dialog states
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -775,49 +783,39 @@ const Settings = () => {
   // Handle adding a new admin
   const handleAddAdmin = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (
-      !newAdminUsername.trim() ||
-      !newAdminPassword.trim() ||
-      (newAdminRole === "gymAdmin" && !selectedBaseForAdmin)
-    ) {
+    
+    if (newAdminPassword.length < 6) {
       toast({
         title: "שגיאה",
-        description: "יש למלא את כל השדות",
+        description: "הסיסמה חייבת להכיל לפחות 6 תווים",
         variant: "destructive",
       });
       return;
     }
 
     try {
-      // Create admin via API
-      const adminData = {
+      await adminService.create({
         username: newAdminUsername,
         password: newAdminPassword,
         role: newAdminRole,
-        ...(newAdminRole === "gymAdmin" && { baseId: selectedBaseForAdmin }),
-      };
-
-      await adminService.create(adminData);
-
-      // Reset form
+        baseId: selectedBaseForAdmin,
+      });
+      toast({
+        title: "הצלחה",
+        description: "המנהל נוסף בהצלחה",
+      });
       setNewAdminUsername("");
       setNewAdminPassword("");
       setNewAdminRole("gymAdmin");
       setSelectedBaseForAdmin("");
-
-      toast({
-        title: "מנהל חדש נוסף",
-        description: `מנהל ${newAdminUsername} נוסף בהצלחה`,
-      });
-    } catch (error: any) {
+      fetchAdmins();
+    } catch (error) {
+      console.error("Error adding admin:", error);
       toast({
         title: "שגיאה",
-        description:
-          error.response?.data?.message || "אירעה שגיאה בעת הוספת המנהל",
+        description: "אירעה שגיאה בעת הוספת המנהל",
         variant: "destructive",
       });
-      console.error("Error adding admin:", error);
     }
   };
 
@@ -1357,6 +1355,57 @@ const Settings = () => {
     null
   );
 
+  // Add new function to fetch admins
+  const fetchAdmins = async () => {
+    try {
+      const response = await adminService.getAll();
+      setAdmins(response);
+    } catch (error) {
+      console.error("Error fetching admins:", error);
+      toast({
+        title: "שגיאה",
+        description: "אירעה שגיאה בעת טעינת רשימת המנהלים",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Fetch admins on component mount
+  useEffect(() => {
+    if (admin?.role === "generalAdmin") {
+      fetchAdmins();
+    }
+  }, [admin?.role]);
+
+  // Add new function to handle password reset
+  const handlePasswordReset = async (adminId: string) => {
+    if (newPassword.length < 6) {
+      toast({
+        title: "שגיאה",
+        description: "הסיסמה חייבת להכיל לפחות 6 תווים",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      await adminService.resetPassword(adminId, newPassword);
+      toast({
+        title: "הצלחה",
+        description: "הסיסמה אופסה בהצלחה",
+      });
+      setResettingPasswordFor(null);
+      setNewPassword("");
+    } catch (error) {
+      console.error("Error resetting password:", error);
+      toast({
+        title: "שגיאה",
+        description: "אירעה שגיאה בעת איפוס הסיסמה",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <DashboardLayout activeTab="settings">
       <div className="space-y-6 animate-fade-up">
@@ -1638,139 +1687,185 @@ const Settings = () => {
           {/* Admins Tab (allBasesAdmin only) */}
           {admin?.role === "generalAdmin" && (
             <TabsContent value="admins" className="pt-6">
-              <div
-                className="bg-card shadow-sm rounded-lg border p-6"
-                style={{ direction: "rtl", width: "510px" }}
-              >
-                <h3 className="font-semibold text-lg mb-4">הוספת מנהל חדש</h3>
-                <form onSubmit={handleAddAdmin} className="space-y-4 max-w-md">
-                  <div>
-                    <label
-                      htmlFor="adminUsername"
-                      className="block text-sm font-medium mb-1"
-                    >
-                      שם משתמש
-                    </label>
-                    <input
-                      id="adminUsername"
-                      type="text"
-                      value={newAdminUsername}
-                      onChange={(e) => setNewAdminUsername(e.target.value)}
-                      className="input-field"
-                      placeholder="הזן שם משתמש"
-                      required
-                      autoComplete="off"
-                    />
-                  </div>
-
-                  <div>
-                    <label
-                      htmlFor="adminPassword"
-                      className="block text-sm font-medium mb-1"
-                    >
-                      סיסמה
-                    </label>
-                    <input
-                      id="adminPassword"
-                      type="password"
-                      value={newAdminPassword}
-                      onChange={(e) => setNewAdminPassword(e.target.value)}
-                      className="input-field"
-                      placeholder="הזן סיסמה"
-                      required
-                      autoComplete="off"
-                    />
-                  </div>
-
-                  <div>
-                    <label
-                      htmlFor="adminRole"
-                      className="block text-sm font-medium mb-1"
-                    >
-                      סוג מנהל
-                    </label>
-                    <Select
-                      value={newAdminRole}
-                      onValueChange={(value) =>
-                        setNewAdminRole(value as "generalAdmin" | "gymAdmin")
-                      }
-                    >
-                      <SelectTrigger id="adminRole" className="w-[450px]">
-                        <SelectValue placeholder="בחר סוג מנהל" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem
-                          value="gymAdmin"
-                          className="flex justify-end"
-                        >
-                          מנהל מכון
-                        </SelectItem>
-                        <SelectItem
-                          value="generalAdmin"
-                          className="flex justify-end"
-                        >
-                          מנהל כללי
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {newAdminRole === "gymAdmin" && (
-                    <div>
-                      <label
-                        htmlFor="adminBaseSelect"
-                        className="block text-sm font-medium mb-1"
-                      >
-                        בסיס
-                      </label>
-                      <Select
-                        value={selectedBaseForAdmin}
-                        onValueChange={(value) =>
-                          value === "BASE_CHOOSE"
-                            ? setSelectedBaseForAdmin("")
-                            : setSelectedBaseForAdmin(value)
-                        }
-                      >
-                        <SelectTrigger
-                          id="adminBaseSelect"
-                          className="input-field"
-                        >
-                          <SelectValue placeholder="בחר בסיס" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem
-                            value="BASE_CHOOSE"
-                            className="flex justify-end"
-                          >
-                            בחר בסיס
-                          </SelectItem>
-                          {bases.map((base) => (
-                            <SelectItem
-                              key={base._id}
-                              value={base._id}
-                              className="flex justify-end"
+              <div className="space-y-6">
+                <div className="flex gap-6" style={{ direction: "rtl" }}>
+                  {/* Admin Form */}
+                  <div className="w-1/2">
+                    <Card>
+                      <CardHeader>
+                        <h3 className="font-semibold text-lg">הוספת מנהל חדש</h3>
+                      </CardHeader>
+                      <CardContent>
+                        <form onSubmit={handleAddAdmin} className="space-y-4">
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="username">שם משתמש</Label>
+                              <Input
+                                id="username"
+                                value={newAdminUsername}
+                                onChange={(e) =>
+                                  setNewAdminUsername(e.target.value)
+                                }
+                                required
+                                style={{ direction: "rtl" }}
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="password">סיסמה (מינימום 6 תווים)</Label>
+                              <Input
+                                id="password"
+                                type="password"
+                                value={newAdminPassword}
+                                onChange={(e) =>
+                                  setNewAdminPassword(e.target.value)
+                                }
+                                required
+                                minLength={6}
+                                style={{ direction: "rtl" }}
+                              />
+                            </div>
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="role">תפקיד</Label>
+                            <Select
+                              value={newAdminRole}
+                              onValueChange={(value: "generalAdmin" | "gymAdmin") =>
+                                setNewAdminRole(value)
+                              }
                             >
-                              {base.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
+                              <SelectTrigger>
+                                <SelectValue placeholder="בחר תפקיד" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="generalAdmin" className="flex justify-end">
+                                  מנהל כללי
+                                </SelectItem>
+                                <SelectItem value="gymAdmin" className="flex justify-end">מנהל חדר כושר</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          {newAdminRole === "gymAdmin" && (
+                            <div className="space-y-2">
+                              <Label htmlFor="baseId">בסיס</Label>
+                              <Select
+                                value={selectedBaseForAdmin || ""}
+                                onValueChange={(value) =>
+                                  setSelectedBaseForAdmin(value)
+                                }
+                              >
+                                <SelectTrigger >
+                                  <SelectValue placeholder="בחר בסיס" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {bases.map((base) => (
+                                    <SelectItem key={base._id} value={base._id} className="flex justify-end">
+                                      {base.name}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          )}
+                          <Button type="submit" className="w-full">
+                            הוסף מנהל
+                          </Button>
+                        </form>
+                      </CardContent>
+                    </Card>
+                  </div>
 
-                  <button type="submit" className="btn-primary w-full">
-                    הוסף מנהל
-                  </button>
-                </form>
+                  {/* Admins Table */}
+                  <div className="w-1/2">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>רשימת מנהלים</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead style={{ textAlign: "right" }}>שם משתמש</TableHead>
+                              <TableHead style={{ textAlign: "right" }}>תפקיד</TableHead>
+                              <TableHead style={{ textAlign: "right" }}>בסיס</TableHead>
+                              <TableHead style={{ textAlign: "right" }}>פעולות</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {admins.map((admin) => (
+                              <TableRow key={admin._id}>
+                                <TableCell style={{ textAlign: "right" }}>{admin.username}</TableCell>
+                                <TableCell style={{ textAlign: "right" }}>
+                                  {admin.role === "generalAdmin"
+                                    ? "מנהל כללי"
+                                    : "מנהל חדר כושר"}
+                                </TableCell>
+                                <TableCell style={{ textAlign: "right" }}>
+                                  {admin.baseId
+                                    ? bases.find((b) => b._id === admin.baseId)
+                                        ?.name
+                                    : "-"}
+                                </TableCell>
+                                <TableCell style={{ textAlign: "right" }}>
+                                  {resettingPasswordFor === admin._id ? (
+                                    <div className="flex items-center gap-2" style={{ direction: "rtl" }}>
+                                      <Input
+                                        type="password"
+                                        value={newPassword}
+                                        onChange={(e) => setNewPassword(e.target.value)}
+                                        placeholder="הזן סיסמה חדשה"
+                                        className="max-w-[200px]"
+                                        style={{ direction: "rtl" }}
+                                      />
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        onClick={() => {
+                                          setResettingPasswordFor(null);
+                                          setNewPassword("");
+                                        }}
+                                        className="h-8 w-8 p-0"
+                                      >
+                                        <XIcon className="h-4 w-4 text-red-600" />
+                                      </Button>
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        onClick={() => handlePasswordReset(admin._id)}
+                                        className="h-8 w-8 p-0"
+                                        disabled={newPassword.length < 6}
+                                      >
+                                        <CheckIcon className="h-4 w-4 text-green-600" />
+                                      </Button>
+                                    </div>
+                                  ) : (
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => setResettingPasswordFor(admin._id)}
+                                    >
+                                      איפוס סיסמה
+                                      <KeyIcon className="h-4 w-4 ml-2" />
+                                    </Button>
+                                  )}
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </div>
               </div>
             </TabsContent>
           )}
 
           {/* New tab for creating departments with subdepartments */}
           <TabsContent value="departments-with-subdepartments" className="pt-6">
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2"
+                style={{ direction: "rtl" }}>
               <div
-                className="bg-card shadow-sm rounded-lg border p-6"
+                className="bg-card shadow-sm rounded-lg border p-6 h-fit"
                 style={{ direction: "rtl" }}
               >
                 {editingDepartmentWithSubDepartments ? (
@@ -2002,22 +2097,21 @@ const Settings = () => {
                           >
                             בסיס
                           </label>
-                          <select
-                            id="newDepartmentBase"
+                          <Select
                             value={selectedBaseForNewDepartment}
-                            onChange={(e) =>
-                              setSelectedBaseForNewDepartment(e.target.value)
-                            }
-                            className="input-field"
-                            required
+                            onValueChange={(value) => setSelectedBaseForNewDepartment(value)}
                           >
-                            <option value="">בחר בסיס</option>
-                            {bases.map((base) => (
-                              <option key={base._id} value={base._id}>
-                                {base.name}
-                              </option>
-                            ))}
-                          </select>
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="בחר בסיס" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {bases.map((base) => (
+                                <SelectItem key={base._id} value={base._id} className="flex justify-end">
+                                  {base.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </div>
                       )}
 
