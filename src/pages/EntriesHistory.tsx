@@ -172,7 +172,7 @@ const EntriesHistory = () => {
               </button>
             </div>
           ) : (
-            <>
+            <div className="max-h-[calc(100vh-300px)] overflow-y-auto">
               <EntriesTable
                 displayedEntries={displayedEntries}
                 hasOrthopedicCondition={hasOrthopedicCondition}
@@ -182,7 +182,7 @@ const EntriesHistory = () => {
               />
 
               {totalEntries > 0 && (
-                <div className="border-t px-4 py-2 flex items-center justify-between">
+                <div className="border-t px-4 py-2 flex items-center justify-between sticky bottom-0 bg-card">
                   <div className="text-sm text-muted-foreground">
                     מציג{" "}
                     {displayedEntries.length > 0
@@ -201,7 +201,7 @@ const EntriesHistory = () => {
                   />
                 </div>
               )}
-            </>
+            </div>
           )}
         </div>
       </div>

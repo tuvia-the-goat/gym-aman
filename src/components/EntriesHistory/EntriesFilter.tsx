@@ -13,7 +13,7 @@ import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { subDepartmentService } from "../../services/api";
-import { SubDepartment } from "@/types";
+import { SubDepartment, Department } from "@/types";
 import { Input } from "../ui/input";
 import {
   Select,
@@ -56,6 +56,22 @@ const EntriesFilter: React.FC<EntriesFilterProps> = ({
   const [filteredSubDepartments, setFilteredSubDepartments] = useState<
     SubDepartment[]
   >([]);
+  const [filteredDepartments, setFilteredDepartments] = useState<Department[]>([]);
+
+  // Filter departments based on selected base
+  useEffect(() => {
+    if (selectedBase) {
+      const baseDepartments = departments.filter(
+        (dept) => dept.baseId === selectedBase
+      );
+      setFilteredDepartments(baseDepartments);
+      // Reset department selection when base changes
+      setSelectedDepartment("");
+    } else {
+      setFilteredDepartments([]);
+      setSelectedDepartment("");
+    }
+  }, [selectedBase, departments]);
 
   // Filter subDepartments when department changes
   useEffect(() => {
@@ -78,7 +94,7 @@ const EntriesFilter: React.FC<EntriesFilterProps> = ({
           htmlFor="search"
           className="block text-sm font-medium mb-1 text-black"
         >
-          חיפוש לפי שם
+          חיפוש לפי שם או מ"א
         </label>
         <Input
           id="search"
@@ -135,32 +151,24 @@ const EntriesFilter: React.FC<EntriesFilterProps> = ({
               ? setSelectedDepartment("")
               : setSelectedDepartment(value);
           }}
+          disabled={!selectedBase}
         >
-          <SelectTrigger
-            className="input-field w-full"
-            style={{ marginLeft: "20px" }}
-          >
+          <SelectTrigger className="input-field w-full">
             <SelectValue placeholder="כל המסגרות" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all" className="flex justify-end">
               כל המסגרות
             </SelectItem>
-            {departments
-              .filter(
-                (dept) =>
-                  admin?.role === "generalAdmin" ||
-                  dept.baseId === admin?.baseId
-              )
-              .map((dept) => (
-                <SelectItem
-                  key={dept._id}
-                  value={dept._id}
-                  className="flex justify-end"
-                >
-                  {dept.name}
-                </SelectItem>
-              ))}
+            {filteredDepartments.map((department) => (
+              <SelectItem
+                key={department._id}
+                value={department._id}
+                className="flex justify-end"
+              >
+                {department.name}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>
