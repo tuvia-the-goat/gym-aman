@@ -11,7 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { format } from "date-fns";
+import { format, subDays, subWeeks, subMonths } from "date-fns";
 import { subDepartmentService } from "../../services/api";
 import { SubDepartment, Department } from "@/types";
 import { Input } from "../ui/input";
@@ -57,6 +57,7 @@ const EntriesFilter: React.FC<EntriesFilterProps> = ({
     SubDepartment[]
   >([]);
   const [filteredDepartments, setFilteredDepartments] = useState<Department[]>([]);
+  const [showDateRange, setShowDateRange] = useState(false);
 
   // Filter departments based on selected base
   useEffect(() => {
@@ -86,6 +87,45 @@ const EntriesFilter: React.FC<EntriesFilterProps> = ({
     );
     setFilteredSubDepartments(subDepts);
   }, [selectedDepartment, subDepartments, setSelectedSubDepartment]);
+
+  const handleQuickDateSelect = (value: string) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    switch (value) {
+      case "all":
+        setStartDate(undefined);
+        setEndDate(undefined);
+        setShowDateRange(false);
+        break;
+      case "today":
+        setStartDate(today);
+        setEndDate(today);
+        setShowDateRange(false);
+        break;
+      case "yesterday":
+        const yesterday = subDays(today, 1);
+        setStartDate(yesterday);
+        setEndDate(yesterday);
+        setShowDateRange(false);
+        break;
+      case "lastWeek":
+        const lastWeekStart = subWeeks(today, 1);
+        setStartDate(lastWeekStart);
+        setEndDate(today);
+        setShowDateRange(false);
+        break;
+      case "lastMonth":
+        const lastMonthStart = subMonths(today, 1);
+        setStartDate(lastMonthStart);
+        setEndDate(today);
+        setShowDateRange(false);
+        break;
+      case "personalized":
+        setShowDateRange(true);
+        break;
+    }
+  };
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4 p-4 bg-secondary rounded-lg">
@@ -212,63 +252,98 @@ const EntriesFilter: React.FC<EntriesFilterProps> = ({
           </SelectContent>
         </Select>
       </div>
-      <div className="xl:col-span-2">
-        <label className="block text-sm font-medium mb-1">טווח תאריכים</label>
-        <div className="flex items-center gap-2">
-          <span>מ-</span>
-          <div className="grid gap-2">
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant={"outline"}
-                  className={cn(
-                    "w-[180px] justify-start text-right",
-                    !startDate && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarIcon className="ml-2 h-4 w-4" />
-                  {startDate ? format(startDate, "yyyy-MM-dd") : "תאריך התחלה"}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={startDate}
-                  onSelect={setStartDate}
-                  initialFocus
-                  className={cn("p-3 pointer-events-auto")}
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
-          <span>עד</span>
-          <div className="grid gap-2">
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant={"outline"}
-                  className={cn(
-                    "w-[180px] justify-start text-right",
-                    !endDate && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarIcon className="ml-2 h-4 w-4" />
-                  {endDate ? format(endDate, "yyyy-MM-dd") : "תאריך סיום"}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={endDate}
-                  onSelect={setEndDate}
-                  initialFocus
-                  className={cn("p-3 pointer-events-auto")}
-                />
-              </PopoverContent>
-            </Popover>
+
+      <div>
+        <label className="block text-sm font-medium mb-1">סינון לפי זמן כניסה</label>
+        <Select
+          onValueChange={handleQuickDateSelect}
+          defaultValue="all"
+        >
+          <SelectTrigger className="input-field w-full">
+            <SelectValue placeholder="בחר תאריך" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all" className="flex justify-end">
+              כל התאריכים
+            </SelectItem>
+            <SelectItem value="today" className="flex justify-end">
+              היום
+            </SelectItem>
+            <SelectItem value="yesterday" className="flex justify-end">
+              אתמול
+            </SelectItem>
+            <SelectItem value="lastWeek" className="flex justify-end">
+              שבוע אחרון
+            </SelectItem>
+            <SelectItem value="lastMonth" className="flex justify-end">
+              חודש אחרון
+            </SelectItem>
+            <SelectItem value="personalized" className="flex justify-end">
+              תאריך מותאם אישית
+            </SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {showDateRange && (
+        <div className="xl:col-span-2">
+          <label className="block text-sm font-medium mb-1">טווח תאריכים</label>
+          <div className="flex items-center gap-2">
+            <span>מ-</span>
+            <div className="grid gap-2">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant={"outline"}
+                    className={cn(
+                      "w-[180px] justify-start text-right",
+                      !startDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="ml-2 h-4 w-4" />
+                    {startDate ? format(startDate, "yyyy-MM-dd") : "תאריך התחלה"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={startDate}
+                    onSelect={setStartDate}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+            <span>עד</span>
+            <div className="grid gap-2">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant={"outline"}
+                    className={cn(
+                      "w-[180px] justify-start text-right",
+                      !endDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="ml-2 h-4 w-4" />
+                    {endDate ? format(endDate, "yyyy-MM-dd") : "תאריך סיום"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={endDate}
+                    onSelect={setEndDate}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };
