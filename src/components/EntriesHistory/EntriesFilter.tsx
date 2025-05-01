@@ -59,6 +59,13 @@ const EntriesFilter: React.FC<EntriesFilterProps> = ({
   const [filteredDepartments, setFilteredDepartments] = useState<Department[]>([]);
   const [showDateRange, setShowDateRange] = useState(false);
 
+  // Set admin's base if they are a gymAdmin
+  useEffect(() => {
+    if (admin?.role === "gymAdmin" && admin.baseId) {
+      setSelectedBase(admin.baseId);
+    }
+  }, [admin, setSelectedBase]);
+
   // Filter departments based on selected base
   useEffect(() => {
     if (selectedBase) {
