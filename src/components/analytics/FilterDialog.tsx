@@ -1,13 +1,31 @@
-import React, { useState } from 'react';
-import { format } from 'date-fns';
-import { CalendarIcon, X, ChevronsUpDown, Check, Layers } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
-import { cn } from '@/lib/utils';
+import React, { useState } from "react";
+import { format } from "date-fns";
+import { CalendarIcon, X, ChevronsUpDown, Check, Layers } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogClose,
+} from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
+import { Trainee } from "@/types";
 
 interface Department {
   _id: string;
@@ -21,15 +39,11 @@ interface SubDepartment {
   departmentId: string;
 }
 
-interface Trainee {
-  _id: string;
-  fullName: string;
-  departmentId: string;
-  baseId: string;
-}
-
 interface TraineesByDepartment {
-  [departmentId: string]: Trainee[];
+  [departmentId: string]: {
+    trainees: Trainee[];
+    subDepartments: { [subDepartmentId: string]: Trainee[] };
+  };
 }
 
 interface FilterDialogProps {
@@ -79,18 +93,34 @@ const FilterDialog: React.FC<FilterDialogProps> = ({
   toggleTrainee,
   getDepartmentName,
   getBaseName,
-  isGeneralAdmin
+  isGeneralAdmin,
 }) => {
   const [openDepartmentCommand, setOpenDepartmentCommand] = useState(false);
-  const [openSubDepartmentCommand, setOpenSubDepartmentCommand] = useState(false);
+  const [openSubDepartmentCommand, setOpenSubDepartmentCommand] =
+    useState(false);
+  const [traineeSearch, setTraineeSearch] = useState("");
+
+  // Filter trainees based on search term
+  const filterTraineesBySearch = (trainees: Trainee[]) => {
+    if (!traineeSearch) return trainees;
+
+    const searchTerm = traineeSearch.toLowerCase();
+    return trainees.filter(
+      (trainee) =>
+        trainee.fullName.toLowerCase().includes(searchTerm) ||
+        trainee.personalId.toLowerCase().includes(searchTerm)
+    );
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md h-[90vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle className="text-xl text-center">סינון אנליטיקות</DialogTitle>
+          <DialogTitle className="text-xl text-center">
+            סינון אנליטיקות
+          </DialogTitle>
         </DialogHeader>
-        <div className="space-y-4 py-2">
+        <div className="space-y-4 py-2 flex-1 overflow-y-auto">
           <div className="space-y-2">
             <h3 className="font-medium">טווח תאריכים</h3>
             <div className="flex gap-2">
@@ -106,7 +136,9 @@ const FilterDialog: React.FC<FilterDialogProps> = ({
                       )}
                     >
                       <CalendarIcon className="ml-2 h-4 w-4" />
-                      {startDate ? format(startDate, "dd/MM/yyyy") : "בחר תאריך"}
+                      {startDate
+                        ? format(startDate, "dd/MM/yyyy")
+                        : "בחר תאריך"}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
@@ -148,11 +180,14 @@ const FilterDialog: React.FC<FilterDialogProps> = ({
               </div>
             </div>
           </div>
-          
+
           {/* Multiple Department Selection */}
           <div className="space-y-2">
             <h3 className="font-medium">בחירת מסגרות</h3>
-            <Popover open={openDepartmentCommand} onOpenChange={setOpenDepartmentCommand}>
+            <Popover
+              open={openDepartmentCommand}
+              onOpenChange={setOpenDepartmentCommand}
+            >
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
@@ -181,7 +216,9 @@ const FilterDialog: React.FC<FilterDialogProps> = ({
                           }}
                         >
                           <Checkbox
-                            checked={selectedDepartmentIds.includes(department._id)}
+                            checked={selectedDepartmentIds.includes(
+                              department._id
+                            )}
                             className="ml-2"
                           />
                           <span>{department.name}</span>
@@ -197,23 +234,26 @@ const FilterDialog: React.FC<FilterDialogProps> = ({
                 </Command>
               </PopoverContent>
             </Popover>
-            
+
             {selectedDepartmentIds.length > 0 && (
               <div className="flex flex-wrap gap-2 mt-2">
-                {selectedDepartmentIds.map(deptId => (
-                  <div key={deptId} className="bg-muted text-sm rounded-md px-2 py-1 flex items-center gap-1">
+                {selectedDepartmentIds.map((deptId) => (
+                  <div
+                    key={deptId}
+                    className="bg-muted text-sm rounded-md px-2 py-1 flex items-center gap-1"
+                  >
                     {getDepartmentName(deptId)}
-                    <button 
-                      onClick={() => toggleDepartment(deptId)} 
+                    <button
+                      onClick={() => toggleDepartment(deptId)}
                       className="hover:text-destructive"
                     >
                       <X size={14} />
                     </button>
                   </div>
                 ))}
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={() => setSelectedDepartmentIds([])}
                   className="text-xs"
                 >
@@ -222,160 +262,336 @@ const FilterDialog: React.FC<FilterDialogProps> = ({
               </div>
             )}
           </div>
-          
+
           {/* SubDepartment Selection */}
-          {setSelectedSubDepartmentIds && toggleSubDepartment && availableSubDepartments.length > 0 && (
-            <div className="space-y-2">
-              <h3 className="font-medium">בחירת תתי-מסגרות</h3>
-              <Popover open={openSubDepartmentCommand} onOpenChange={setOpenSubDepartmentCommand}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    role="combobox"
-                    aria-expanded={openSubDepartmentCommand}
-                    className="w-full justify-between text-right"
-                    disabled={selectedDepartmentIds.length === 0}
-                  >
-                    {selectedSubDepartmentIds.length > 0
-                      ? `${selectedSubDepartmentIds.length} תתי-מסגרות נבחרו`
-                      : selectedDepartmentIds.length === 0 
-                        ? "יש לבחור מסגרות תחילה" 
+          {setSelectedSubDepartmentIds &&
+            toggleSubDepartment &&
+            availableSubDepartments.length > 0 && (
+              <div className="space-y-2">
+                <h3 className="font-medium">בחירת תתי-מסגרות</h3>
+                <Popover
+                  open={openSubDepartmentCommand}
+                  onOpenChange={setOpenSubDepartmentCommand}
+                >
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={openSubDepartmentCommand}
+                      className="w-full justify-between text-right"
+                      disabled={selectedDepartmentIds.length === 0}
+                    >
+                      {selectedSubDepartmentIds.length > 0
+                        ? `${selectedSubDepartmentIds.length} תתי-מסגרות נבחרו`
+                        : selectedDepartmentIds.length === 0
+                        ? "יש לבחור מסגרות תחילה"
                         : "בחר תתי-מסגרות"}
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-full p-0">
-                  <Command>
-                    <CommandInput placeholder="חפש תת-מסגרת..." />
-                    <CommandList>
-                      <CommandEmpty>לא נמצאו תתי-מסגרות</CommandEmpty>
-                      <CommandGroup>
-                        {availableSubDepartments
-                          .filter(subDept => selectedDepartmentIds.includes(subDept.departmentId))
-                          .map((subDept) => (
-                          <CommandItem
-                            key={subDept._id}
-                            value={subDept.name}
-                            onSelect={() => {
-                              toggleSubDepartment(subDept._id);
-                            }}
-                          >
-                            <Checkbox
-                              checked={selectedSubDepartmentIds.includes(subDept._id)}
-                              className="ml-2"
-                            />
-                            <span>{subDept.name}</span>
-                            <span className="mr-auto text-xs text-muted-foreground">
-                              {getDepartmentName(subDept.departmentId)}
-                            </span>
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
-              
-              {selectedSubDepartmentIds.length > 0 && (
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {selectedSubDepartmentIds.map(subDeptId => {
-                    const subDept = availableSubDepartments.find(sd => sd._id === subDeptId);
-                    return (
-                      <div key={subDeptId} className="bg-muted text-sm rounded-md px-2 py-1 flex items-center gap-1">
-                        <Layers className="h-3 w-3 mr-1 text-muted-foreground" />
-                        {subDept?.name || "תת-מסגרת"}
-                        <button 
-                          onClick={() => toggleSubDepartment(subDeptId)} 
-                          className="hover:text-destructive"
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-full p-0">
+                    <Command>
+                      <CommandInput placeholder="חפש תת-מסגרת..." />
+                      <CommandList>
+                        <CommandEmpty>לא נמצאו תתי-מסגרות</CommandEmpty>
+                        <CommandGroup>
+                          {availableSubDepartments
+                            .filter((subDept) =>
+                              selectedDepartmentIds.includes(
+                                subDept.departmentId
+                              )
+                            )
+                            .map((subDept) => (
+                              <CommandItem
+                                key={subDept._id}
+                                value={subDept.name}
+                                onSelect={() => {
+                                  toggleSubDepartment(subDept._id);
+                                }}
+                              >
+                                <Checkbox
+                                  checked={selectedSubDepartmentIds.includes(
+                                    subDept._id
+                                  )}
+                                  className="ml-2"
+                                />
+                                <span>{subDept.name}</span>
+                                <span className="mr-auto text-xs text-muted-foreground">
+                                  {getDepartmentName(subDept.departmentId)}
+                                </span>
+                              </CommandItem>
+                            ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+
+                {selectedSubDepartmentIds.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {selectedSubDepartmentIds.map((subDeptId) => {
+                      const subDept = availableSubDepartments.find(
+                        (sd) => sd._id === subDeptId
+                      );
+                      return (
+                        <div
+                          key={subDeptId}
+                          className="bg-muted text-sm rounded-md px-2 py-1 flex items-center gap-1"
                         >
-                          <X size={14} />
-                        </button>
-                      </div>
-                    );
-                  })}
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    onClick={() => setSelectedSubDepartmentIds([])}
-                    className="text-xs"
-                  >
-                    נקה הכל
-                  </Button>
-                </div>
-              )}
-            </div>
-          )}
-          
-          {/* Trainees Selection (organized by department) */}
+                          <Layers className="h-3 w-3 mr-1 text-muted-foreground" />
+                          {subDept?.name || "תת-מסגרת"}
+                          <button
+                            onClick={() => toggleSubDepartment(subDeptId)}
+                            className="hover:text-destructive"
+                          >
+                            <X size={14} />
+                          </button>
+                        </div>
+                      );
+                    })}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setSelectedSubDepartmentIds([])}
+                      className="text-xs"
+                    >
+                      נקה הכל
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+
+          {/* Trainees Selection */}
           <div className="space-y-2">
             <h3 className="font-medium">בחירת מתאמנים</h3>
+
+            {/* Add search input */}
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="חיפוש לפי שם או מספר אישי..."
+                value={traineeSearch}
+                onChange={(e) => setTraineeSearch(e.target.value)}
+                className="w-full px-3 py-2 border rounded-md text-right"
+              />
+              {traineeSearch && (
+                <button
+                  onClick={() => setTraineeSearch("")}
+                  className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  <X size={16} />
+                </button>
+              )}
+            </div>
+
             <div className="max-h-64 overflow-y-auto border rounded-md">
               {Object.keys(traineesByDepartment).length === 0 ? (
-                <p className="text-center py-2 text-muted-foreground">אין מתאמנים זמינים</p>
+                <p className="text-center py-2 text-muted-foreground">
+                  אין מתאמנים זמינים
+                </p>
               ) : (
                 <div className="divide-y">
-                  {Object.entries(traineesByDepartment).map(([deptId, deptTrainees]) => (
-                    <div key={deptId} className="p-2">
-                      <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-medium text-sm">{getDepartmentName(deptId)}</h4>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="h-6 text-xs"
-                          onClick={() => {
-                            // Get trainee IDs for this department
-                            const traineeIds = deptTrainees.map(t => t._id);
-                            
-                            // Check if all trainees from this department are already selected
-                            const allSelected = traineeIds.every(id => selectedTrainees.includes(id));
-                            
-                            if (allSelected) {
-                              // If all are selected, remove all
-                              const newSelection = selectedTrainees.filter(id => !traineeIds.includes(id));
-                              setSelectedTrainees(newSelection);
-                            } else {
-                              // If not all are selected, add all
-                              const newSelection = [...selectedTrainees];
-                              traineeIds.forEach(id => {
-                                if (!newSelection.includes(id)) {
-                                  newSelection.push(id);
+                  {Object.entries(traineesByDepartment)
+                    .filter(
+                      ([deptId]) =>
+                        selectedDepartmentIds.length === 0 ||
+                        selectedDepartmentIds.includes(deptId)
+                    )
+                    .map(([deptId, deptData]) => {
+                      // Filter trainees in this department
+                      const filteredTrainees = filterTraineesBySearch(
+                        deptData.trainees
+                      );
+                      const filteredSubDepartments = Object.fromEntries(
+                        Object.entries(deptData.subDepartments).map(
+                          ([subDeptId, trainees]) => [
+                            subDeptId,
+                            filterTraineesBySearch(trainees),
+                          ]
+                        )
+                      );
+
+                      // Skip department if no trainees match the search
+                      if (
+                        filteredTrainees.length === 0 &&
+                        Object.values(filteredSubDepartments).every(
+                          (t) => t.length === 0
+                        )
+                      ) {
+                        return null;
+                      }
+
+                      return (
+                        <div key={deptId} className="p-2">
+                          <div className="flex items-center justify-between mb-2">
+                            <h4 className="font-medium text-sm">
+                              {getDepartmentName(deptId)}
+                            </h4>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 text-xs"
+                              onClick={() => {
+                                const traineeIds = filteredTrainees.map(
+                                  (t) => t._id
+                                );
+                                const allSelected = traineeIds.every((id) =>
+                                  selectedTrainees.includes(id)
+                                );
+
+                                if (allSelected) {
+                                  setSelectedTrainees(
+                                    selectedTrainees.filter(
+                                      (id) => !traineeIds.includes(id)
+                                    )
+                                  );
+                                } else {
+                                  const newSelection = [...selectedTrainees];
+                                  traineeIds.forEach((id) => {
+                                    if (!newSelection.includes(id)) {
+                                      newSelection.push(id);
+                                    }
+                                  });
+                                  setSelectedTrainees(newSelection);
                                 }
-                              });
-                              setSelectedTrainees(newSelection);
-                            }
-                          }}
-                        >
-                          {deptTrainees.every(t => selectedTrainees.includes(t._id)) 
-                            ? "בטל בחירת כולם" 
-                            : "בחר הכל"}
-                        </Button>
-                      </div>
-                      
-                      <div className="space-y-1 pl-2">
-                        {deptTrainees.map(trainee => (
-                          <div key={trainee._id} className="flex items-center space-x-2 justify-end">
-                            <label htmlFor={`trainee-${trainee._id}`} className="text-sm cursor-pointer mr-2 flex-1">
-                              {trainee.fullName}
-                            </label>
-                            <Checkbox 
-                              id={`trainee-${trainee._id}`}
-                              checked={selectedTrainees.includes(trainee._id)}
-                              onCheckedChange={() => toggleTrainee(trainee._id)}
-                            />
+                              }}
+                            >
+                              {filteredTrainees.every((t) =>
+                                selectedTrainees.includes(t._id)
+                              )
+                                ? "בטל בחירת כולם"
+                                : "בחר הכל"}
+                            </Button>
                           </div>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
+
+                          {/* Show trainees without subdepartment first */}
+                          {filteredTrainees.filter((t) => !t.subDepartmentId)
+                            .length > 0 && (
+                            <div className="space-y-1 pl-2 mb-2">
+                              {filteredTrainees
+                                .filter((t) => !t.subDepartmentId)
+                                .map((trainee) => (
+                                  <div
+                                    key={trainee._id}
+                                    className="flex items-center space-x-2 justify-end"
+                                  >
+                                    <label
+                                      htmlFor={`trainee-${trainee._id}`}
+                                      className="text-sm cursor-pointer mr-2 flex-1"
+                                    >
+                                      {trainee.fullName}
+                                    </label>
+                                    <Checkbox
+                                      id={`trainee-${trainee._id}`}
+                                      checked={selectedTrainees.includes(
+                                        trainee._id
+                                      )}
+                                      onCheckedChange={() =>
+                                        toggleTrainee(trainee._id)
+                                      }
+                                    />
+                                  </div>
+                                ))}
+                            </div>
+                          )}
+
+                          {/* Show trainees grouped by subdepartment */}
+                          {Object.entries(filteredSubDepartments)
+                            .filter(
+                              ([subDeptId, trainees]) =>
+                                (selectedSubDepartmentIds.length === 0 ||
+                                  selectedSubDepartmentIds.includes(
+                                    subDeptId
+                                  )) &&
+                                trainees.length > 0
+                            )
+                            .map(([subDeptId, subDeptTrainees]) => (
+                              <div
+                                key={subDeptId}
+                                className="space-y-1 pl-4 mb-2"
+                              >
+                                <div className="flex items-center justify-between">
+                                  <h5 className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+                                    <Layers className="h-3 w-3" />
+                                    {availableSubDepartments.find(
+                                      (sd) => sd._id === subDeptId
+                                    )?.name || "תת-מסגרת"}
+                                  </h5>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-5 text-xs"
+                                    onClick={() => {
+                                      const traineeIds = subDeptTrainees.map(
+                                        (t) => t._id
+                                      );
+                                      const allSelected = traineeIds.every(
+                                        (id) => selectedTrainees.includes(id)
+                                      );
+
+                                      if (allSelected) {
+                                        setSelectedTrainees(
+                                          selectedTrainees.filter(
+                                            (id) => !traineeIds.includes(id)
+                                          )
+                                        );
+                                      } else {
+                                        const newSelection = [
+                                          ...selectedTrainees,
+                                        ];
+                                        traineeIds.forEach((id) => {
+                                          if (!newSelection.includes(id)) {
+                                            newSelection.push(id);
+                                          }
+                                        });
+                                        setSelectedTrainees(newSelection);
+                                      }
+                                    }}
+                                  >
+                                    {subDeptTrainees.every((t) =>
+                                      selectedTrainees.includes(t._id)
+                                    )
+                                      ? "בטל הכל"
+                                      : "בחר הכל"}
+                                  </Button>
+                                </div>
+                                {subDeptTrainees.map((trainee) => (
+                                  <div
+                                    key={trainee._id}
+                                    className="flex items-center space-x-2 justify-end"
+                                  >
+                                    <label
+                                      htmlFor={`trainee-${trainee._id}`}
+                                      className="text-sm cursor-pointer mr-2 flex-1"
+                                    >
+                                      {trainee.fullName}
+                                    </label>
+                                    <Checkbox
+                                      id={`trainee-${trainee._id}`}
+                                      checked={selectedTrainees.includes(
+                                        trainee._id
+                                      )}
+                                      onCheckedChange={() =>
+                                        toggleTrainee(trainee._id)
+                                      }
+                                    />
+                                  </div>
+                                ))}
+                              </div>
+                            ))}
+                        </div>
+                      );
+                    })}
                 </div>
               )}
             </div>
-            
+
             {selectedTrainees.length > 0 && (
               <div className="flex justify-between items-center">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={() => setSelectedTrainees([])}
                 >
                   נקה בחירת מתאמנים
@@ -387,7 +603,7 @@ const FilterDialog: React.FC<FilterDialogProps> = ({
             )}
           </div>
         </div>
-        <div className="flex justify-end gap-2 mt-2">
+        <div className="flex justify-end gap-2 mt-2 pt-2 border-t">
           <Button variant="outline" onClick={clearFilters}>
             נקה הכל
           </Button>
