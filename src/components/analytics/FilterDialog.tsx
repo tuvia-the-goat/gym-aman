@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { format } from "date-fns";
+import { format, subDays, subWeeks, subMonths } from "date-fns";
 import { CalendarIcon, X, ChevronsUpDown, Check, Layers } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -26,6 +26,13 @@ import {
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { Trainee } from "@/types";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface Department {
   _id: string;
@@ -99,6 +106,7 @@ const FilterDialog: React.FC<FilterDialogProps> = ({
   const [openSubDepartmentCommand, setOpenSubDepartmentCommand] =
     useState(false);
   const [traineeSearch, setTraineeSearch] = useState("");
+  const [showDateRange, setShowDateRange] = useState(false);
 
   // Filter trainees based on search term
   const filterTraineesBySearch = (trainees: Trainee[]) => {
@@ -112,6 +120,45 @@ const FilterDialog: React.FC<FilterDialogProps> = ({
     );
   };
 
+  const handleQuickDateSelect = (value: string) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    switch (value) {
+      case "all":
+        setStartDate(undefined);
+        setEndDate(undefined);
+        setShowDateRange(false);
+        break;
+      case "today":
+        setStartDate(today);
+        setEndDate(today);
+        setShowDateRange(false);
+        break;
+      case "yesterday":
+        const yesterday = subDays(today, 1);
+        setStartDate(yesterday);
+        setEndDate(yesterday);
+        setShowDateRange(false);
+        break;
+      case "lastWeek":
+        const lastWeekStart = subWeeks(today, 1);
+        setStartDate(lastWeekStart);
+        setEndDate(today);
+        setShowDateRange(false);
+        break;
+      case "lastMonth":
+        const lastMonthStart = subMonths(today, 1);
+        setStartDate(lastMonthStart);
+        setEndDate(today);
+        setShowDateRange(false);
+        break;
+      case "personalized":
+        setShowDateRange(true);
+        break;
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md h-[90vh] flex flex-col">
@@ -123,62 +170,90 @@ const FilterDialog: React.FC<FilterDialogProps> = ({
         <div className="space-y-4 py-2 flex-1 overflow-y-auto">
           <div className="space-y-2">
             <h3 className="font-medium">טווח תאריכים</h3>
-            <div className="flex gap-2">
-              <div className="w-1/2">
-                <p className="text-sm mb-1">מתאריך:</p>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className={cn(
-                        "w-full justify-start text-right",
-                        !startDate && "text-muted-foreground"
-                      )}
-                    >
-                      <CalendarIcon className="ml-2 h-4 w-4" />
-                      {startDate
-                        ? format(startDate, "dd/MM/yyyy")
-                        : "בחר תאריך"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={startDate}
-                      onSelect={setStartDate}
-                      initialFocus
-                      className="p-3 pointer-events-auto"
-                    />
-                  </PopoverContent>
-                </Popover>
+            <Select onValueChange={handleQuickDateSelect} defaultValue="all">
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="בחר תאריך" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all" className="flex justify-end">
+                  כל התאריכים
+                </SelectItem>
+                <SelectItem value="today" className="flex justify-end">
+                  היום
+                </SelectItem>
+                <SelectItem value="yesterday" className="flex justify-end">
+                  אתמול
+                </SelectItem>
+                <SelectItem value="lastWeek" className="flex justify-end">
+                  שבוע אחרון
+                </SelectItem>
+                <SelectItem value="lastMonth" className="flex justify-end">
+                  חודש אחרון
+                </SelectItem>
+                <SelectItem value="personalized" className="flex justify-end">
+                  תאריך מותאם אישית
+                </SelectItem>
+              </SelectContent>
+            </Select>
+
+            {showDateRange && (
+              <div className="flex gap-2">
+                <div className="w-1/2">
+                  <p className="text-sm mb-1">מתאריך:</p>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-full justify-start text-right",
+                          !startDate && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="ml-2 h-4 w-4" />
+                        {startDate
+                          ? format(startDate, "dd/MM/yyyy")
+                          : "בחר תאריך"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={startDate}
+                        onSelect={setStartDate}
+                        initialFocus
+                        className="p-3 pointer-events-auto"
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+                <div className="w-1/2">
+                  <p className="text-sm mb-1">עד תאריך:</p>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-full justify-start text-right",
+                          !endDate && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="ml-2 h-4 w-4" />
+                        {endDate ? format(endDate, "dd/MM/yyyy") : "בחר תאריך"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={endDate}
+                        onSelect={setEndDate}
+                        initialFocus
+                        className="p-3 pointer-events-auto"
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
               </div>
-              <div className="w-1/2">
-                <p className="text-sm mb-1">עד תאריך:</p>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className={cn(
-                        "w-full justify-start text-right",
-                        !endDate && "text-muted-foreground"
-                      )}
-                    >
-                      <CalendarIcon className="ml-2 h-4 w-4" />
-                      {endDate ? format(endDate, "dd/MM/yyyy") : "בחר תאריך"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={endDate}
-                      onSelect={setEndDate}
-                      initialFocus
-                      className="p-3 pointer-events-auto"
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-            </div>
+            )}
           </div>
 
           {/* Multiple Department Selection */}
