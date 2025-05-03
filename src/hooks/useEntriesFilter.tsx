@@ -54,12 +54,15 @@ export const useEntriesFilter = () => {
         ? format(endDate, "yyyy-MM-dd")
         : undefined;
 
-      // Only apply the baseId filter for gym admins
-      const baseIdParam =
-        selectedBase ||
-        (admin?.role === "gymAdmin" ? admin?.baseId : undefined);
-
-      // Filter trainees by medical profile if needed
+      // Apply base filter based on admin role and selected base
+      let baseIdParam = undefined;
+      if (admin?.role === "gymAdmin") {
+        // Gym admins can only see their own base
+        baseIdParam = admin.baseId;
+      } else if (admin?.role === "generalAdmin" && selectedBase) {
+        // General admins can see specific base or all bases
+        baseIdParam = selectedBase;
+      }
 
       const result = await entryService.getPaginated({
         page: currentPage,
@@ -122,8 +125,14 @@ export const useEntriesFilter = () => {
       // Check if the new entry matches our current filters
 
       // Base filter check
-      if (selectedBase && entry.baseId !== selectedBase) {
-        return false;
+      if (admin?.role === "gymAdmin") {
+        if (entry.baseId !== admin.baseId) {
+          return false;
+        }
+      } else if (admin?.role === "generalAdmin" && selectedBase) {
+        if (entry.baseId !== selectedBase) {
+          return false;
+        }
       }
 
       // Department filter check
@@ -193,6 +202,7 @@ export const useEntriesFilter = () => {
     debouncedSearch,
     startDate,
     endDate,
+    admin,
     trainees,
   ]);
 

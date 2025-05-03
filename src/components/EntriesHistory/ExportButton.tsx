@@ -85,11 +85,13 @@ const ExportButton = ({
 
       // Format dates for API request
       const formattedStartDate = startDate
-        ? startDate.toISOString().split("T")[0]
+        ? new Date(startDate.getTime() + 24 * 60 * 60 * 1000).toISOString().split("T")[0]
         : undefined;
       const formattedEndDate = endDate
-        ? endDate.toISOString().split("T")[0]
+        ? new Date(endDate.getTime() + 24 * 60 * 60 * 1000).toISOString().split("T")[0]
         : undefined;
+        
+        console.log(formattedStartDate, formattedEndDate);
 
       // Only apply the baseId filter for gym admins if no specific base is selected
       const baseIdParam =

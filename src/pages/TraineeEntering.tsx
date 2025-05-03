@@ -425,21 +425,26 @@ const TraineeEntering = () => {
 
       {/* Content */}
       <div className="relative z-10 flex flex-col min-h-screen">
-        <header className="bg-primary text-primary-foreground py-4 px-6 shadow-md">
+        <header className="bg-blue-500/70 text-primary-foreground py-4 px-6 shadow-md">
           <div className="container mx-auto flex justify-between items-center">
             <div className="flex items-center space-x-3 space-x-reverse">
               <Dumbbell className="h-6 w-6" />
               <h1 className="text-2xl font-bold">מערכת אימ"ון</h1>
             </div>
-            <Button
-              onClick={() => navigate("/login")}
-              variant="ghost"
-              className="text-primary-foreground bg-primary-foreground/20 hover:bg-primary-foreground/10"
-            >
-              <LogIn className="ml-2 h-4 w-4" />
-              התחברות מנהלים
-            </Button>
-          </div>
+                <div className="flex justify-center gap-6">
+                  <img src="/amanLogo.png" alt="Aman Logo" className="h-16" />
+                  <img src="/artechLogo.png" alt="Artech Logo" className="h-16" />
+                  <img src="/hadrahaLogo.png" alt="Hadraha Logo" className="h-16" />
+                </div>
+              <Button
+                onClick={() => navigate("/login")}
+                variant="ghost"
+                className="text-primary-foreground bg-primary-foreground/20 hover:bg-primary-foreground/10"
+              >
+                <LogIn className="ml-2 h-4 w-4" />
+                התחברות מנהלים
+              </Button>
+            </div>
         </header>
         <main className="flex-1 container mx-auto px-6 py-8 max-w-5xl">
           <div className="max-w-4xl mx-auto">
@@ -471,10 +476,11 @@ const TraineeEntering = () => {
             {selectedBase && (
               <div className="space-y-3">
                 <div className="text-center">
-                  <span className="inline-block px-4 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium mb-1">
+                  <span className="inline-block px-4 py-1 bg-white/10 text-white rounded-full text-sm font-medium mb-1">
                     בסיס: {selectedBase.name}
                   </span>
                 </div>
+
 
                 {view === "entry" && (
                   <div className="glass max-w-xl mx-auto p-6 rounded-2xl animate-fade-up shadow-lg border border-border/30">
@@ -503,6 +509,11 @@ const TraineeEntering = () => {
                                   .replace(/\D/g, "")
                                   .slice(0, 7);
                                 setEntryPersonalId(value);
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  handlePersonalIdCheck();
+                                }
                               }}
                               className="input-field pr-10"
                               placeholder="הזן את מספרך האישי"

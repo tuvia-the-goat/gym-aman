@@ -69,7 +69,12 @@ const Login = () => {
   };
   return <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-b from-blue-50 to-background">
       <div className="w-full max-w-md">
-        <div className="glass p-8 rounded-2xl animate-fade-up shadow-lg border border-border/30">
+      <div className="flex justify-center gap-6 mb-10">
+                  <img src="/amanLogo.png" alt="Aman Logo" className="h-16" />
+                  <img src="/artechLogo.png" alt="Artech Logo" className="h-16" />
+                  <img src="/hadrahaLogo.png" alt="Hadraha Logo" className="h-16" />
+                </div>
+        <div className="glass p-8 rounded-2xl mb-40 animate-fade-up shadow-lg border border-border/30">
           <div className="text-center mb-8">
             <div className="flex justify-center mb-4">
               <div className="bg-primary/10 p-3 rounded-full">
@@ -77,7 +82,7 @@ const Login = () => {
               </div>
             </div>
             <h1 className="text-3xl font-bold mb-2 bg-gradient-to-b from-foreground to-foreground/70 bg-clip-text text-transparent">מערכת אימ"ון</h1>
-            <p className="text-muted-foreground">התחבר כדי להמשיך</p>
+            <p className="text-muted-foreground">כניסת מנהלים, התחבר כדי להמשיך</p>
           </div>
           
           <form onSubmit={handleLogin} className="space-y-6">
