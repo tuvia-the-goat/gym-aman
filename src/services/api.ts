@@ -161,6 +161,35 @@ export const departmentService = {
     return response.data;
   },
 
+  // Get paginated departments
+  getPaginated: async (params: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    baseId?: string;
+  }): Promise<{
+    departments: Department[];
+    pagination: {
+      total: number;
+      page: number;
+      limit: number;
+      pages: number;
+    };
+  }> => {
+    const queryParams = new URLSearchParams();
+
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== "") {
+        queryParams.append(key, String(value));
+      }
+    });
+
+    const response = await api.get(
+      `/departments/paginated?${queryParams.toString()}`
+    );
+    return response.data;
+  },
+
   // Create new department
   create: async (departmentData: {
     name: string;

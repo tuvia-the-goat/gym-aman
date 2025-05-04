@@ -66,6 +66,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useInView } from "react-intersection-observer";
 
 const Settings = () => {
   const {
@@ -200,57 +201,6 @@ const Settings = () => {
     departmentsFuse.setCollection(departments);
     subDepartmentsFuse.setCollection(subDepartments);
   }, [departments, subDepartments]);
-
-  // Enhanced search function
-  const handleSearch = async (query: string) => {
-    setSearchQuery(query);
-
-    // Clear any existing timeout
-    if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current);
-    }
-
-    // If query is empty, clear results and open items
-    if (!query.trim()) {
-      setSearchResults(null);
-      setSearchSuggestions({ departments: [], subDepartments: [] });
-      setOpenAccordionItems([]);
-      return;
-    }
-
-    // Set a new timeout for the search
-    searchTimeoutRef.current = setTimeout(async () => {
-      try {
-        // Local fuzzy search for suggestions
-        const deptResults = departmentsFuse.search(query);
-        const subDeptResults = subDepartmentsFuse.search(query);
-
-        setSearchSuggestions({
-          departments: deptResults.map((result) => result.item),
-          subDepartments: subDeptResults.map((result) => result.item),
-        });
-
-        // API search for full results
-        const results = await departmentService.search(query);
-        setSearchResults(results);
-
-        // Get unique department IDs that contain matching subdepartments
-        const departmentsWithMatchingSubdepartments = new Set(
-          results.subDepartments.map((subDept) => subDept.departmentId)
-        );
-
-        // Set the open accordion items (only departments with matching subdepartments)
-        setOpenAccordionItems([...departmentsWithMatchingSubdepartments]);
-      } catch (error) {
-        console.error("Error searching departments:", error);
-        toast({
-          title: "שגיאה",
-          description: "אירעה שגיאה בעת החיפוש",
-          variant: "destructive",
-        });
-      }
-    }, 300);
-  };
 
   // Cleanup search timeout on unmount
   useEffect(() => {
@@ -427,20 +377,39 @@ const Settings = () => {
     }
 
     try {
+      // Optimistically update UI
+      const tempDepartment = {
+        _id: `temp-${Date.now()}`,
+        name: newDepartmentName,
+        baseId: selectedBaseForDepartment,
+        numOfPeople: newDepartmentNumOfPeople,
+      };
+      setDepartments([...departments, tempDepartment]);
+
+      // Reset form
+      setNewDepartmentName("");
+      setNewDepartmentNumOfPeople(0);
+      setSelectedBaseForDepartment("");
+
+      // Make API call
       const newDepartment = await departmentService.create({
         name: newDepartmentName,
         baseId: selectedBaseForDepartment,
         numOfPeople: newDepartmentNumOfPeople,
       });
-      setDepartments([...departments, newDepartment]);
-      setNewDepartmentName("");
-      setNewDepartmentNumOfPeople(0);
-      setSelectedBaseForDepartment("");
+
+      // Update with real data
+      setDepartments(departments.map(dept => 
+        dept._id === tempDepartment._id ? newDepartment : dept
+      ));
+
       toast({
         title: "הצלחה",
         description: "המחלקה נוספה בהצלחה",
       });
     } catch (error) {
+      // Revert optimistic update on error
+      setDepartments(departments.filter(dept => dept._id !== `temp-${Date.now()}`));
       console.error("Error adding department:", error);
       toast({
         title: "שגיאה",
@@ -481,19 +450,43 @@ const Settings = () => {
     }
 
     try {
-      const updatedDepartment = await departmentService.update(departmentId, {
+      // Optimistically update UI
+      const updatedDepartment = {
+        _id: departmentId,
+        name: editDepartmentName,
+        baseId: editDepartmentBaseId,
+        numOfPeople: editDepartmentNumOfPeople,
+      };
+      setDepartments(departments.map(dept => 
+        dept._id === departmentId ? updatedDepartment : dept
+      ));
+
+      // Reset editing state
+      setEditingDepartmentId(null);
+      setEditDepartmentName("");
+      setEditDepartmentBaseId("");
+      setEditDepartmentNumOfPeople(0);
+
+      // Make API call
+      const result = await departmentService.update(departmentId, {
         name: editDepartmentName,
         numOfPeople: editDepartmentNumOfPeople,
       });
-      setDepartments(
-        departments.map((d) => (d._id === departmentId ? updatedDepartment : d))
-      );
-      setEditingDepartmentId(null);
+
+      // Update with real data
+      setDepartments(departments.map(dept => 
+        dept._id === departmentId ? result : dept
+      ));
+
       toast({
         title: "הצלחה",
         description: "המחלקה עודכנה בהצלחה",
       });
     } catch (error) {
+      // Revert optimistic update on error
+      setDepartments(departments.map(dept => 
+        dept._id === departmentId ? departments.find(d => d._id === departmentId)! : dept
+      ));
       console.error("Error updating department:", error);
       toast({
         title: "שגיאה",
@@ -559,20 +552,58 @@ const Settings = () => {
     }
 
     try {
+      // Optimistically update UI
+      const tempSubDepartment = {
+        _id: `temp-${Date.now()}`,
+        name: newSubDepartmentName,
+        departmentId: selectedDepartmentForSubDepartment,
+        numOfPeople: newSubDepartmentNumOfPeople,
+      };
+      setSubDepartments([...subDepartments, tempSubDepartment]);
+      setLoadedSubDepartments(prev => ({
+        ...prev,
+        [selectedDepartmentForSubDepartment]: [
+          ...(prev[selectedDepartmentForSubDepartment] || []),
+          tempSubDepartment
+        ]
+      }));
+
+      // Reset form
+      setNewSubDepartmentName("");
+      setNewSubDepartmentNumOfPeople(0);
+      setSelectedDepartmentForSubDepartment("");
+
+      // Make API call
       const newSubDepartment = await subDepartmentService.create({
         name: newSubDepartmentName,
         departmentId: selectedDepartmentForSubDepartment,
         numOfPeople: newSubDepartmentNumOfPeople,
       });
-      setSubDepartments([...subDepartments, newSubDepartment]);
-      setNewSubDepartmentName("");
-      setNewSubDepartmentNumOfPeople(0);
-      setSelectedDepartmentForSubDepartment("");
+
+      // Update with real data
+      setSubDepartments(subDepartments.map(subDept => 
+        subDept._id === tempSubDepartment._id ? newSubDepartment : subDept
+      ));
+      setLoadedSubDepartments(prev => ({
+        ...prev,
+        [selectedDepartmentForSubDepartment]: prev[selectedDepartmentForSubDepartment]?.map(subDept =>
+          subDept._id === tempSubDepartment._id ? newSubDepartment : subDept
+        ) || [newSubDepartment]
+      }));
+
       toast({
         title: "הצלחה",
         description: "תת-המחלקה נוספה בהצלחה",
       });
     } catch (error) {
+      // Revert optimistic update on error
+      setSubDepartments(subDepartments.filter(subDept => subDept._id !== `temp-${Date.now()}`));
+      setLoadedSubDepartments(prev => ({
+        ...prev,
+        [selectedDepartmentForSubDepartment]: prev[selectedDepartmentForSubDepartment]?.filter(
+          subDept => subDept._id !== `temp-${Date.now()}`
+        ) || []
+      }));
       console.error("Error adding subdepartment:", error);
       toast({
         title: "שגיאה",
@@ -613,25 +644,65 @@ const Settings = () => {
     }
 
     try {
-      const updatedSubDepartment = await subDepartmentService.update(
-        subDepartmentId,
-        {
-          name: editSubDepartmentName,
-          departmentId: editSubDepartmentDepartmentId,
-          numOfPeople: editSubDepartmentNumOfPeople,
-        }
-      );
-      setSubDepartments(
-        subDepartments.map((s) =>
-          s._id === subDepartmentId ? updatedSubDepartment : s
-        )
-      );
+      // Optimistically update UI
+      const updatedSubDepartment = {
+        _id: subDepartmentId,
+        name: editSubDepartmentName,
+        departmentId: editSubDepartmentDepartmentId,
+        numOfPeople: editSubDepartmentNumOfPeople,
+      };
+      setSubDepartments(subDepartments.map(subDept => 
+        subDept._id === subDepartmentId ? updatedSubDepartment : subDept
+      ));
+      setLoadedSubDepartments(prev => ({
+        ...prev,
+        [editSubDepartmentDepartmentId]: prev[editSubDepartmentDepartmentId]?.map(subDept =>
+          subDept._id === subDepartmentId ? updatedSubDepartment : subDept
+        ) || [updatedSubDepartment]
+      }));
+
+      // Reset editing state
       setEditingSubDepartmentId(null);
+      setEditSubDepartmentName("");
+      setEditSubDepartmentDepartmentId("");
+      setEditSubDepartmentNumOfPeople(0);
+
+      // Make API call
+      const result = await subDepartmentService.update(subDepartmentId, {
+        name: editSubDepartmentName,
+        departmentId: editSubDepartmentDepartmentId,
+        numOfPeople: editSubDepartmentNumOfPeople,
+      });
+
+      // Update with real data
+      setSubDepartments(subDepartments.map(subDept => 
+        subDept._id === subDepartmentId ? result : subDept
+      ));
+      setLoadedSubDepartments(prev => ({
+        ...prev,
+        [editSubDepartmentDepartmentId]: prev[editSubDepartmentDepartmentId]?.map(subDept =>
+          subDept._id === subDepartmentId ? result : subDept
+        ) || [result]
+      }));
+
       toast({
         title: "הצלחה",
         description: "תת-המחלקה עודכנה בהצלחה",
       });
     } catch (error) {
+      // Revert optimistic update on error
+      const originalSubDepartment = subDepartments.find(s => s._id === subDepartmentId);
+      if (originalSubDepartment) {
+        setSubDepartments(subDepartments.map(subDept => 
+          subDept._id === subDepartmentId ? originalSubDepartment : subDept
+        ));
+        setLoadedSubDepartments(prev => ({
+          ...prev,
+          [editSubDepartmentDepartmentId]: prev[editSubDepartmentDepartmentId]?.map(subDept =>
+            subDept._id === subDepartmentId ? originalSubDepartment : subDept
+          ) || [originalSubDepartment]
+        }));
+      }
       console.error("Error updating subdepartment:", error);
       toast({
         title: "שגיאה",
@@ -1404,6 +1475,152 @@ const Settings = () => {
         variant: "destructive",
       });
     }
+  };
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadedSubDepartments, setLoadedSubDepartments] = useState<{[key: string]: SubDepartment[]}>({});
+  const { ref: loadMoreRef, inView } = useInView();
+
+  // Function to load departments
+  const loadDepartments = async (page: number) => {
+    try {
+      setIsLoading(true);
+      const result = await departmentService.getPaginated({
+        page,
+        limit: 10,
+        baseId: selectedBaseFilter !== "all" ? selectedBaseFilter : undefined,
+      });
+
+      if (page === 1) {
+        setDepartments(result.departments);
+      } else {
+        // Filter out duplicates before adding new departments
+        const existingIds = new Set(departments.map(dept => dept._id));
+        const newDepartments = result.departments.filter(dept => !existingIds.has(dept._id));
+        setDepartments([...departments, ...newDepartments]);
+      }
+
+      setHasMore(page < result.pagination.pages);
+      setCurrentPage(page);
+    } catch (error) {
+      console.error("Error loading departments:", error);
+      toast({
+        title: "שגיאה",
+        description: "אירעה שגיאה בטעינת המסגרות",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Load subdepartments for a department
+  const loadSubDepartments = async (departmentId: string) => {
+    if (loadedSubDepartments[departmentId]) return;
+
+    try {
+      const subDepts = await subDepartmentService.getByDepartment(departmentId);
+      setLoadedSubDepartments(prev => ({
+        ...prev,
+        [departmentId]: subDepts
+      }));
+    } catch (error) {
+      console.error("Error loading subdepartments:", error);
+      toast({
+        title: "שגיאה",
+        description: "אירעה שגיאה בטעינת תתי-המסגרות",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Load initial departments
+  useEffect(() => {
+    if (!searchQuery) {
+      loadDepartments(1);
+    }
+  }, [selectedBaseFilter]);
+
+  // Load more departments when scrolling
+  useEffect(() => {
+    if (inView && hasMore && !isLoading && !searchQuery) {
+      loadDepartments(currentPage + 1);
+    }
+  }, [inView, hasMore, isLoading, currentPage, searchQuery]);
+
+  // Handle search
+  const handleSearch = async (query: string) => {
+    setSearchQuery(query);
+    setCurrentPage(1);
+    setHasMore(true);
+    
+    // Clear any existing timeout
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    // If query is empty, reset everything
+    if (!query.trim()) {
+      setSearchResults(null);
+      setSearchSuggestions({ departments: [], subDepartments: [] });
+      setOpenAccordionItems([]);
+      await loadDepartments(1);
+      return;
+    }
+
+    // Set a new timeout for the search
+    searchTimeoutRef.current = setTimeout(() => {
+      (async () => {
+        try {
+          // API search for full results
+          const results = await departmentService.search(query);
+          setSearchResults(results);
+          setDepartments(results.departments);
+
+          // Get all departments that have matching subdepartments
+          const departmentsWithMatchingSubdepartments = new Set(
+            results.subDepartments.map((subDept) => subDept.departmentId)
+          );
+
+          // Set the open accordion items to show all departments with matching subdepartments
+          setOpenAccordionItems([...departmentsWithMatchingSubdepartments]);
+
+          // Update loadedSubDepartments with the search results
+          const subDeptsByDepartment = results.subDepartments.reduce((acc, subDept) => {
+            if (!acc[subDept.departmentId]) {
+              acc[subDept.departmentId] = [];
+            }
+            acc[subDept.departmentId].push(subDept);
+            return acc;
+          }, {} as { [key: string]: SubDepartment[] });
+
+          setLoadedSubDepartments(prev => ({
+            ...prev,
+            ...subDeptsByDepartment
+          }));
+        } catch (error) {
+          console.error("Error searching departments:", error);
+          toast({
+            title: "שגיאה",
+            description: "אירעה שגיאה בעת החיפוש",
+            variant: "destructive",
+          });
+        }
+      })();
+    }, 300);
+  };
+
+  // Handle accordion change
+  const handleAccordionChange = (value: string[]) => {
+    setOpenAccordionItems(value);
+    // Load subdepartments for newly opened departments
+    value.forEach(deptId => {
+      if (!loadedSubDepartments[deptId]) {
+        loadSubDepartments(deptId);
+      }
+    });
   };
 
   return (
@@ -2255,6 +2472,9 @@ const Settings = () => {
                               subDepartments: [],
                             });
                             setOpenAccordionItems([]);
+                            setCurrentPage(1);
+                            setHasMore(true);
+                            loadDepartments(1);
                           }}
                         >
                           <X className="h-4 w-4" />
@@ -2263,197 +2483,116 @@ const Settings = () => {
                     </div>
                   </div>
 
-                  <Accordion
-                    type="multiple"
-                    className="w-full"
-                    value={openAccordionItems}
-                    onValueChange={setOpenAccordionItems}
-                  >
-                    {(searchResults ? searchResults.departments : departments)
-                      .filter(
-                        (dept) =>
-                          (admin?.role === "generalAdmin" ||
-                            dept.baseId === admin?.baseId) &&
-                          (selectedBaseFilter === "all" ||
-                            dept.baseId === selectedBaseFilter)
-                      )
-                      .map((department) => {
-                        // Get all subdepartments for this department
-                        const allDepartmentSubDepartments =
-                          subDepartments.filter(
-                            (subDept) => subDept.departmentId === department._id
-                          );
-
-                        // Get matching subdepartments from search results
-                        const matchingSubDepartments = searchResults
-                          ? searchResults.subDepartments.filter(
-                              (subDept) =>
-                                subDept.departmentId === department._id
-                            )
-                          : [];
-
-                        // Show all departments when not searching
-                        if (!searchQuery) {
-                          return (
-                            <AccordionItem
-                              key={department._id}
-                              value={department._id}
-                            >
-                              <AccordionTrigger className="flex justify-between">
-                                <div className="flex flex-row gap-2 items-center">
-                                  <span>{department.name}</span>
-                                  <span className="text-sm text-muted-foreground">
-                                    ({department.numOfPeople} אנשים)
-                                  </span>
-                                  {admin?.role === "generalAdmin" && (
-                                    <span className="text-sm text-muted-foreground">
-                                      ({getBaseName(department.baseId)})
-                                    </span>
-                                  )}
-                                </div>
-                              </AccordionTrigger>
-                              <AccordionContent>
-                                <ul className="space-y-2">
-                                  {allDepartmentSubDepartments.map(
-                                    (subDept) => (
-                                      <li
-                                        key={subDept._id}
-                                        className="flex items-center gap-2"
-                                      >
-                                        <span>{subDept.name}</span>
-                                        <span className="text-sm text-muted-foreground">
-                                          ({subDept.numOfPeople} אנשים)
-                                        </span>
-                                      </li>
-                                    )
-                                  )}
-                                  <li>
-                                    <div className="flex gap-2">
-                                      <Button
-                                        variant="ghost"
-                                        className="flex-1 flex items-center gap-2 justify-center text-muted-foreground hover:text-foreground"
-                                        onClick={() => {
-                                          setEditingDepartmentWithSubDepartments(null);
-                                          setEditDepartmentWithSubDepartmentsName("");
-                                          setEditDepartmentWithSubDepartmentsNumOfPeople(0);
-                                    
-                                          setAddingSubDepartmentsTo(
-                                            department._id
-                                          );
-                                          setNewSubDepartmentInputs([
-                                            { name: "", numOfPeople: 0 },
-                                          ]);
-                                        }}
-                                      >
-                                        <PlusIcon className="h-4 w-4" />
-                                        <span>הוספת תת-מסגרת חדשה</span>
-                                      </Button>
-                                      <Button
-                                        variant="ghost"
-                                        className="flex items-center gap-2 justify-center text-muted-foreground hover:text-foreground"
-                                        onClick={() =>
-                                          startEditDepartmentWithSubDepartments(
-                                            department._id
-                                          )
-                                        }
-                                      >
-                                        <PencilIcon className="h-4 w-4" />
-                                        <span>עריכה</span>
-                                      </Button>
-                                    </div>
-                                  </li>
-                                </ul>
-                              </AccordionContent>
-                            </AccordionItem>
-                          );
-                        }
-
-                        // When searching, only show departments that have matching subdepartments or match the search query themselves
-                        if (
-                          searchResults &&
-                          matchingSubDepartments.length === 0 &&
-                          !searchResults.departments.find(
-                            (d) => d._id === department._id
+                  <div className="h-[600px] overflow-y-auto pr-2">
+                    <Accordion
+                      type="multiple"
+                      className="w-full"
+                      value={openAccordionItems}
+                      onValueChange={handleAccordionChange}
+                    >
+                      {departments.length === 0 && searchQuery ? (
+                        <div className="text-center py-8 text-muted-foreground">
+                          לא נמצאו מסגרות או תתי-מסגרות התואמות לחיפוש
+                        </div>
+                      ) : (
+                        departments
+                          .filter(
+                            (dept) =>
+                              (admin?.role === "generalAdmin" ||
+                                dept.baseId === admin?.baseId) &&
+                              (selectedBaseFilter === "all" ||
+                                dept.baseId === selectedBaseFilter)
                           )
-                        ) {
-                          return null;
-                        }
+                          .map((department) => {
+                            // Get subdepartments for this department
+                            const departmentSubDepartments = loadedSubDepartments[department._id] || [];
 
-                        return (
-                          <AccordionItem
-                            key={department._id}
-                            value={department._id}
-                          >
-                            <AccordionTrigger className="flex justify-between">
-                              <div className="flex flex-row gap-2 items-center">
-                                <span>{department.name}</span>
-                                <span className="text-sm text-muted-foreground">
-                                  ({department.numOfPeople} אנשים)
-                                </span>
-                                {admin?.role === "generalAdmin" && (
-                                  <span className="text-sm text-muted-foreground">
-                                    ({getBaseName(department.baseId)})
-                                  </span>
-                                )}
-                              </div>
-                            </AccordionTrigger>
-                            <AccordionContent>
-                              <ul className="space-y-2">
-                                {allDepartmentSubDepartments.map((subDept) => (
-                                  <li
-                                    key={subDept._id}
-                                    className={`flex items-center gap-2 ${
-                                      matchingSubDepartments.some(
-                                        (matching) =>
-                                          matching._id === subDept._id
-                                      )
-                                        ? "font-bold"
-                                        : ""
-                                    }`}
-                                  >
-                                    <span>{subDept.name}</span>
+                            return (
+                              <AccordionItem
+                                key={department._id}
+                                value={department._id}
+                              >
+                                <AccordionTrigger className="flex justify-between">
+                                  <div className="flex flex-row gap-2 items-center">
+                                    <span>{department.name}</span>
                                     <span className="text-sm text-muted-foreground">
-                                      ({subDept.numOfPeople} אנשים)
+                                      ({department.numOfPeople} אנשים)
                                     </span>
-                                  </li>
-                                ))}
-                                <li>
-                                  <div className="flex gap-2">
-                                    <Button
-                                      variant="ghost"
-                                      className="flex-1 flex items-center gap-2 justify-center text-muted-foreground hover:text-foreground"
-                                      onClick={() => {
-                                        setAddingSubDepartmentsTo(
-                                          department._id
-                                        );
-                                        setNewSubDepartmentInputs([
-                                          { name: "", numOfPeople: 0 },
-                                        ]);
-                                      }}
-                                    >
-                                      <PlusIcon className="h-4 w-4" />
-                                      <span>הוספת תת-מסגרת חדשה</span>
-                                    </Button>
-                                    <Button
-                                      variant="ghost"
-                                      className="flex items-center gap-2 justify-center text-muted-foreground hover:text-foreground"
-                                      onClick={() =>
-                                        startEditDepartmentWithSubDepartments(
-                                          department._id
-                                        )
-                                      }
-                                    >
-                                      <PencilIcon className="h-4 w-4" />
-                                      <span>עריכה</span>
-                                    </Button>
+                                    {admin?.role === "generalAdmin" && (
+                                      <span className="text-sm text-muted-foreground">
+                                        ({getBaseName(department.baseId)})
+                                      </span>
+                                    )}
                                   </div>
-                                </li>
-                              </ul>
-                            </AccordionContent>
-                          </AccordionItem>
-                        );
-                      })}
-                  </Accordion>
+                                </AccordionTrigger>
+                                <AccordionContent>
+                                  <ul className="space-y-2">
+                                    {!loadedSubDepartments[department._id] ? (
+                                      <div className="flex items-center justify-center py-4">
+                                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                                      </div>
+                                    ) : departmentSubDepartments.length === 0 ? (
+                                      <div className="text-center py-4 text-muted-foreground">
+                                        אין תתי-מסגרות
+                                      </div>
+                                    ) : (
+                                      departmentSubDepartments.map((subDept) => (
+                                        <li
+                                          key={subDept._id}
+                                          className="flex items-center gap-2"
+                                        >
+                                          <span>{subDept.name}</span>
+                                          <span className="text-sm text-muted-foreground">
+                                            ({subDept.numOfPeople} אנשים)
+                                          </span>
+                                        </li>
+                                      ))
+                                    )}
+                                    <li>
+                                      <div className="flex gap-2">
+                                        <Button
+                                          variant="ghost"
+                                          className="flex-1 flex items-center gap-2 justify-center text-muted-foreground hover:text-foreground"
+                                          onClick={() => {
+                                            setEditingDepartmentWithSubDepartments(null);
+                                            setEditDepartmentWithSubDepartmentsName("");
+                                            setEditDepartmentWithSubDepartmentsNumOfPeople(0);
+                                            setAddingSubDepartmentsTo(department._id);
+                                            setNewSubDepartmentInputs([
+                                              { name: "", numOfPeople: 0 },
+                                            ]);
+                                          }}
+                                        >
+                                          <PlusIcon className="h-4 w-4" />
+                                          <span>הוספת תת-מסגרת חדשה</span>
+                                        </Button>
+                                        <Button
+                                          variant="ghost"
+                                          className="flex items-center gap-2 justify-center text-muted-foreground hover:text-foreground"
+                                          onClick={() =>
+                                            startEditDepartmentWithSubDepartments(
+                                              department._id
+                                            )
+                                          }
+                                        >
+                                          <PencilIcon className="h-4 w-4" />
+                                          <span>עריכה</span>
+                                        </Button>
+                                      </div>
+                                    </li>
+                                  </ul>
+                                </AccordionContent>
+                              </AccordionItem>
+                            );
+                          })
+                      )}
+                    </Accordion>
+                    {hasMore && (
+                      <div ref={loadMoreRef} className="h-10 flex items-center justify-center">
+                        {isLoading && <div className="animate-spin">...</div>}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -2576,18 +2715,18 @@ const Settings = () => {
                                     <Button
                                       size="sm"
                                       variant="ghost"
-                                      onClick={() => saveEditBase(base._id)}
-                                      className="h-8 w-8 p-0"
-                                    >
-                                      <CheckIcon className="h-4 w-4 text-green-600" />
-                                    </Button>
-                                    <Button
-                                      size="sm"
-                                      variant="ghost"
                                       onClick={cancelEditBase}
                                       className="h-8 w-8 p-0"
                                     >
                                       <XIcon className="h-4 w-4 text-red-600" />
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      onClick={() => saveEditBase(base._id)}
+                                      className="h-8 w-8 p-0"
+                                    >
+                                      <CheckIcon className="h-4 w-4 text-green-600" />
                                     </Button>
                                   </>
                                 ) : (
