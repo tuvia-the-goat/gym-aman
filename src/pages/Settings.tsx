@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import DashboardLayout from "../components/DashboardLayout";
 import { useAdmin } from "../context/AdminContext";
 import { useToast } from "@/components/ui/use-toast";
@@ -552,19 +552,20 @@ const Settings = () => {
     }
 
     try {
-      // Optimistically update UI
-      const tempSubDepartment = {
-        _id: `temp-${Date.now()}`,
+      // Create new subdepartment via API
+      const newSubDepartment = await subDepartmentService.create({
         name: newSubDepartmentName,
         departmentId: selectedDepartmentForSubDepartment,
         numOfPeople: newSubDepartmentNumOfPeople,
-      };
-      setSubDepartments([...subDepartments, tempSubDepartment]);
+      });
+
+      // Update local state
+      setSubDepartments([...subDepartments, newSubDepartment]);
       setLoadedSubDepartments(prev => ({
         ...prev,
         [selectedDepartmentForSubDepartment]: [
           ...(prev[selectedDepartmentForSubDepartment] || []),
-          tempSubDepartment
+          newSubDepartment
         ]
       }));
 
@@ -573,37 +574,11 @@ const Settings = () => {
       setNewSubDepartmentNumOfPeople(0);
       setSelectedDepartmentForSubDepartment("");
 
-      // Make API call
-      const newSubDepartment = await subDepartmentService.create({
-        name: newSubDepartmentName,
-        departmentId: selectedDepartmentForSubDepartment,
-        numOfPeople: newSubDepartmentNumOfPeople,
-      });
-
-      // Update with real data
-      setSubDepartments(subDepartments.map(subDept => 
-        subDept._id === tempSubDepartment._id ? newSubDepartment : subDept
-      ));
-      setLoadedSubDepartments(prev => ({
-        ...prev,
-        [selectedDepartmentForSubDepartment]: prev[selectedDepartmentForSubDepartment]?.map(subDept =>
-          subDept._id === tempSubDepartment._id ? newSubDepartment : subDept
-        ) || [newSubDepartment]
-      }));
-
       toast({
         title: "הצלחה",
         description: "תת-המחלקה נוספה בהצלחה",
       });
     } catch (error) {
-      // Revert optimistic update on error
-      setSubDepartments(subDepartments.filter(subDept => subDept._id !== `temp-${Date.now()}`));
-      setLoadedSubDepartments(prev => ({
-        ...prev,
-        [selectedDepartmentForSubDepartment]: prev[selectedDepartmentForSubDepartment]?.filter(
-          subDept => subDept._id !== `temp-${Date.now()}`
-        ) || []
-      }));
       console.error("Error adding subdepartment:", error);
       toast({
         title: "שגיאה",
@@ -644,13 +619,14 @@ const Settings = () => {
     }
 
     try {
-      // Optimistically update UI
-      const updatedSubDepartment = {
-        _id: subDepartmentId,
+      // Update subdepartment via API
+      const updatedSubDepartment = await subDepartmentService.update(subDepartmentId, {
         name: editSubDepartmentName,
         departmentId: editSubDepartmentDepartmentId,
         numOfPeople: editSubDepartmentNumOfPeople,
-      };
+      });
+
+      // Update local state
       setSubDepartments(subDepartments.map(subDept => 
         subDept._id === subDepartmentId ? updatedSubDepartment : subDept
       ));
@@ -667,42 +643,11 @@ const Settings = () => {
       setEditSubDepartmentDepartmentId("");
       setEditSubDepartmentNumOfPeople(0);
 
-      // Make API call
-      const result = await subDepartmentService.update(subDepartmentId, {
-        name: editSubDepartmentName,
-        departmentId: editSubDepartmentDepartmentId,
-        numOfPeople: editSubDepartmentNumOfPeople,
-      });
-
-      // Update with real data
-      setSubDepartments(subDepartments.map(subDept => 
-        subDept._id === subDepartmentId ? result : subDept
-      ));
-      setLoadedSubDepartments(prev => ({
-        ...prev,
-        [editSubDepartmentDepartmentId]: prev[editSubDepartmentDepartmentId]?.map(subDept =>
-          subDept._id === subDepartmentId ? result : subDept
-        ) || [result]
-      }));
-
       toast({
         title: "הצלחה",
         description: "תת-המחלקה עודכנה בהצלחה",
       });
     } catch (error) {
-      // Revert optimistic update on error
-      const originalSubDepartment = subDepartments.find(s => s._id === subDepartmentId);
-      if (originalSubDepartment) {
-        setSubDepartments(subDepartments.map(subDept => 
-          subDept._id === subDepartmentId ? originalSubDepartment : subDept
-        ));
-        setLoadedSubDepartments(prev => ({
-          ...prev,
-          [editSubDepartmentDepartmentId]: prev[editSubDepartmentDepartmentId]?.map(subDept =>
-            subDept._id === subDepartmentId ? originalSubDepartment : subDept
-          ) || [originalSubDepartment]
-        }));
-      }
       console.error("Error updating subdepartment:", error);
       toast({
         title: "שגיאה",
@@ -748,29 +693,67 @@ const Settings = () => {
       (subDept) => subDept._id === subDepartmentId
     );
     if (subDepartmentToDelete) {
-      setDeletingSubDepartmentId(subDepartmentId);
-      setDeleteItemType("subdepartment");
-      setDeleteItemName(subDepartmentToDelete.name);
-
-      // Reset all transfer-related states
-      setTransferDepartmentId("");
-      setTransferSubDepartmentId("");
-      setAvailableSubDepartments([]);
-      setTraineesInSubDepartment([]);
-
       // Fetch trainees in this subdepartment
       try {
         const allTrainees = await traineeService.getAll();
         const traineesInDept = allTrainees.filter(
           (trainee) => trainee.subDepartmentId === subDepartmentId
         );
+
+        // If no trainees, delete immediately
+        if (traineesInDept.length === 0) {
+          try {
+            await subDepartmentService.delete(subDepartmentId);
+            
+            // Update local state
+            const updatedSubDepartments = subDepartments.filter(
+              (subDept) => subDept._id !== subDepartmentId
+            );
+            setSubDepartments(updatedSubDepartments);
+            
+            // Update loadedSubDepartments
+            setLoadedSubDepartments(prev => {
+              const newState = { ...prev };
+              Object.keys(newState).forEach(deptId => {
+                newState[deptId] = newState[deptId].filter(
+                  subDept => subDept._id !== subDepartmentId
+                );
+              });
+              return newState;
+            });
+
+            toast({
+              title: "תת-מסגרת נמחקה",
+              description: `תת-מסגרת ${subDepartmentToDelete.name} נמחקה בהצלחה`,
+            });
+            return;
+          } catch (error) {
+            console.error("Error deleting subdepartment:", error);
+            toast({
+              title: "שגיאה",
+              description: "אירעה שגיאה בעת מחיקת תת-המסגרת",
+              variant: "destructive",
+            });
+            return;
+          }
+        }
+
+        // If there are trainees, show confirmation dialog
+        setDeletingSubDepartmentId(subDepartmentId);
+        setDeleteItemType("subdepartment");
+        setDeleteItemName(subDepartmentToDelete.name);
         setTraineesInSubDepartment(traineesInDept);
+
+        // Reset all transfer-related states
+        setTransferDepartmentId("");
+        setTransferSubDepartmentId("");
+        setAvailableSubDepartments([]);
+
+        setShowDeleteConfirm(true);
       } catch (error) {
         console.error("Error fetching trainees:", error);
         setTraineesInSubDepartment([]);
       }
-
-      setShowDeleteConfirm(true);
     }
   };
 
@@ -823,10 +806,22 @@ const Settings = () => {
       // Then delete the subdepartment
       await subDepartmentService.delete(deletingSubDepartmentId);
 
+      // Update local state
       const updatedSubDepartments = subDepartments.filter(
         (subDept) => subDept._id !== deletingSubDepartmentId
       );
       setSubDepartments(updatedSubDepartments);
+      
+      // Update loadedSubDepartments
+      setLoadedSubDepartments(prev => {
+        const newState = { ...prev };
+        Object.keys(newState).forEach(deptId => {
+          newState[deptId] = newState[deptId].filter(
+            subDept => subDept._id !== deletingSubDepartmentId
+          );
+        });
+        return newState;
+      });
 
       toast({
         title: "תת-מסגרת נמחקה",
@@ -1516,12 +1511,53 @@ const Settings = () => {
     }
   };
 
-  // Load subdepartments for a department
-  const loadSubDepartments = async (departmentId: string) => {
-    if (loadedSubDepartments[departmentId]) return;
+  // Add cache for subdepartments
+  const subDepartmentsCache = useRef<{[key: string]: {
+    data: SubDepartment[],
+    timestamp: number
+  }}>({});
+
+  // Cache expiration time (5 minutes)
+  const CACHE_EXPIRATION = 5 * 60 * 1000;
+
+  // Memoize filtered departments
+  const filteredDepartments = useMemo(() => {
+    return departments.filter(
+      (dept) =>
+        (admin?.role === "generalAdmin" || dept.baseId === admin?.baseId) &&
+        (selectedBaseFilter === "all" || dept.baseId === selectedBaseFilter)
+    );
+  }, [departments, admin?.role, admin?.baseId, selectedBaseFilter]);
+
+  // Memoize search results
+  const memoizedSearchResults = useMemo(() => {
+    if (!searchQuery) return null;
+    return searchResults;
+  }, [searchQuery, searchResults]);
+
+  // Cached load subdepartments function
+  const loadSubDepartments = useCallback(async (departmentId: string) => {
+    // Check cache first
+    const cachedData = subDepartmentsCache.current[departmentId];
+    const now = Date.now();
+    
+    if (cachedData && (now - cachedData.timestamp) < CACHE_EXPIRATION) {
+      setLoadedSubDepartments(prev => ({
+        ...prev,
+        [departmentId]: cachedData.data
+      }));
+      return;
+    }
 
     try {
       const subDepts = await subDepartmentService.getByDepartment(departmentId);
+      
+      // Update cache
+      subDepartmentsCache.current[departmentId] = {
+        data: subDepts,
+        timestamp: now
+      };
+
       setLoadedSubDepartments(prev => ({
         ...prev,
         [departmentId]: subDepts
@@ -1534,34 +1570,23 @@ const Settings = () => {
         variant: "destructive",
       });
     }
-  };
+  }, []);
 
-  // Load initial departments
+  // Clear cache when departments are updated
   useEffect(() => {
-    if (!searchQuery) {
-      loadDepartments(1);
-    }
-  }, [selectedBaseFilter]);
+    subDepartmentsCache.current = {};
+  }, [departments]);
 
-  // Load more departments when scrolling
-  useEffect(() => {
-    if (inView && hasMore && !isLoading && !searchQuery) {
-      loadDepartments(currentPage + 1);
-    }
-  }, [inView, hasMore, isLoading, currentPage, searchQuery]);
-
-  // Handle search
-  const handleSearch = async (query: string) => {
+  // Update handleSearch to use cache
+  const handleSearch = useCallback(async (query: string) => {
     setSearchQuery(query);
     setCurrentPage(1);
     setHasMore(true);
     
-    // Clear any existing timeout
     if (searchTimeoutRef.current) {
       clearTimeout(searchTimeoutRef.current);
     }
 
-    // If query is empty, reset everything
     if (!query.trim()) {
       setSearchResults(null);
       setSearchSuggestions({ departments: [], subDepartments: [] });
@@ -1570,47 +1595,49 @@ const Settings = () => {
       return;
     }
 
-    // Set a new timeout for the search
-    searchTimeoutRef.current = setTimeout(() => {
-      (async () => {
-        try {
-          // API search for full results
-          const results = await departmentService.search(query);
-          setSearchResults(results);
-          setDepartments(results.departments);
+    searchTimeoutRef.current = setTimeout(async () => {
+      try {
+        const results = await departmentService.search(query);
+        setSearchResults(results);
+        setDepartments(results.departments);
 
-          // Get all departments that have matching subdepartments
-          const departmentsWithMatchingSubdepartments = new Set(
-            results.subDepartments.map((subDept) => subDept.departmentId)
-          );
+        const departmentsWithMatchingSubdepartments = new Set(
+          results.subDepartments.map((subDept) => subDept.departmentId)
+        );
 
-          // Set the open accordion items to show all departments with matching subdepartments
-          setOpenAccordionItems([...departmentsWithMatchingSubdepartments]);
+        setOpenAccordionItems([...departmentsWithMatchingSubdepartments]);
 
-          // Update loadedSubDepartments with the search results
-          const subDeptsByDepartment = results.subDepartments.reduce((acc, subDept) => {
-            if (!acc[subDept.departmentId]) {
-              acc[subDept.departmentId] = [];
-            }
-            acc[subDept.departmentId].push(subDept);
-            return acc;
-          }, {} as { [key: string]: SubDepartment[] });
+        // Cache the subdepartments from search results
+        const subDeptsByDepartment = results.subDepartments.reduce((acc, subDept) => {
+          if (!acc[subDept.departmentId]) {
+            acc[subDept.departmentId] = [];
+          }
+          acc[subDept.departmentId].push(subDept);
+          return acc;
+        }, {} as { [key: string]: SubDepartment[] });
 
-          setLoadedSubDepartments(prev => ({
-            ...prev,
-            ...subDeptsByDepartment
-          }));
-        } catch (error) {
-          console.error("Error searching departments:", error);
-          toast({
-            title: "שגיאה",
-            description: "אירעה שגיאה בעת החיפוש",
-            variant: "destructive",
-          });
-        }
-      })();
+        // Update cache with search results
+        Object.entries(subDeptsByDepartment).forEach(([deptId, subDepts]) => {
+          subDepartmentsCache.current[deptId] = {
+            data: subDepts,
+            timestamp: Date.now()
+          };
+        });
+
+        setLoadedSubDepartments(prev => ({
+          ...prev,
+          ...subDeptsByDepartment
+        }));
+      } catch (error) {
+        console.error("Error searching departments:", error);
+        toast({
+          title: "שגיאה",
+          description: "אירעה שגיאה בעת החיפוש",
+          variant: "destructive",
+        });
+      }
     }, 300);
-  };
+  }, []);
 
   // Handle accordion change
   const handleAccordionChange = (value: string[]) => {
@@ -2490,101 +2517,116 @@ const Settings = () => {
                       value={openAccordionItems}
                       onValueChange={handleAccordionChange}
                     >
-                      {departments.length === 0 && searchQuery ? (
+                      {filteredDepartments.length === 0 && searchQuery ? (
                         <div className="text-center py-8 text-muted-foreground">
                           לא נמצאו מסגרות או תתי-מסגרות התואמות לחיפוש
                         </div>
                       ) : (
-                        departments
-                          .filter(
-                            (dept) =>
-                              (admin?.role === "generalAdmin" ||
-                                dept.baseId === admin?.baseId) &&
-                              (selectedBaseFilter === "all" ||
-                                dept.baseId === selectedBaseFilter)
-                          )
-                          .map((department) => {
-                            // Get subdepartments for this department
-                            const departmentSubDepartments = loadedSubDepartments[department._id] || [];
+                        filteredDepartments.map((department) => {
+                          // Get subdepartments for this department
+                          const departmentSubDepartments = loadedSubDepartments[department._id] || [];
 
-                            return (
-                              <AccordionItem
-                                key={department._id}
-                                value={department._id}
-                              >
-                                <AccordionTrigger className="flex justify-between">
-                                  <div className="flex flex-row gap-2 items-center">
-                                    <span>{department.name}</span>
+                          return (
+                            <AccordionItem
+                              key={department._id}
+                              value={department._id}
+                            >
+                              <AccordionTrigger className="flex justify-between">
+                                <div className="flex flex-row gap-2 items-center">
+                                  <span>{department.name}</span>
+                                  <span className="text-sm text-muted-foreground">
+                                    ({department.numOfPeople} אנשים)
+                                  </span>
+                                  {admin?.role === "generalAdmin" && (
                                     <span className="text-sm text-muted-foreground">
-                                      ({department.numOfPeople} אנשים)
+                                      ({getBaseName(department.baseId)})
                                     </span>
-                                    {admin?.role === "generalAdmin" && (
-                                      <span className="text-sm text-muted-foreground">
-                                        ({getBaseName(department.baseId)})
-                                      </span>
-                                    )}
-                                  </div>
-                                </AccordionTrigger>
-                                <AccordionContent>
-                                  <ul className="space-y-2">
-                                    {!loadedSubDepartments[department._id] ? (
-                                      <div className="flex items-center justify-center py-4">
-                                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-                                      </div>
-                                    ) : departmentSubDepartments.length === 0 ? (
-                                      <div className="text-center py-4 text-muted-foreground">
-                                        אין תתי-מסגרות
-                                      </div>
-                                    ) : (
-                                      departmentSubDepartments.map((subDept) => (
-                                        <li
-                                          key={subDept._id}
-                                          className="flex items-center gap-2"
-                                        >
+                                  )}
+                                </div>
+                              </AccordionTrigger>
+                              <AccordionContent>
+                                <ul className="space-y-2">
+                                  {!loadedSubDepartments[department._id] ? (
+                                    <div className="flex items-center justify-center py-4">
+                                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                                    </div>
+                                  ) : departmentSubDepartments.length === 0 ? (
+                                    <div className="text-center py-4 text-muted-foreground">
+                                      אין תתי-מסגרות
+                                    </div>
+                                  ) : (
+                                    departmentSubDepartments.map((subDept) => (
+                                      <li
+                                        key={subDept._id}
+                                        className="flex items-center justify-between gap-2"
+                                      >
+                                        <div className="flex items-center gap-2">
                                           <span>{subDept.name}</span>
                                           <span className="text-sm text-muted-foreground">
                                             ({subDept.numOfPeople} אנשים)
                                           </span>
-                                        </li>
-                                      ))
-                                    )}
-                                    <li>
-                                      <div className="flex gap-2">
+                                        </div>
                                         <Button
                                           variant="ghost"
-                                          className="flex-1 flex items-center gap-2 justify-center text-muted-foreground hover:text-foreground"
-                                          onClick={() => {
-                                            setEditingDepartmentWithSubDepartments(null);
-                                            setEditDepartmentWithSubDepartmentsName("");
-                                            setEditDepartmentWithSubDepartmentsNumOfPeople(0);
-                                            setAddingSubDepartmentsTo(department._id);
-                                            setNewSubDepartmentInputs([
-                                              { name: "", numOfPeople: 0 },
-                                            ]);
-                                          }}
+                                          size="icon"
+                                          className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                                          onClick={() => confirmDeleteSubDepartment(subDept._id)}
                                         >
-                                          <PlusIcon className="h-4 w-4" />
-                                          <span>הוספת תת-מסגרת חדשה</span>
+                                          <TrashIcon className="h-4 w-4" />
                                         </Button>
-                                        <Button
-                                          variant="ghost"
-                                          className="flex items-center gap-2 justify-center text-muted-foreground hover:text-foreground"
-                                          onClick={() =>
-                                            startEditDepartmentWithSubDepartments(
-                                              department._id
-                                            )
-                                          }
-                                        >
-                                          <PencilIcon className="h-4 w-4" />
-                                          <span>עריכה</span>
-                                        </Button>
-                                      </div>
-                                    </li>
-                                  </ul>
-                                </AccordionContent>
-                              </AccordionItem>
-                            );
-                          })
+                                      </li>
+                                    ))
+                                  )}
+                                  <li>
+                                    <div className="flex gap-2">
+                                      <Button
+                                        variant="ghost"
+                                        className="flex-1 flex items-center gap-2 justify-center text-muted-foreground hover:text-foreground"
+                                        onClick={() => {
+                                          setEditingDepartmentWithSubDepartments(null);
+                                          setEditDepartmentWithSubDepartmentsName("");
+                                          setEditDepartmentWithSubDepartmentsNumOfPeople(0);
+                                          setAddingSubDepartmentsTo(department._id);
+                                          setNewSubDepartmentInputs([
+                                            { name: "", numOfPeople: 0 },
+                                          ]);
+                                        }}
+                                      >
+                                        <PlusIcon className="h-4 w-4" />
+                                        <span>הוספת תת-מסגרת חדשה</span>
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        className="flex items-center gap-2 justify-center text-muted-foreground hover:text-foreground"
+                                        onClick={() =>
+                                          startEditDepartmentWithSubDepartments(
+                                            department._id
+                                          )
+                                        }
+                                      >
+                                        <PencilIcon className="h-4 w-4" />
+                                        <span>עריכה</span>
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        className="flex items-center gap-2 justify-center text-muted-foreground hover:text-destructive"
+                                        onClick={() => {
+                                          setDeletingDepartmentId(department._id);
+                                          setDeleteItemType("department");
+                                          setDeleteItemName(department.name);
+                                          setShowDeleteConfirm(true);
+                                        }}
+                                      >
+                                        <TrashIcon className="h-4 w-4" />
+                                        <span>מחיקה</span>
+                                      </Button>
+                                    </div>
+                                  </li>
+                                </ul>
+                              </AccordionContent>
+                            </AccordionItem>
+                          );
+                        })
                       )}
                     </Accordion>
                     {hasMore && (

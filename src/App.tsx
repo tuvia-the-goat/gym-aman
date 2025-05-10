@@ -1,6 +1,5 @@
-
 import React, { useEffect, useState } from 'react';
-import { BrowserRouter, Route, Routes, useNavigate } from 'react-router-dom';
+import { BrowserRouter, Route, Routes, Navigate } from 'react-router-dom';
 import { AdminProvider } from './context/AdminContext';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
@@ -11,7 +10,6 @@ import TraineeEntering from './pages/TraineeEntering';
 import Settings from './pages/Settings';
 import NotFound from './pages/NotFound';
 import MedicalApprovals from './pages/MedicalApprovals';
-import Index from './pages/Index';
 import { Toaster } from '@/components/ui/toaster';
 import './App.css';
 
@@ -20,7 +18,7 @@ const App = () => {
     <AdminProvider>
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Index />} />
+          <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="/login" element={<Login />} />
           <Route path="/trainee-entering" element={<TraineeEntering />} />
           <Route path="/dashboard" element={<Dashboard />} />

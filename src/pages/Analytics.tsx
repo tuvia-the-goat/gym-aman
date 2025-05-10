@@ -2,6 +2,7 @@ import React from 'react';
 import DashboardLayout from '../components/DashboardLayout';
 import { useAnalyticsFilters } from '../hooks/useAnalyticsFilters';
 import { useAnalyticsData } from '../hooks/useAnalyticsData';
+import { subDays, subWeeks, subMonths } from 'date-fns';
 
 // Import refactored components
 import FilterHeader from '../components/analytics/FilterHeader';
@@ -74,6 +75,40 @@ const Analytics = () => {
     hasSpecificFilters
   );
 
+  const handleQuickDateSelect = (value: string) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    switch (value) {
+      case "all":
+        setStartDate(undefined);
+        setEndDate(undefined);
+        break;
+      case "today":
+        setStartDate(today);
+        setEndDate(today);
+        break;
+      case "yesterday":
+        const yesterday = subDays(today, 1);
+        setStartDate(yesterday);
+        setEndDate(yesterday);
+        break;
+      case "lastWeek":
+        const lastWeekStart = subWeeks(today, 1);
+        setStartDate(lastWeekStart);
+        setEndDate(today);
+        break;
+      case "lastMonth":
+        const lastMonthStart = subMonths(today, 1);
+        setStartDate(lastMonthStart);
+        setEndDate(today);
+        break;
+      case "personalized":
+        setShowFilterDialog(true);
+        break;
+    }
+  };
+
   // Function to clear sub-department filters
   const clearSubDepartmentFilters = () => {
     if (setSelectedSubDepartmentIds) {
@@ -89,6 +124,11 @@ const Analytics = () => {
           hasActiveFilters={hasActiveFilters}
           clearFilters={clearFilters}
           openFilterDialog={() => setShowFilterDialog(true)}
+          onDateSelect={handleQuickDateSelect}
+          startDate={startDate}
+          endDate={endDate}
+          setStartDate={setStartDate}
+          setEndDate={setEndDate}
         />
         
         {/* Filter Dialog */}
