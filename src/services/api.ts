@@ -127,6 +127,12 @@ export const baseService = {
     return response.data;
   },
 
+  // Get base by ID
+  getById: async (baseId: string): Promise<Base> => {
+    const response = await api.get(`/bases/${baseId}`);
+    return response.data;
+  },
+
   // Create new base
   create: async (baseData: {
     name: string;
@@ -370,6 +376,29 @@ export const traineeService = {
     );
     return response.data;
   },
+
+  // Get trainees with medical approval stats
+  getMedicalApprovalStats: async (baseId?: string): Promise<{ approved: number; notApproved: number }> => {
+    const response = await api.get("/trainees/medical-approval-stats", {
+      params: { baseId }
+    });
+    return response.data;
+  },
+
+  // Get top trainees from last month
+  getTopTrainees: async (baseId?: string): Promise<Array<{
+    id: string;
+    name: string;
+    count: number;
+    departmentName: string;
+    subDepartmentName: string;
+    baseName?: string;
+  }>> => {
+    const response = await api.get("/trainees/top", {
+      params: { baseId }
+    });
+    return response.data;
+  },
 };
 
 // Entry Services
@@ -458,6 +487,28 @@ export const entryService = {
     const response = await api.get(
       `/entries/paginated?${queryParams.toString()}`
     );
+    return response.data;
+  },
+
+  // Get today's successful entries
+  getTodaySuccessfulEntries: async (baseId?: string): Promise<{ count: number }> => {
+    const response = await api.get("/entries/today-successful", {
+      params: { baseId }
+    });
+    return response.data;
+  },
+
+  // Get all successful entries today without base filtering
+  getTodaySuccessfulEntriesAll: async (): Promise<{ count: number }> => {
+    const response = await api.get("/entries/today-successful-all");
+    return response.data;
+  },
+
+  // Get entries from last hour
+  getLastHourEntries: async (baseId?: string): Promise<Entry[]> => {
+    const response = await api.get("/entries/last-hour", {
+      params: { baseId }
+    });
     return response.data;
   },
 };

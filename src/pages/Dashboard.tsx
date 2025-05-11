@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React from "react";
 import DashboardLayout from "../components/DashboardLayout";
 import { useAdmin } from "../context/AdminContext";
 import {
@@ -6,161 +6,59 @@ import {
   Calendar,
   CheckCircle,
   DumbbellIcon,
-  XCircle,
   Clock,
 } from "lucide-react";
-import { isWithinInterval, subMonths, subHours, parseISO } from "date-fns";
 import StatCard from "../components/dashboard/StatCard";
 import TopTraineesCard from "../components/dashboard/TopTraineesCard";
 import RecentEntriesCard from "../components/analytics/RecentEntriesCard";
-import { traineeService } from "@/services/api";
+import { traineeService, entryService } from "@/services/api";
+import { useQuery } from "@tanstack/react-query";
 
 const Dashboard = () => {
-  const { admin, trainees, entries, departments, bases, subDepartments } =
-    useAdmin();
+  const { admin } = useAdmin();
+  const baseId = admin?.role === "gymAdmin" ? admin.baseId : undefined;
 
-  const [traineesLastWeek, setTraineesLastWeek] = useState([]);
-
-  useEffect(() => {
-    const getLastWeekTrainees = async () => {
-      try {
-        const trainees = await traineeService.traineesLastWeek();
-        setTraineesLastWeek(trainees);
-      } catch (e) {}
-    };
-    getLastWeekTrainees();
-  }, [traineeService, setTraineesLastWeek]);
-
-  // Current date for calculations
-  const now = new Date();
-  const today = now.toISOString().split("T")[0];
-
-  const totalSuccessfulEntriesToday = useMemo(() => {
-    // Successful entries - filter entries with status 'success' today
-    const successfulEntries = entries.filter(
-      (entry) =>
-        entry.status === "success" && entry.entryDate.split("T")[0] === today
-    );
-    return successfulEntries.length;
-  }, [entries, today]);
-
-  // Filter trainees and entries for the current base if admin is a base admin
-  const baseFilteredTrainees = useMemo(() => {
-    if (admin?.role === "gymAdmin" && admin.baseId) {
-      return trainees.filter((trainee) => trainee.baseId === admin.baseId);
-    }
-    return trainees;
-  }, [admin, trainees]);
-
-  const baseFilteredEntries = useMemo(() => {
-    if (admin?.role === "gymAdmin" && admin.baseId) {
-      return entries.filter((entry) => entry.baseId === admin.baseId);
-    }
-    return entries;
-  }, [admin, entries]);
-
-  // Today's successful entries - only for current base
-  const todaySuccessfulEntries = baseFilteredEntries.filter(
-    (entry) =>
-      entry.entryDate.split("T")[0] === today && entry.status === "success"
-  ).length;
-
-  // Entries in the last hour - only for current base
-  const entriesLastHour = useMemo(() => {
-    return baseFilteredEntries.filter((entry) => {
-      const entryDate = parseISO(`${entry.entryDate}T${entry.entryTime}`);
-      return isWithinInterval(entryDate, {
-        start: subHours(now, 1),
-        end: now,
-      });
-    });
-  }, [baseFilteredEntries, now]);
-
-  // Entries in the last month (for top trainees calculation) - only for current base
-  // UPDATE: Filter to include only successful entries
-  const lastMonthEntries = baseFilteredEntries.filter((entry) => {
-    const entryDate = parseISO(entry.entryDate);
-    return (
-      isWithinInterval(entryDate, {
-        start: subMonths(now, 1),
-        end: now,
-      }) && entry.status === "success"
-    ); // Added check for successful entries only
+  // Query for trainees who trained last week
+  const { data: traineesLastWeek = [] } = useQuery({
+    queryKey: ["traineesLastWeek"],
+    queryFn: traineeService.traineesLastWeek,
   });
 
-  // Calculate top 7 trainees from the last month - only from current base
-  // Now using only successful entries
-  const topTrainees = useMemo(() => {
-    const traineeEntryCounts = {};
+  // Query for total trainees count
+  const { data: totalTrainees = 0 } = useQuery({
+    queryKey: ["totalTrainees", baseId],
+    queryFn: () => traineeService.getPaginated({ baseId, limit: 1 }).then(res => res.pagination.total),
+  });
 
-    lastMonthEntries.forEach((entry) => {
-      if (entry.traineeId) {
-        traineeEntryCounts[entry.traineeId] =
-          (traineeEntryCounts[entry.traineeId] || 0) + 1;
-      }
-    });
+  // Query for today's successful entries
+  const { data: todayEntries = { count: 0 } } = useQuery({
+    queryKey: ["todayEntries", baseId],
+    queryFn: () => entryService.getTodaySuccessfulEntries(baseId),
+  });
 
-    const traineeCountsArray = Object.entries(traineeEntryCounts)
-      .map(([traineeId, count]) => {
-        const trainee = baseFilteredTrainees.find((t) => t._id === traineeId);
+  // Query for all successful entries today across all bases
+  const { data: allTodayEntries = { count: 0 } } = useQuery({
+    queryKey: ["allTodayEntries"],
+    queryFn: entryService.getTodaySuccessfulEntriesAll,
+  });
 
-        if (!trainee) {
-          return undefined;
-        }
+  // Query for entries in the last hour
+  const { data: lastHourEntries = [] } = useQuery({
+    queryKey: ["lastHourEntries", baseId],
+    queryFn: () => entryService.getLastHourEntries(baseId),
+  });
 
-        let topTraineeDetails: {
-          id: string;
-          name: string;
-          count: number;
-          departmentName: string;
-          subDepartmentName: string;
-          baseName?: string;
-        } = {
-          id: traineeId,
-          name: trainee?.fullName || "Unknown Trainee",
-          count: count as number,
-          departmentName: trainee
-            ? departments?.find((d) => d._id === trainee.departmentId)?.name ||
-              "-"
-            : "-",
-          subDepartmentName: trainee
-            ? subDepartments?.find((d) => d._id === trainee.subDepartmentId)
-                ?.name || "-"
-            : "-",
-        };
-        if (admin?.role !== "gymAdmin" && !admin.baseId) {
-          topTraineeDetails.baseName = trainee
-            ? bases?.find((d) => d._id === trainee.baseId)?.name || "-"
-            : "-";
-        }
-        return topTraineeDetails;
-      })
-      .filter((trainee) => !!trainee)
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 7);
+  // Query for medical approval stats
+  const { data: medicalApprovalStats = { approved: 0, notApproved: 0 } } = useQuery({
+    queryKey: ["medicalApprovalStats", baseId],
+    queryFn: () => traineeService.getMedicalApprovalStats(baseId),
+  });
 
-    return traineeCountsArray;
-  }, [lastMonthEntries, baseFilteredTrainees, departments]);
-
-  // Calculate medical approval stats - only for current base
-  const medicalApprovalStats = useMemo(() => {
-    let approved = 0;
-    let notApproved = 0;
-
-    baseFilteredTrainees.forEach((trainee) => {
-      if (
-        trainee.medicalApproval &&
-        trainee.medicalApproval.approved &&
-        new Date(trainee.medicalApproval.expirationDate) >= new Date()
-      ) {
-        approved++;
-      } else {
-        notApproved++;
-      }
-    });
-
-    return { approved, notApproved };
-  }, [baseFilteredTrainees]);
+  // Query for top trainees
+  const { data: topTrainees = [] } = useQuery({
+    queryKey: ["topTrainees", baseId],
+    queryFn: () => traineeService.getTopTrainees(baseId),
+  });
 
   return (
     <DashboardLayout activeTab="dashboard">
@@ -178,7 +76,7 @@ const Dashboard = () => {
           {admin?.role === "gymAdmin" && admin.baseId && (
             <StatCard
               title="כניסות לחדר הכושר היום"
-              value={todaySuccessfulEntries}
+              value={todayEntries.count}
               description="כניסות שנרשמו היום"
               icon={<Calendar className="h-4 w-4" />}
             />
@@ -186,14 +84,14 @@ const Dashboard = () => {
 
           <StatCard
             title='כניסות לחדרי הכושר באמ"ן היום'
-            value={totalSuccessfulEntriesToday}
+            value={allTodayEntries.count}
             description='כמות הכניסות של מתאמנים לחדרי הכושר באמ"ן היום'
             icon={<TrendingUp className="h-4 w-4" />}
           />
 
           <StatCard
             title="התאמנו בשבוע האחרון"
-            value={`${traineesLastWeek.length}/${baseFilteredTrainees.length}`}
+            value={`${traineesLastWeek.length}/${totalTrainees}`}
             description="מספר הרשומים שהתאמנו בשבוע האחרון מתוך כלל הרשומים"
             icon={<DumbbellIcon className="h-4 w-4" />}
           />
@@ -219,7 +117,7 @@ const Dashboard = () => {
 
           <div>
             <RecentEntriesCard
-              entries={entriesLastHour}
+              entries={lastHourEntries}
               title="כניסות בשעה האחרונה"
               icon={<Clock className="h-5 w-5 text-blue-500" />}
               emptyMessage="אין כניסות בשעה האחרונה"

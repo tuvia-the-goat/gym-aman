@@ -9,23 +9,13 @@ import React, {
 } from "react";
 import {
   Admin,
-  Base,
-  Department,
-  SubDepartment,
-  Trainee,
-  Entry,
   AdminContextType,
 } from "../types";
 import {
   authService,
-  baseService,
-  departmentService,
-  subDepartmentService,
-  traineeService,
-  entryService,
   initializeSystem,
 } from "../services/api";
-import { socketService } from "../services/socket"; // Import socket service
+import { socketService } from "../services/socket";
 
 const AdminContext = createContext<AdminContextType | undefined>(undefined);
 
@@ -33,11 +23,6 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
   const [admin, setAdmin] = useState<Admin | null>(null);
-  const [bases, setBases] = useState<Base[]>([]);
-  const [departments, setDepartments] = useState<Department[]>([]);
-  const [subDepartments, setSubDepartments] = useState<SubDepartment[]>([]);
-  const [trainees, setTrainees] = useState<Trainee[]>([]);
-  const [entries, setEntries] = useState<Entry[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Initialize data from server
@@ -65,27 +50,6 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({
             localStorage.removeItem("admin");
           }
         }
-
-        // Fetch initial data
-        const [
-          basesData,
-          departmentsData,
-          subDepartmentsData,
-          traineesData,
-          entriesData,
-        ] = await Promise.all([
-          baseService.getAll(),
-          departmentService.getAll(),
-          subDepartmentService.getAll(),
-          traineeService.getAll(),
-          entryService.getAll(),
-        ]);
-
-        setBases(basesData);
-        setDepartments(departmentsData);
-        setSubDepartments(subDepartmentsData);
-        setTrainees(traineesData);
-        setEntries(entriesData);
       } catch (error) {
         console.error("Error initializing data:", error);
       } finally {
@@ -101,15 +65,8 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({
     // Initialize socket
     socketService.init();
 
-    // Set up the event listener for new entries
-    const cleanup = socketService.onNewEntry((newEntry) => {
-      // Add the new entry to the state
-      setEntries((prevEntries) => [newEntry, ...prevEntries]);
-    });
-
     // Clean up on unmount
     return () => {
-      cleanup();
       socketService.disconnect();
     };
   }, []);
@@ -139,16 +96,6 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({
       value={{
         admin,
         setAdmin,
-        bases,
-        setBases,
-        departments,
-        setDepartments,
-        subDepartments,
-        setSubDepartments,
-        trainees,
-        setTrainees,
-        entries,
-        setEntries,
         loading,
         setLoading,
       }}

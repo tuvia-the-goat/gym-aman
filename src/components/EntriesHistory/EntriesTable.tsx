@@ -28,7 +28,7 @@ const EntriesTable: React.FC<EntriesTableProps> = ({
   handleTraineeClick,
   isLoading,
 }) => {
-  const { admin, departments, bases, subDepartments, trainees } = useAdmin();
+  const { admin } = useAdmin();
 
   // Filter trainees and entries for the current base if admin is a base admin
   const baseFilteredTrainees = useMemo(() => {

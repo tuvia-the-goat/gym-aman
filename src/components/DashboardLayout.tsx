@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAdmin } from "../context/AdminContext";
-import { authService } from "../services/api";
+import { authService, baseService } from "../services/api";
 import { useToast } from "@/components/ui/use-toast";
 import {
   Sidebar,
@@ -45,13 +45,14 @@ interface DashboardLayoutProps {
 
 const DashboardLayout = ({ children, activeTab }: DashboardLayoutProps) => {
   const navigate = useNavigate();
-  const { admin, loading, bases } = useAdmin();
+  const { admin, loading } = useAdmin();
   const { toast } = useToast();
   const [sidebarOpen, setSidebarOpen] = useState(true); // Default to open on desktop
   const isMobile = useIsMobile();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [showTraineeEnteryConfirm, setShowTraineeEnteryConfirm] =
     useState(false);
+  const [baseName, setBaseName] = useState("");
 
   useEffect(() => {
     if (!loading && !admin) {
@@ -68,6 +69,23 @@ const DashboardLayout = ({ children, activeTab }: DashboardLayoutProps) => {
       setSidebarOpen(true);
     }
   }, [activeTab, isMobile]);
+
+  // Fetch base name when admin changes
+  useEffect(() => {
+    const fetchBaseName = async () => {
+      if (admin?.role === "gymAdmin" && admin.baseId) {
+        try {
+          const base = await baseService.getById(admin.baseId);
+          setBaseName(base.name);
+        } catch (error) {
+          console.error("Error fetching base name:", error);
+          setBaseName("");
+        }
+      }
+    };
+
+    fetchBaseName();
+  }, [admin]);
 
   const handleLogoutConfirm = () => {
     setShowLogoutConfirm(true);
@@ -118,9 +136,8 @@ const DashboardLayout = ({ children, activeTab }: DashboardLayoutProps) => {
 
   // Get the gym name for gym admins
   const getGymName = () => {
-    if (admin.role === "gymAdmin" && admin.baseId) {
-      const gym = bases.find((base) => base._id === admin.baseId);
-      return gym ? gym.name : "";
+    if (admin?.role === "gymAdmin") {
+      return baseName;
     }
     return "";
   };
@@ -235,7 +252,7 @@ const DashboardLayout = ({ children, activeTab }: DashboardLayoutProps) => {
             <div className="mt-3 px-4 py-2 bg-primary/10 text-primary rounded-full text-sm font-medium">
               {admin.role === "generalAdmin"
                 ? "מנהל כללי"
-                : `מנהל חדר כושר- בסיס ${getGymName()}`}
+                : `מנהל חדר כושר- בסיס ${baseName}`}
             </div>
           </SidebarHeader>
 
