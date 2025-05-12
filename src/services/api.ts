@@ -378,25 +378,43 @@ export const traineeService = {
   },
 
   // Get trainees with medical approval stats
-  getMedicalApprovalStats: async (baseId?: string): Promise<{ approved: number; notApproved: number }> => {
+  l: async (
+    baseId?: string
+  ): Promise<{ approved: number; notApproved: number }> => {
     const response = await api.get("/trainees/medical-approval-stats", {
-      params: { baseId }
+      params: { baseId },
     });
     return response.data;
   },
 
   // Get top trainees from last month
-  getTopTrainees: async (baseId?: string): Promise<Array<{
-    id: string;
-    name: string;
-    count: number;
-    departmentName: string;
-    subDepartmentName: string;
-    baseName?: string;
-  }>> => {
+  getTopTrainees: async (
+    baseId?: string
+  ): Promise<
+    Array<{
+      id: string;
+      name: string;
+      count: number;
+      departmentName: string;
+      subDepartmentName: string;
+      baseName?: string;
+    }>
+  > => {
     const response = await api.get("/trainees/top", {
-      params: { baseId }
+      params: { baseId },
     });
+    return response.data;
+  },
+
+  // Get trainee by ID with optional population
+  getById: async (traineeId: string, populate?: string[]): Promise<Trainee> => {
+    const queryParams = new URLSearchParams();
+    if (populate?.length) {
+      queryParams.append("populate", populate.join(","));
+    }
+    const response = await api.get(
+      `/trainees/${traineeId}?${queryParams.toString()}`
+    );
     return response.data;
   },
 };
@@ -491,9 +509,11 @@ export const entryService = {
   },
 
   // Get today's successful entries
-  getTodaySuccessfulEntries: async (baseId?: string): Promise<{ count: number }> => {
+  getTodaySuccessfulEntries: async (
+    baseId?: string
+  ): Promise<{ count: number }> => {
     const response = await api.get("/entries/today-successful", {
-      params: { baseId }
+      params: { baseId },
     });
     return response.data;
   },
@@ -507,7 +527,7 @@ export const entryService = {
   // Get entries from last hour
   getLastHourEntries: async (baseId?: string): Promise<Entry[]> => {
     const response = await api.get("/entries/last-hour", {
-      params: { baseId }
+      params: { baseId },
     });
     return response.data;
   },
@@ -533,7 +553,10 @@ export const adminService = {
   },
 
   // Reset admin password
-  resetPassword: async (adminId: string, newPassword: string): Promise<void> => {
+  resetPassword: async (
+    adminId: string,
+    newPassword: string
+  ): Promise<void> => {
     await api.put(`/admins/${adminId}/reset-password`, { newPassword });
   },
 };

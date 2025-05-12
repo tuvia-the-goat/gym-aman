@@ -20,7 +20,7 @@ import { traineeService } from "../services/api";
 
 const MedicalApprovals = () => {
   const navigate = useNavigate();
-  const { admin, trainees, departments, setTrainees } = useAdmin();
+  const { admin } = useAdmin();
   const { toast } = useToast();
 
   // State for UI
@@ -31,16 +31,6 @@ const MedicalApprovals = () => {
     undefined
   );
   const [isLoading, setIsLoading] = useState(false);
-
-  // Filter trainees by admin's base if admin is gymAdmin
-  const baseFilteredTrainees = useMemo(
-    () =>
-      trainees.filter(
-        (trainee) =>
-          admin?.role === "generalAdmin" || trainee.baseId === admin?.baseId
-      ),
-    [admin, trainees]
-  );
 
   // Clear all filters
   const clearFilters = () => {
@@ -58,20 +48,10 @@ const MedicalApprovals = () => {
     try {
       // Set loading state
       setIsLoading(true);
-
-      // Fetch fresh data to ensure everything is in sync
-      const allTrainees = await traineeService.getAll();
-      
-      // Update all data in context
-      setTrainees(allTrainees);
-      
-      // Find and set the updated trainee in the refreshed data
-      const refreshedTrainee = allTrainees.find(t => t._id === updatedTrainee._id);
-      setSelectedTrainee(refreshedTrainee || null);
+      setSelectedTrainee(updatedTrainee);
 
       // Clear any filters to show fresh data
       clearFilters();
-
     } catch (error) {
       console.error("Error refreshing data:", error);
       toast({
@@ -186,7 +166,6 @@ const MedicalApprovals = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="md:col-span-1">
             <LazyTraineeList
-              trainees={baseFilteredTrainees}
               selectedTrainee={selectedTrainee}
               onSelectTrainee={handleTraineeSelect}
               searchQuery={searchQuery}
@@ -221,7 +200,6 @@ const MedicalApprovals = () => {
             ) : selectedTrainee ? (
               <TraineeProfile
                 trainee={selectedTrainee}
-                departments={departments}
                 onUpdate={handleTraineeUpdate}
                 setIsLoading={setIsLoading}
               />
