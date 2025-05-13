@@ -66,10 +66,12 @@ interface TraineeProfileProps {
 }
 
 const getBaseName = (base: string | Base) => {
+  if (!base) return "לא משויך";
   return typeof base === "string" ? "" : base.name;
 };
 
 const getBaseId = (base: string | Base) => {
+  if (!base) return null;
   return typeof base === "string" ? base : base._id;
 };
 
@@ -78,11 +80,21 @@ const getDepartmentName = (department: string | Department) => {
   return typeof department === "string" ? "" : department.name;
 };
 
+const getDepartmentId = (department: string | Department) => {
+  if (!department) return null;
+  return typeof department === "string" ? department : department._id;
+};
+
 const getSubDepartmentName = (
   subDepartment: string | SubDepartment | undefined
 ) => {
   if (!subDepartment) return "לא משויך";
   return typeof subDepartment === "string" ? "" : subDepartment.name;
+};
+
+const getSubDepartmentId = (subDepartment: string | SubDepartment) => {
+  if (!subDepartment) return null;
+  return typeof subDepartment === "string" ? subDepartment : subDepartment._id;
 };
 
 const TraineeProfile: React.FC<TraineeProfileProps> = ({
@@ -129,8 +141,6 @@ const TraineeProfile: React.FC<TraineeProfileProps> = ({
     initialData: trainee,
   });
 
-  console.log({ isEditing });
-
   // Fetch departments, bases, and subDepartments only when in edit mode
   const [
     { data: departments = [] },
@@ -141,7 +151,6 @@ const TraineeProfile: React.FC<TraineeProfileProps> = ({
       {
         queryKey: ["departments"],
         queryFn: () => {
-          console.log("getting departments");
           return departmentService.getAll();
         },
         enabled: isEditing,
@@ -356,7 +365,6 @@ const TraineeProfile: React.FC<TraineeProfileProps> = ({
         : approved
         ? addYears(new Date(), 1).toISOString().split("T")[0]
         : null;
-
       // Prepare the update data
       const updateData = {
         personalId,
@@ -368,12 +376,12 @@ const TraineeProfile: React.FC<TraineeProfileProps> = ({
           | "64"
           | "45"
           | "25",
-        departmentId,
-        subDepartmentId,
+        departmentId: getDepartmentId(departmentId),
+        subDepartmentId: getSubDepartmentId(subDepartmentId),
         baseId: getBaseId(baseId) || getBaseId(populatedTrainee.baseId),
         gender: gender as "male" | "female",
         birthDate: birthDate?.toISOString().split("T")[0],
-        orthopedicCondition,
+        orthopedicCondition: orthopedicCondition || false,
         medicalFormScore,
         medicalCertificateProvided:
           medicalFormScore === "partialScore"
@@ -390,7 +398,6 @@ const TraineeProfile: React.FC<TraineeProfileProps> = ({
       };
 
       // Update all trainee details
-      console.log("updateData", updateData);
       const updatedTrainee = await traineeService.updateProfile(
         populatedTrainee._id,
         updateData
@@ -525,6 +532,7 @@ const TraineeProfile: React.FC<TraineeProfileProps> = ({
                       setGender(value as "male" | "female")
                     }
                     disabled={isSaving}
+                    defaultValue={populatedTrainee.gender}
                   >
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="בחר מין" />
@@ -574,14 +582,16 @@ const TraineeProfile: React.FC<TraineeProfileProps> = ({
                   <div className="space-y-2">
                     <label className="text-sm font-medium">בסיס</label>
                     <Select
-                      value={baseId || getBaseId(populatedTrainee.baseId)}
+                      value={
+                        getBaseId(baseId) || getBaseId(populatedTrainee.baseId)
+                      }
                       onValueChange={(value) => {
-                        console.log("Base selected:", value);
                         setBaseId(value);
                         setDepartmentId(""); // Reset department when base changes
                         setSubDepartmentId("none"); // Reset sub-department when base changes
                       }}
                       disabled={isSaving}
+                      defaultValue={getBaseId(populatedTrainee.baseId)}
                     >
                       <SelectTrigger className="w-full">
                         <SelectValue placeholder="בחר בסיס" />
@@ -604,22 +614,21 @@ const TraineeProfile: React.FC<TraineeProfileProps> = ({
                 <div className="space-y-2">
                   <label className="text-sm font-medium">מסגרת</label>
                   <Select
-                    value={departmentId}
+                    value={getDepartmentId(departmentId)}
                     onValueChange={(value) => {
                       setDepartmentId(value);
                       setSubDepartmentId("none"); // Reset sub-department when department changes
                     }}
                     disabled={isSaving}
+                    defaultValue={getDepartmentId(
+                      populatedTrainee.departmentId
+                    )}
                   >
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="בחר מסגרת" />
                     </SelectTrigger>
                     <SelectContent>
                       {departments
-                        .map((d) => {
-                          console.log(d);
-                          return d;
-                        })
                         .filter((dept) => dept.baseId === getBaseId(baseId))
                         .map((dept) => (
                           <SelectItem
@@ -637,9 +646,13 @@ const TraineeProfile: React.FC<TraineeProfileProps> = ({
                 <div className="space-y-2">
                   <label className="text-sm font-medium">תת-מסגרת</label>
                   <Select
-                    value={subDepartmentId}
+                    value={getSubDepartmentId(subDepartmentId)}
                     onValueChange={setSubDepartmentId}
                     disabled={isSaving}
+                    defaultValue={
+                      getSubDepartmentId(populatedTrainee.subDepartmentId) ||
+                      "none"
+                    }
                   >
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="בחר תת-מסגרת" />
@@ -650,7 +663,9 @@ const TraineeProfile: React.FC<TraineeProfileProps> = ({
                       </SelectItem>
                       {subDepartments
                         .filter(
-                          (subDept) => subDept.departmentId === departmentId
+                          (subDept) =>
+                            subDept.departmentId ===
+                            getDepartmentId(departmentId)
                         )
                         .map((subDept) => (
                           <SelectItem
@@ -762,6 +777,7 @@ const TraineeProfile: React.FC<TraineeProfileProps> = ({
                 value={medicalProfile}
                 onValueChange={setMedicalProfile}
                 disabled={isSaving}
+                defaultValue={populatedTrainee.medicalProfile}
               >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="בחר פרופיל רפואי" />
@@ -809,7 +825,7 @@ const TraineeProfile: React.FC<TraineeProfileProps> = ({
                 <input
                   id="orthopedicCondition"
                   type="checkbox"
-                  checked={orthopedicCondition}
+                  defaultChecked={false}
                   onChange={(e) => setOrthopedicCondition(e.target.checked)}
                   className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary ml-2"
                   disabled={isSaving}
@@ -854,6 +870,7 @@ const TraineeProfile: React.FC<TraineeProfileProps> = ({
                     setMedicalFormScore(value as MedicalFormScore)
                   }
                   disabled={isSaving}
+                  defaultValue={populatedTrainee.medicalFormScore}
                 >
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="בחר ציון" />
