@@ -8,7 +8,6 @@ import useLazyTrainees from "../../hooks/useLazyTrainees";
 import { useAdmin } from "@/context/AdminContext";
 
 interface LazyTraineeListProps {
-  trainees: Trainee[];
   selectedTrainee: Trainee | null;
   onSelectTrainee: (trainee: Trainee) => void;
   searchQuery?: string;
@@ -20,7 +19,6 @@ interface LazyTraineeListProps {
 }
 
 const LazyTraineeList = ({
-  trainees,
   selectedTrainee,
   onSelectTrainee,
   // Optional overrides for external state management
@@ -47,7 +45,7 @@ const LazyTraineeList = ({
     setExpirationDate: hookSetExpirationDate,
     lastTraineeElementRef,
   } = useLazyTrainees({
-    baseTrainees: trainees,
+    baseTrainees: [],
     baseId: admin?.baseId,
     itemsPerPage: 20,
   });

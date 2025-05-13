@@ -121,6 +121,32 @@ export interface Trainee {
   medicalCertificateProvided?: boolean;
 }
 
+export interface PopulatedTrainee {
+  _id: string;
+  personalId: string;
+  fullName: string;
+  gender: "male" | "female";
+  departmentId: Department;
+  subDepartmentId?: SubDepartment; // Add this line
+  baseId: Base;
+  phoneNumber: string;
+  email?: string;
+  medicalProfile: string;
+  birthDate?: string;
+  medicalApproval: MedicalApproval;
+  orthopedicCondition: boolean;
+  medicalLimitation?: string;
+  registrationDate: string;
+  trainingDays?: string[];
+  preferredTime?: string;
+  lastEntryDate?: string;
+  entryCount?: number;
+  notes?: string;
+  // Add missing properties
+  medicalFormScore: MedicalFormScore;
+  medicalCertificateProvided?: boolean;
+}
+
 export interface DepartmentService {
   getAll: () => Promise<Department[]>;
   create: (departmentData: {
