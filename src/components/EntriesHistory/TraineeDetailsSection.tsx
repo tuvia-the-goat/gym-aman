@@ -11,34 +11,15 @@ import {
   File,
   Layers
 } from 'lucide-react';
-import { Trainee } from '@/types';
+import { PopulatedTrainee } from '@/types';
 import { useAdmin } from '../../context/AdminContext';
 
 interface TraineeDetailsSectionProps {
-  trainee: Trainee;
+  trainee: PopulatedTrainee;
 }
 
 const TraineeDetailsSection: React.FC<TraineeDetailsSectionProps> = ({ trainee }) => {
-  const { departments, bases, subDepartments } = useAdmin();
   
-  // Get department name
-  const getDepartmentName = (id: string) => {
-    const department = departments.find(dept => dept._id === id);
-    return department ? department.name : 'לא ידוע';
-  };
-
-  // Get subDepartment name
-  const getSubDepartmentName = (id: string) => {
-    if (!id) return 'לא ידוע';
-    const subDepartment = subDepartments.find(subDept => subDept._id === id);
-    return subDepartment ? subDepartment.name : 'לא ידוע';
-  };
-
-  // Get base name
-  const getBaseName = (id: string) => {
-    const base = bases.find(base => base._id === id);
-    return base ? base.name : 'לא ידוע';
-  };
 
   // Format phone number
   const formatPhoneNumber = (phoneNumber: string) => {
@@ -78,7 +59,7 @@ const TraineeDetailsSection: React.FC<TraineeDetailsSectionProps> = ({ trainee }
           </div>
           <div>
             <div className="text-xs font-medium text-muted-foreground">בסיס</div>
-            <div className="font-medium">{getBaseName(trainee.baseId)}</div>
+            <div className="font-medium">{trainee.baseId.name}</div>
           </div>
         </div>
         
@@ -88,7 +69,7 @@ const TraineeDetailsSection: React.FC<TraineeDetailsSectionProps> = ({ trainee }
           </div>
           <div>
             <div className="text-xs font-medium text-muted-foreground">מסגרת</div>
-            <div className="font-medium">{getDepartmentName(trainee.departmentId)}</div>
+            <div className="font-medium">{trainee.departmentId.name}</div>
           </div>
         </div>
         
@@ -99,7 +80,7 @@ const TraineeDetailsSection: React.FC<TraineeDetailsSectionProps> = ({ trainee }
           </div>
           <div>
             <div className="text-xs font-medium text-muted-foreground">תת-מסגרת</div>
-            <div className="font-medium">{trainee.subDepartmentId ? getSubDepartmentName(trainee.subDepartmentId) : 'לא משויך'}</div>
+            <div className="font-medium">{trainee.subDepartmentId?.name ? trainee.subDepartmentId?.name : 'לא משויך'}</div>
           </div>
         </div>
         

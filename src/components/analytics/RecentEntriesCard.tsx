@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Clock } from 'lucide-react';
@@ -41,10 +40,12 @@ const RecentEntriesCard: React.FC<RecentEntriesCardProps> = ({
                 <div className={`px-2 py-1 rounded-full text-xs ${
                   entry.status === 'success' ? 'bg-green-100 text-green-800' :
                   entry.status === 'noMedicalApproval' ? 'bg-red-100 text-red-800' :
+                  entry.status === 'notAssociated' ? 'bg-purple-100 text-purple-800' :
                   'bg-blue-100 text-blue-800'
                 }`}>
                   {entry.status === 'success' ? 'מאושר' :
                    entry.status === 'noMedicalApproval' ? 'אין אישור רפואי' :
+                   entry.status === 'notAssociated' ? 'שייך לבסיס אחר' :
                    'לא רשום'}
                 </div>
               </div>

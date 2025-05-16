@@ -10,7 +10,9 @@ import {
   MedicalFormScore,
   SubDepartment,
   SubDepartmentCreateData,
+  PopulatedTrainee,
 } from "../types";
+import { TraineeAnalytics } from '@/components/EntriesHistory/types';
 
 const API_URL = "http://localhost:3000/api";
 
@@ -79,6 +81,12 @@ export const subDepartmentService = {
     return response.data;
   },
 
+  // Get subDepartment by ID
+  getById: async (id: string): Promise<SubDepartment> => {
+    const response = await api.get(`/subDepartments/${id}`);
+    return response.data;
+  },
+
   // Create new subDepartment
   create: async (subDepartmentData: {
     name: string;
@@ -128,8 +136,8 @@ export const baseService = {
   },
 
   // Get base by ID
-  getById: async (baseId: string): Promise<Base> => {
-    const response = await api.get(`/bases/${baseId}`);
+  getById: async (id: string): Promise<Base> => {
+    const response = await api.get(`/bases/${id}`);
     return response.data;
   },
 
@@ -162,8 +170,18 @@ export const baseService = {
 // Department Services
 export const departmentService = {
   // Get all departments
-  getAll: async (): Promise<Department[]> => {
-    const response = await api.get("/departments");
+  getAll: async (baseId?: string): Promise<Department[]> => {
+    const params = new URLSearchParams();
+    if (baseId) {
+      params.append('baseId', baseId);
+    }
+    const response = await api.get(`/departments?${params.toString()}`);
+    return response.data;
+  },
+
+  // Get department by ID
+  getById: async (id: string): Promise<Department> => {
+    const response = await api.get(`/departments/${id}`);
     return response.data;
   },
 
@@ -261,6 +279,17 @@ export const traineeService = {
     return response.data;
   },
 
+  // Get trainee by ID
+  getById: async (id: string): Promise<Trainee> => {
+    const response = await api.get(`/trainees/${id}`);
+    return response.data;
+  },
+
+  getByPersonalId: async (personalId: string): Promise<PopulatedTrainee> => {
+    const response = await api.get(`/trainees/personal/${personalId}`);
+    return response.data;
+  },
+  
   // Create new trainee with subDepartmentId
   create: async (traineeData: {
     personalId: string;
@@ -545,6 +574,16 @@ export const initializeSystem = async () => {
     return response.data;
   } catch (error) {
     console.error("Error initializing system:", error);
+    throw error;
+  }
+};
+
+export const fetchTraineeAnalytics = async (traineeId: string): Promise<TraineeAnalytics> => {
+  try {
+    const response = await api.get(`/trainees/${traineeId}/analytics`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching trainee analytics:', error);
     throw error;
   }
 };

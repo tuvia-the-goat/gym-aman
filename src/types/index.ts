@@ -74,11 +74,15 @@ export interface Entry {
   traineeFullName: string;
   traineePersonalId: string;
   departmentId: string;
-  subDepartmentId?: string; // Add this line
+  subDepartmentId?: string;
   baseId: string;
   entryDate: string;
   entryTime: string;
   status?: EntryStatus;
+  baseName?: string;
+  departmentName?: string;
+  subDepartmentName?: string;
+  hasMedicalWarning?: boolean;
 }
 
 export interface AdminContextType {
@@ -101,7 +105,7 @@ export interface Trainee {
   fullName: string;
   gender: "male" | "female";
   departmentId: string;
-  subDepartmentId?: string; // Add this line
+  subDepartmentId?: string;
   baseId: string;
   phoneNumber: string;
   email?: string;
@@ -116,9 +120,14 @@ export interface Trainee {
   lastEntryDate?: string;
   entryCount?: number;
   notes?: string;
-  // Add missing properties
   medicalFormScore: MedicalFormScore;
   medicalCertificateProvided?: boolean;
+}
+
+export interface PopulatedTrainee extends Omit<Trainee, 'departmentId' | 'baseId' | 'subDepartmentId'> {
+  departmentId: { _id: string; name: string };
+  baseId: { _id: string; name: string };
+  subDepartmentId?: { _id: string; name: string };
 }
 
 export interface DepartmentService {

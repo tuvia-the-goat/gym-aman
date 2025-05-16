@@ -15,44 +15,16 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 interface EntriesTableProps {
   displayedEntries: Entry[];
-  hasOrthopedicCondition: (traineeId: string) => boolean;
-  hasMedicalLimitation: (traineeId: string) => boolean;
   handleTraineeClick: (traineeId: string) => void;
   isLoading: boolean;
 }
 
 const EntriesTable: React.FC<EntriesTableProps> = ({
   displayedEntries,
-  hasOrthopedicCondition,
-  hasMedicalLimitation,
   handleTraineeClick,
   isLoading,
 }) => {
   const { admin } = useAdmin();
-
-  // Filter trainees and entries for the current base if admin is a base admin
-  const baseFilteredTrainees = useMemo(() => {
-    if (admin?.role === "gymAdmin" && admin.baseId) {
-      return trainees.filter((trainee) => trainee.baseId === admin.baseId);
-    }
-    return trainees;
-  }, [admin, trainees]);
-
-  const getDepartmentName = (id: string) => {
-    const department = departments.find((dept) => dept._id === id);
-    return department ? department.name : "-";
-  };
-
-  const getSubDepartmentName = (id: string) => {
-    if (!id) return "-";
-    const subDepartment = subDepartments.find((subDept) => subDept._id === id);
-    return subDepartment ? subDepartment.name : "-";
-  };
-
-  const getBaseName = (id: string) => {
-    const base = bases.find((base) => base._id === id);
-    return base ? base.name : "-";
-  };
 
   const getDateFormat = (dateString: string) => {
     try {
@@ -196,16 +168,8 @@ const EntriesTable: React.FC<EntriesTableProps> = ({
         </thead>
         <tbody>
           {displayedEntries.map((entry) => {
-            const hasOrthopedic = entry.traineeId
-              ? hasOrthopedicCondition(entry.traineeId)
-              : false;
-            const hasMedical = entry.traineeId
-              ? hasMedicalLimitation(entry.traineeId)
-              : false;
 
-            const isInThisBase = baseFilteredTrainees.some(
-              (trainee) => trainee._id === entry.traineeId
-            );
+
 
             const statusDisplay = getEntryStatusDisplay(
               entry.status || "success"
@@ -216,7 +180,7 @@ const EntriesTable: React.FC<EntriesTableProps> = ({
                 key={entry._id}
                 className={cn(
                   "border-t hover:bg-muted/50 cursor-pointer transition-colors",
-                  (hasOrthopedic || hasMedical) && "bg-amber-50",
+                  (entry.hasMedicalWarning) && "bg-amber-50",
                   statusDisplay.rowClass
                 )}
                 onClick={() =>
@@ -224,7 +188,7 @@ const EntriesTable: React.FC<EntriesTableProps> = ({
                 }
               >
                 <td className="px-4 py-3 flex items-center">
-                  {(hasOrthopedic || hasMedical) &&
+                  {(entry.hasMedicalWarning) &&
                     entry.status === "success" && (
                       <AlertTriangle
                         className="h-4 w-4 text-amber-500 ml-2"
@@ -235,23 +199,19 @@ const EntriesTable: React.FC<EntriesTableProps> = ({
                 </td>
                 <td className="px-4 py-3">{entry.traineePersonalId}</td>
                   {admin?.role === "generalAdmin" && (
-                    <td className="px-4 py-3">{getBaseName(entry.baseId)}</td>
+                    <td className="px-4 py-3">{entry.baseName}</td>
                   )}
                 <td
-                  className={`px-4 py-3 ${
-                    entry.status === "notAssociated" ? "text-purple-600" : ""
-                  }`}
                 >
                   {entry.status === "notAssociated"
                     ? "מחוץ ליחידה"
-                    : entry.departmentId
-                    ? getDepartmentName(entry.departmentId)
-                    : "-"}
+                    : entry.departmentName
+                  }
                 </td>
                 <td className="px-4 py-3">
-                  {entry.subDepartmentId && entry.status !== "notAssociated"
-                    ? getSubDepartmentName(entry.subDepartmentId)
-                    : "-"}
+                  {entry.status === "notAssociated"
+                    ? "מחוץ ליחידה"
+                    : entry.subDepartmentName}
                 </td>
                 <td className="px-4 py-3">{getDateFormat(entry.entryDate)}</td>
                 <td className="px-4 py-3">{entry.entryTime}</td>

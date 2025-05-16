@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { Entry } from "@/types";
 import { useAdmin } from "@/context/AdminContext";
-import { entryService } from "@/services/api";
+import { entryService, departmentService, subDepartmentService, baseService } from "@/services/api";
 
 interface ExportButtonProps {
   searchTerm: string;
@@ -16,6 +16,7 @@ interface ExportButtonProps {
   startDate?: Date;
   endDate?: Date;
   isLoading: boolean;
+  displayedEntries: Entry[]
 }
 
 const ExportButton = ({
@@ -27,27 +28,11 @@ const ExportButton = ({
   endDate,
   isLoading,
 }: ExportButtonProps) => {
-  const { admin, departments, bases, subDepartments, trainees } = useAdmin();
+  const { admin} = useAdmin();
   const { toast } = useToast();
   const [isExporting, setIsExporting] = useState(false);
 
-  const getDepartmentName = (id: string, status?: string) => {
-    if (status === "notAssociated") return "מחוץ ליחידה";
-    const department = departments.find((dept) => dept._id === id);
-    return department ? department.name : "-";
-  };
-
-  const getSubDepartmentName = (id: string, status?: string) => {
-    if (status === "notAssociated") return "-";
-    if (!id) return "-";
-    const subDepartment = subDepartments.find((subDept) => subDept._id === id);
-    return subDepartment ? subDepartment.name : "-";
-  };
-
-  const getBaseName = (id: string) => {
-    const base = bases.find((base) => base._id === id);
-    return base ? base.name : "-";
-  };
+  
 
   const formatDate = (dateString: string) => {
     try {
@@ -91,7 +76,6 @@ const ExportButton = ({
         ? new Date(endDate.getTime() + 24 * 60 * 60 * 1000).toISOString().split("T")[0]
         : undefined;
         
-        console.log(formattedStartDate, formattedEndDate);
 
       // Only apply the baseId filter for gym admins if no specific base is selected
       const baseIdParam =
@@ -134,18 +118,33 @@ const ExportButton = ({
       }
 
       if (selectedDepartment) {
-        const departmentName = getDepartmentName(selectedDepartment);
-        activeFilters.push(`מסגרת: ${departmentName}`);
+        try {
+          const department = await departmentService.getById(selectedDepartment);
+          activeFilters.push(`מסגרת: ${department.name}`);
+        } catch (error) {
+          console.error("Error fetching department:", error);
+          activeFilters.push(`מסגרת: לא נמצא`);
+        }
       }
 
       if (selectedSubDepartment) {
-        const subDepartmentName = getSubDepartmentName(selectedSubDepartment);
-        activeFilters.push(`תת-מסגרת: ${subDepartmentName}`);
+        try {
+          const subDepartment = await subDepartmentService.getById(selectedSubDepartment);
+          activeFilters.push(`תת-מסגרת: ${subDepartment.name}`);
+        } catch (error) {
+          console.error("Error fetching subdepartment:", error);
+          activeFilters.push(`תת-מסגרת: לא נמצא`);
+        }
       }
 
       if (selectedBase) {
-        const baseName = getBaseName(selectedBase);
-        activeFilters.push(`בסיס: ${baseName}`);
+        try {
+          const base = await baseService.getById(selectedBase);
+          activeFilters.push(`בסיס: ${base.name}`);
+        } catch (error) {
+          console.error("Error fetching base:", error);
+          activeFilters.push(`בסיס: לא נמצא`);
+        }
       }
 
       if (startDate && endDate) {
@@ -270,19 +269,16 @@ const ExportButton = ({
               entry.traineeFullName || "-"
             }</td>
             <td style="mso-number-format:'\\@'">${entry.traineePersonalId}</td>
-            <td style="mso-number-format:'\\@'">${getDepartmentName(
-              entry.departmentId,
-              entry.status
-            )}</td>
-            <td style="mso-number-format:'\\@'">${getSubDepartmentName(
-              entry.subDepartmentId || "",
-              entry.status
-            )}</td>
+            <td style="mso-number-format:'\\@'">${
+              entry.departmentName
+              }</td>
+            <td style="mso-number-format:'\\@'">${
+              entry.subDepartmentName}</td>
             ${
               admin?.role === "generalAdmin"
-                ? `<td style="mso-number-format:'\\@'">${getBaseName(
-                    entry.baseId
-                  )}</td>`
+                ? `<td style="mso-number-format:'\\@'">${
+                    entry.baseName
+                  }</td>`
                 : ""
             }
             <td style="mso-number-format:'\\@'">${formatDate(

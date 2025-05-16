@@ -16,14 +16,24 @@ import TraineeProfileDialog from "../components/EntriesHistory/TraineeProfileDia
 import EntriesRealtimeIndicator from "../components/EntriesHistory/EntriesRealtimeIndicator"; // Import the new component
 import ExportButton from "../components/EntriesHistory/ExportButton";
 import { useEntriesFilter } from "../hooks/useEntriesFilter";
+import { useQuery } from "@tanstack/react-query";
+import { log } from "console";
 
 const EntriesHistory = () => {
-  const { trainees, entries, setEntries } = useAdmin();
+  // const { trainees, entries, setEntries } = useAdmin();
   const { toast } = useToast();
 
-  const [selectedTrainee, setSelectedTrainee] = useState<Trainee | null>(null);
+  const [selectedTraineeId, setSelectedTraineeId] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [hasNewEntries, setHasNewEntries] = useState(false);
+
+  // Query for selected trainee
+  const { data: selectedTrainee } = useQuery({
+    queryKey: ["trainee", selectedTraineeId],
+    queryFn: () => traineeService.getById(selectedTraineeId),
+    enabled: !!selectedTraineeId,
+  });
+  
 
   const {
     entries: displayedEntries,
@@ -46,11 +56,9 @@ const EntriesHistory = () => {
     totalEntries,
     entriesPerPage,
     goToPage,
-    hasOrthopedicCondition,
-    hasMedicalLimitation,
     refreshEntries,
   } = useEntriesFilter();
-
+  console.log(selectedDepartment)
   // Set up WebSocket event handler for new entries
   useEffect(() => {
     // Register handler for new entries
@@ -87,42 +95,12 @@ const EntriesHistory = () => {
     }
   }, [hasNewEntries, refreshEntries]);
 
-  const handleTraineeClick = (traineeId: string) => {
-    const trainee = trainees.find((t) => t._id === traineeId);
-    if (trainee) {
-      setSelectedTrainee(trainee);
-      setIsDialogOpen(true);
-    }
+  const handleTraineeClick = (traineeId) => {    
+    setSelectedTraineeId(traineeId._id);
+    setIsDialogOpen(true);
   };
 
-  const updateMedicalApproval = async (approved: boolean) => {
-    if (!selectedTrainee) return;
-    try {
-      const updatedTrainee = await traineeService.updateMedicalApproval(
-        selectedTrainee._id,
-        {
-          approved: approved,
-          expirationDate: approved
-            ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
-            : null,
-        }
-      );
-      setSelectedTrainee(updatedTrainee);
-      toast({
-        title: approved ? "אישור רפואי עודכן" : "אישור רפואי בוטל",
-        description: approved
-          ? "האישור הרפואי עודכן בהצלחה לשנה"
-          : "האישור הרפואי בוטל בהצלחה",
-      });
-    } catch (error) {
-      console.error("Error updating medical approval:", error);
-      toast({
-        title: "שגיאה",
-        description: "אירעה שגיאה בעת עדכון האישור הרפואי",
-        variant: "destructive",
-      });
-    }
-  };
+
 
   return (
     <DashboardLayout activeTab="entries">
@@ -134,6 +112,7 @@ const EntriesHistory = () => {
 
             <EntriesRealtimeIndicator />
             <ExportButton
+              displayedEntries={displayedEntries}
               searchTerm={searchTerm}
               selectedDepartment={selectedDepartment}
               selectedSubDepartment={selectedSubDepartment}
@@ -175,8 +154,6 @@ const EntriesHistory = () => {
             <div className="max-h-[calc(100vh-300px)] overflow-y-auto">
               <EntriesTable
                 displayedEntries={displayedEntries}
-                hasOrthopedicCondition={hasOrthopedicCondition}
-                hasMedicalLimitation={hasMedicalLimitation}
                 handleTraineeClick={handleTraineeClick}
                 isLoading={isLoading}
               />
@@ -210,7 +187,6 @@ const EntriesHistory = () => {
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <TraineeProfileDialog
             trainee={selectedTrainee}
-            updateMedicalApproval={updateMedicalApproval}
           />
         </Dialog>
       )}

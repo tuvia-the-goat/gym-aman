@@ -1,88 +1,83 @@
-import React, { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { useToast } from "@/components/ui/use-toast";
+import { addMonths, compareAsc } from "date-fns";
 import {
-  CalendarIcon,
   AlertCircle,
-  User,
-  Calendar as CalendarIconFull,
   CheckCircle,
-  XCircle,
-  Shield,
   Dumbbell,
   LogIn,
+  Shield,
+  User,
+  XCircle
 } from "lucide-react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAdmin } from "../context/AdminContext";
 import backgroundImage from "../assets/gym-with-indoor-cycling-equipment.jpg";
+import { useAdmin } from "../context/AdminContext";
 import {
-  Department,
+  authService,
+  baseService,
+  entryService,
+  traineeService
+} from "../services/api";
+import {
   Base,
   Trainee,
-  MedicalFormScore,
-  EntryStatus,
+  PopulatedTrainee
 } from "../types";
-import { useToast } from "@/components/ui/use-toast";
-import {
-  baseService,
-  departmentService,
-  traineeService,
-  entryService,
-  authService,
-} from "../services/api";
-import { addMonths, compareAsc, parseISO, format } from "date-fns";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import { cn } from "@/lib/utils";
-import { Input } from "@/components/ui/input";
-import TraineeProfile from "../components/TraineeProfile";
 
 const TraineeEntering = () => {
   const navigate = useNavigate();
-  const {
-    admin,
-    bases,
-    departments,
-    trainees,
-    setTrainees,
-    entries,
-    setEntries,
-  } = useAdmin();
   const { toast } = useToast();
 
+  const [bases, setBases] = useState<Base[]>([]);
   const [selectedBase, setSelectedBase] = useState<Base | null>(null);
-  const [view, setView] = useState<"login" | "register" | "entry">("entry");
-  const [loginUsername, setLoginUsername] = useState("");
-  const [loginPassword, setLoginPassword] = useState("");
-  const [personalId, setPersonalId] = useState("");
-  const [fullName, setFullName] = useState("");
-  const [medicalProfile, setMedicalProfile] = useState<string>("");
-  const [departmentId, setDepartmentId] = useState("");
-  const [phoneNumber, setPhoneNumber] = useState("");
-  const [gender, setGender] = useState<"male" | "female" | "">("");
-  const [birthDate, setBirthDate] = useState<Date | undefined>(undefined);
-  const [orthopedicCondition, setOrthopedicCondition] = useState(false);
   const [entryPersonalId, setEntryPersonalId] = useState("");
   const [confirmingEntry, setConfirmingEntry] = useState(false);
-  const [entryTrainee, setEntryTrainee] = useState<Trainee | null>(null);
+  const [entryTrainee, setEntryTrainee] = useState<PopulatedTrainee | null>(null);
   const [traineeMedicalExpirationDate, setTraineeMedicalExpirationDate] =
     useState<Date | null>(null);
 
   const baseFromStorage = localStorage.getItem("base");
 
   useEffect(() => {
-    if (baseFromStorage) {
-      const base = bases.find((b) => b._id === baseFromStorage);
-      if (base) {
-        setSelectedBase(base);
+    const fetchBases = async () => {
+      if (!baseFromStorage && !selectedBase) {
+        try {
+          const fetchedBases = await baseService.getAll();
+          setBases(fetchedBases);
+        } catch (error) {
+          toast({
+            title: "שגיאה",
+            description: "אירעה שגיאה בטעינת הבסיסים",
+            variant: "destructive",
+          });
+        }
       }
-    } else if (bases.length > 0) {
-      setSelectedBase(null);
-    }
-  }, [baseFromStorage, bases, setSelectedBase]);
+    };
+    fetchBases();
+  }, [baseFromStorage, selectedBase, toast]);
+
+  useEffect(() => {
+    const fetchBase = async () => {
+      if (baseFromStorage) {
+        try {
+          const base = await baseService.getById(baseFromStorage);
+          setSelectedBase(base);
+        } catch (error) {
+          toast({
+            title: "שגיאה",
+            description: "אירעה שגיאה בטעינת הבסיס",
+            variant: "destructive",
+          });
+        }
+      } else {
+        setSelectedBase(null);
+      }
+    };
+    fetchBase();
+  }, [baseFromStorage, toast]);
 
   useEffect(() => {
     window.history.pushState(null, "", window.location.pathname);
@@ -95,125 +90,13 @@ const TraineeEntering = () => {
     };
   }, []);
 
-  const handleAdminLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      const admin = await authService.login(loginUsername, loginPassword);
-      navigate("/dashboard");
-      toast({
-        title: "התחברות הצליחה",
-        description: `ברוך הבא, ${loginUsername}!`,
-      });
-    } catch (error) {
-      toast({
-        title: "התחברות נכשלה",
-        description: "שם משתמש או סיסמה שגויים",
-        variant: "destructive",
-      });
-    }
-  };
+
 
   const validatePersonalId = (id: string) => {
     return /^\d{7}$/.test(id);
   };
 
-  const validatePhoneNumber = (phone: string) => {
-    return /^05\d{8}$/.test(phone);
-  };
 
-  const handleRegistration = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedBase) {
-      toast({
-        title: "שגיאה",
-        description: "יש לבחור בסיס",
-        variant: "destructive",
-      });
-      return;
-    }
-    if (!birthDate) {
-      toast({
-        title: "שגיאה",
-        description: "חובה להזין תאריך לידה",
-        variant: "destructive",
-      });
-      return;
-    }
-    if (!gender) {
-      toast({
-        title: "שגיאה",
-        description: "יש לבחור מין",
-        variant: "destructive",
-      });
-      return;
-    }
-    if (!validatePersonalId(personalId)) {
-      toast({
-        title: "שגיאה",
-        description: "מספר אישי חייב להיות בדיוק 7 ספרות",
-        variant: "destructive",
-      });
-      return;
-    }
-    if (!validatePhoneNumber(phoneNumber)) {
-      toast({
-        title: "שגיאה",
-        description: "מספר טלפון חייב להיות 10 ספרות ולהתחיל ב-05",
-        variant: "destructive",
-      });
-      return;
-    }
-    const existingTrainee = trainees.find((t) => t.personalId === personalId);
-    if (existingTrainee) {
-      toast({
-        title: "שגיאה",
-        description: "מספר אישי כבר קיים במערכת",
-        variant: "destructive",
-      });
-      return;
-    }
-    try {
-      const formattedBirthDate = birthDate.toISOString().split("T")[0];
-      const newTrainee = await traineeService.create({
-        personalId,
-        fullName,
-        medicalProfile: medicalProfile as
-          | "97"
-          | "82"
-          | "72"
-          | "64"
-          | "45"
-          | "25",
-        departmentId,
-        phoneNumber,
-        baseId: selectedBase._id,
-        gender: gender as "male" | "female",
-        birthDate: formattedBirthDate,
-        orthopedicCondition,
-        medicalFormScore: "notRequired" as MedicalFormScore,
-      });
-      setTrainees([...trainees, newTrainee]);
-      setPersonalId("");
-      setFullName("");
-      setMedicalProfile("");
-      setDepartmentId("");
-      setPhoneNumber("");
-      setGender("");
-      setBirthDate(undefined);
-      setOrthopedicCondition(false);
-      toast({
-        title: "הרשמה הצליחה",
-        description: "המתאמן נרשם בהצלחה למערכת",
-      });
-    } catch (error) {
-      toast({
-        title: "שגיאה",
-        description: "אירעה שגיאה בעת הרשמת המתאמן",
-        variant: "destructive",
-      });
-      console.error("Registration error:", error);
-    }
-  };
 
   const getDateFormat = (dateToFormat: Date) => {
     const day = dateToFormat.getDate();
@@ -222,7 +105,7 @@ const TraineeEntering = () => {
     return `${day}/${month}/${year}`;
   };
 
-  const handlePersonalIdCheck = () => {
+  const handlePersonalIdCheck = async () => {
     if (!validatePersonalId(entryPersonalId)) {
       toast({
         title: "שגיאה",
@@ -231,19 +114,26 @@ const TraineeEntering = () => {
       });
       return;
     }
-    const trainee = trainees.find((t) => t.personalId === entryPersonalId);
-    if (!trainee) {
-      handleNotRegisteredEntry();
-      return;
+    try {
+      const trainee = await traineeService.getByPersonalId(entryPersonalId);
+      if (!trainee) {
+        handleNotRegisteredEntry();
+        return;
+      }
+      setEntryTrainee(trainee);
+      setTraineeMedicalExpirationDate(
+        trainee.medicalApproval.expirationDate
+          ? new Date(trainee.medicalApproval.expirationDate)
+          : null
+      );
+      setConfirmingEntry(true);
+    } catch (error) {
+      toast({
+        title: "שגיאה",
+        description: "אירעה שגיאה בחיפוש המתאמן",
+        variant: "destructive",
+      });
     }
-    setEntryTrainee(trainee);
-    setTraineeMedicalExpirationDate(
-      trainee.medicalApproval.expirationDate
-        ? new Date(trainee.medicalApproval.expirationDate)
-        : null
-    );
-
-    setConfirmingEntry(true);
   };
 
   const handleNotRegisteredEntry = async () => {
@@ -258,7 +148,6 @@ const TraineeEntering = () => {
         baseId: selectedBase._id,
         status: "notRegistered",
       });
-      setEntries([newEntry, ...entries]);
       toast({
         title: "משתמש לא רשום",
         description:
@@ -304,13 +193,12 @@ const TraineeEntering = () => {
           entryTime: currentTime,
           traineeFullName: entryTrainee.fullName,
           traineePersonalId: entryTrainee.personalId,
-          departmentId: entryTrainee.departmentId,
-          subDepartmentId: entryTrainee.subDepartmentId,
+          departmentId: entryTrainee.departmentId._id,
+          subDepartmentId: entryTrainee.subDepartmentId?._id,
           baseId: selectedBase._id,
           status: "noMedicalApproval",
         });
 
-        setEntries([newEntry, ...entries]);
         toast({
           title: "אישור רפואי נדרש",
           description: "לא ניתן לרשום כניסה ללא אישור רפואי בתוקף",
@@ -332,7 +220,7 @@ const TraineeEntering = () => {
     }
 
     // Check if trainee's base matches selected base
-    if (entryTrainee.baseId !== selectedBase._id) {
+    if (entryTrainee.baseId._id !== selectedBase._id) {
       try {
         const today = new Date().toISOString().split("T")[0];
         const currentTime = new Date().toTimeString().split(" ")[0];
@@ -342,13 +230,12 @@ const TraineeEntering = () => {
           entryTime: currentTime,
           traineeFullName: entryTrainee.fullName,
           traineePersonalId: entryTrainee.personalId,
-          departmentId: entryTrainee.departmentId,
-          subDepartmentId: entryTrainee.subDepartmentId,
+          departmentId: entryTrainee.departmentId._id,
+          subDepartmentId: entryTrainee.subDepartmentId?._id,
           baseId: selectedBase._id,
           status: "notAssociated",
         });
 
-        setEntries([newEntry, ...entries]);
         toast({
           title: "כניסה נרשמה בהצלחה",
           description: `${entryTrainee.fullName} נרשם/ה בהצלחה`,
@@ -378,12 +265,11 @@ const TraineeEntering = () => {
         entryTime: currentTime,
         traineeFullName: entryTrainee.fullName,
         traineePersonalId: entryTrainee.personalId,
-        departmentId: entryTrainee.departmentId,
-        subDepartmentId: entryTrainee.subDepartmentId,
+        departmentId: entryTrainee.departmentId._id,
+        subDepartmentId: entryTrainee.subDepartmentId?._id,
         baseId: selectedBase._id,
         status: "success",
       });
-      setEntries([newEntry, ...entries]);
       toast({
         title: "כניסה נרשמה בהצלחה",
         description: `${entryTrainee.fullName} נרשם/ה בהצלחה`,
@@ -403,9 +289,6 @@ const TraineeEntering = () => {
     }
   };
 
-  const filteredDepartments = departments.filter(
-    (dept) => selectedBase && dept.baseId === selectedBase._id
-  );
 
   return (
     <div className="relative min-h-screen flex flex-col">
@@ -482,7 +365,7 @@ const TraineeEntering = () => {
                 </div>
 
 
-                {view === "entry" && (
+                {(
                   <div className="glass max-w-xl mx-auto p-6 rounded-2xl animate-fade-up shadow-lg border border-border/30">
                     <h3 className="text-xl font-bold mb-6 text-center flex items-center justify-center">
                       <LogIn className="ml-2 h-5 w-5 text-primary" />

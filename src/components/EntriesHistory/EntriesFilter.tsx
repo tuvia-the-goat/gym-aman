@@ -12,8 +12,8 @@ import { Button } from "@/components/ui/button";
 import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format, subDays, subWeeks, subMonths } from "date-fns";
-import { subDepartmentService } from "../../services/api";
-import { SubDepartment, Department } from "@/types";
+import { subDepartmentService, baseService, departmentService } from "../../services/api";
+import { SubDepartment, Department, Base } from "@/types";
 import { Input } from "../ui/input";
 import {
   Select,
@@ -22,14 +22,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useQuery } from "@tanstack/react-query";
 
 interface EntriesFilterProps {
   searchTerm: string;
   setSearchTerm: (value: string) => void;
   selectedDepartment: string;
   setSelectedDepartment: (value: string) => void;
-  selectedSubDepartment: string; // Add this line
-  setSelectedSubDepartment: (value: string) => void; // Add this line
+  selectedSubDepartment: string;
+  setSelectedSubDepartment: (value: string) => void;
   selectedBase: string;
   setSelectedBase: (value: string) => void;
   startDate: Date | undefined;
@@ -52,12 +53,29 @@ const EntriesFilter: React.FC<EntriesFilterProps> = ({
   endDate,
   setEndDate,
 }) => {
-  const { admin, departments, bases, subDepartments } = useAdmin();
-  const [filteredSubDepartments, setFilteredSubDepartments] = useState<
-    SubDepartment[]
-  >([]);
-  const [filteredDepartments, setFilteredDepartments] = useState<Department[]>([]);
+  const { admin } = useAdmin();
   const [showDateRange, setShowDateRange] = useState(false);
+
+  // Fetch bases using TanStack Query
+  const { data: bases = [] } = useQuery<Base[]>({
+    queryKey: ['bases'],
+    queryFn: () => baseService.getAll(),
+    enabled: admin?.role === "generalAdmin"
+  });
+
+  // Fetch departments using TanStack Query
+  const { data: departments = [] } = useQuery<Department[]>({
+    queryKey: ['departments', selectedBase, admin?.role, admin?.baseId],
+    queryFn: () => departmentService.getAll(admin?.role === "gymAdmin" ? admin.baseId : selectedBase),
+    enabled: !!selectedBase || admin?.role === "gymAdmin"
+  });
+
+  // Fetch sub-departments using TanStack Query
+  const { data: subDepartments = [] } = useQuery<SubDepartment[]>({
+    queryKey: ['subDepartments', selectedDepartment],
+    queryFn: () => subDepartmentService.getByDepartment(selectedDepartment),
+    enabled: !!selectedDepartment
+  });
 
   // Set admin's base if they are a gymAdmin
   useEffect(() => {
@@ -65,35 +83,6 @@ const EntriesFilter: React.FC<EntriesFilterProps> = ({
       setSelectedBase(admin.baseId);
     }
   }, [admin, setSelectedBase]);
-
-  // Filter departments based on selected base
-  useEffect(() => {
-    if (selectedBase) {
-      const baseDepartments = departments.filter(
-        (dept) => dept.baseId === selectedBase
-      );
-      setFilteredDepartments(baseDepartments);
-      // Reset department selection when base changes
-      setSelectedDepartment("");
-    } else {
-      setFilteredDepartments([]);
-      setSelectedDepartment("");
-    }
-  }, [selectedBase, departments]);
-
-  // Filter subDepartments when department changes
-  useEffect(() => {
-    if (!selectedDepartment) {
-      setFilteredSubDepartments([]);
-      setSelectedSubDepartment("");
-      return;
-    }
-
-    const subDepts = subDepartments.filter(
-      (subDept) => subDept.departmentId === selectedDepartment
-    );
-    setFilteredSubDepartments(subDepts);
-  }, [selectedDepartment, subDepartments, setSelectedSubDepartment]);
 
   const handleQuickDateSelect = (value: string) => {
     const today = new Date();
@@ -163,6 +152,8 @@ const EntriesFilter: React.FC<EntriesFilterProps> = ({
             value={selectedBase}
             onValueChange={(value) => {
               value === "all" ? setSelectedBase("") : setSelectedBase(value);
+              setSelectedDepartment("");
+              setSelectedSubDepartment("");
             }}
           >
             <SelectTrigger className="input-field w-full">
@@ -207,7 +198,7 @@ const EntriesFilter: React.FC<EntriesFilterProps> = ({
             <SelectItem value="all" className="flex justify-end">
               כל המסגרות
             </SelectItem>
-            {filteredDepartments.map((department) => (
+            {departments.map((department) => (
               <SelectItem
                 key={department._id}
                 value={department._id}
@@ -220,7 +211,6 @@ const EntriesFilter: React.FC<EntriesFilterProps> = ({
         </Select>
       </div>
 
-      {/* Add SubDepartment filter */}
       <div>
         <label
           htmlFor="subDepartment"
@@ -247,7 +237,7 @@ const EntriesFilter: React.FC<EntriesFilterProps> = ({
             <SelectItem value="all" className="flex justify-end">
               כל תתי-המסגרות
             </SelectItem>
-            {filteredSubDepartments.map((subDept) => (
+            {subDepartments.map((subDept) => (
               <SelectItem
                 key={subDept._id}
                 value={subDept._id}

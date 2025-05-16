@@ -4,11 +4,9 @@ import { Shield, CheckCircle2, XCircle, AlertTriangle } from 'lucide-react';
 import { Trainee } from '@/types';
 interface MedicalDetailsSectionProps {
   trainee: Trainee;
-  updateMedicalApproval: (approved: boolean) => Promise<void>;
 }
 const MedicalDetailsSection: React.FC<MedicalDetailsSectionProps> = ({
   trainee,
-  updateMedicalApproval
 }) => {
   const hasExpiredMedicalApproval = !trainee.medicalApproval.approved || trainee.medicalApproval.expirationDate && new Date(trainee.medicalApproval.expirationDate) < new Date();
   return <div className="glass p-5 rounded-xl border border-border/30 shadow-sm">
