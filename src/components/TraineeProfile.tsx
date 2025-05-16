@@ -1,7 +1,14 @@
 // src/components/TraineeProfile.tsx - Update to include subDepartment info
 
 import React, { useState, useEffect } from "react";
-import { Trainee, Department, MedicalFormScore, SubDepartment, Base } from "../types";
+import {
+  Trainee,
+  Department,
+  MedicalFormScore,
+  SubDepartment,
+  Base,
+  PopulatedTrainee,
+} from "../types";
 import { Calendar } from "@/components/ui/calendar";
 import {
   Popover,
@@ -31,7 +38,12 @@ import { format, parseISO, addYears } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
-import { traineeService } from "../services/api";
+import {
+  baseService,
+  departmentService,
+  traineeService,
+  subDepartmentService,
+} from "../services/api";
 import { useAdmin } from "../context/AdminContext";
 import { Input } from "@/components/ui/input";
 import {
@@ -44,24 +56,55 @@ import {
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { he } from "date-fns/locale";
+import { useQueries, useQuery } from "@tanstack/react-query";
 
 interface TraineeProfileProps {
   trainee: Trainee;
-  departments: Department[];
   onUpdate: (updatedTrainee: Trainee) => void;
   readOnly?: boolean;
   setIsLoading?: (loading: boolean) => void;
 }
 
+const getBaseName = (base: string | Base) => {
+  if (!base) return "לא משויך";
+  return typeof base === "string" ? "" : base.name;
+};
+
+const getBaseId = (base: string | Base) => {
+  if (!base) return null;
+  return typeof base === "string" ? base : base._id;
+};
+
+const getDepartmentName = (department: string | Department) => {
+  if (!department) return "לא משויך";
+  return typeof department === "string" ? "" : department.name;
+};
+
+const getDepartmentId = (department: string | Department) => {
+  if (!department) return null;
+  return typeof department === "string" ? department : department._id;
+};
+
+const getSubDepartmentName = (
+  subDepartment: string | SubDepartment | undefined
+) => {
+  if (!subDepartment) return "לא משויך";
+  return typeof subDepartment === "string" ? "" : subDepartment.name;
+};
+
+const getSubDepartmentId = (subDepartment: string | SubDepartment) => {
+  if (!subDepartment) return null;
+  return typeof subDepartment === "string" ? subDepartment : subDepartment._id;
+};
+
 const TraineeProfile: React.FC<TraineeProfileProps> = ({
   trainee,
-  departments,
   onUpdate,
   readOnly = false,
   setIsLoading,
 }) => {
   const { toast } = useToast();
-  const { subDepartments, bases, admin } = useAdmin();
+  const { admin } = useAdmin();
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showMedicalApproval, setShowMedicalApproval] = useState(false);
@@ -69,38 +112,90 @@ const TraineeProfile: React.FC<TraineeProfileProps> = ({
   // Form fields
   const [personalId, setPersonalId] = useState("");
   const [personalIdError, setPersonalIdError] = useState("");
-  const [fullName, setFullName] = useState(trainee.fullName);
-  const [medicalProfile, setMedicalProfile] = useState(trainee.medicalProfile);
-  const [departmentId, setDepartmentId] = useState(trainee.departmentId);
-  const [subDepartmentId, setSubDepartmentId] = useState(trainee.subDepartmentId);
-  const [baseId, setBaseId] = useState(trainee.baseId);
-  const [gender, setGender] = useState(trainee.gender);
-  const [birthDate, setBirthDate] = useState(trainee.birthDate ? parseISO(trainee.birthDate) : undefined);
-  const [orthopedicCondition, setOrthopedicCondition] = useState(trainee.orthopedicCondition);
-  const [medicalFormScore, setMedicalFormScore] = useState<MedicalFormScore>(trainee.medicalFormScore);
-  const [medicalCertificateProvided, setMedicalCertificateProvided] = useState(trainee.medicalCertificateProvided || false);
-  const [medicalLimitation, setMedicalLimitation] = useState(trainee.medicalLimitation || "");
-  const [medicalApprovalExpiration, setMedicalApprovalExpiration] = useState<Date | undefined>(
-    trainee.medicalApproval.expirationDate ? parseISO(trainee.medicalApproval.expirationDate) : undefined
-  );
+  const [fullName, setFullName] = useState("");
+  const [medicalProfile, setMedicalProfile] = useState("");
+  const [departmentId, setDepartmentId] = useState("");
+  const [subDepartmentId, setSubDepartmentId] = useState("");
+  const [baseId, setBaseId] = useState("");
+  const [gender, setGender] = useState<"male" | "female">("male");
+  const [birthDate, setBirthDate] = useState<Date | undefined>(undefined);
+  const [orthopedicCondition, setOrthopedicCondition] = useState(false);
+  const [medicalFormScore, setMedicalFormScore] =
+    useState<MedicalFormScore>("notRequired");
+  const [medicalCertificateProvided, setMedicalCertificateProvided] =
+    useState(false);
+  const [medicalLimitation, setMedicalLimitation] = useState("");
+  const [medicalApprovalExpiration, setMedicalApprovalExpiration] = useState<
+    Date | undefined
+  >(undefined);
+
+  // Fetch trainee with populated fields
+  const { data: populatedTrainee, isLoading: isLoadingTrainee } = useQuery({
+    queryKey: ["trainee-populated", trainee._id],
+    queryFn: () =>
+      traineeService.getById(trainee._id, [
+        "subDepartmentId",
+        "departmentId",
+        "baseId",
+      ]),
+    initialData: trainee,
+  });
+
+  // Fetch departments, bases, and subDepartments only when in edit mode
+  const [
+    { data: departments = [] },
+    { data: bases = [] },
+    { data: subDepartments = [] },
+  ] = useQueries({
+    queries: [
+      {
+        queryKey: ["departments"],
+        queryFn: () => {
+          return departmentService.getAll();
+        },
+        enabled: isEditing,
+      },
+      {
+        queryKey: ["bases"],
+        queryFn: () => baseService.getAll(),
+        enabled: isEditing && admin?.role === "generalAdmin",
+      },
+      {
+        queryKey: ["subDepartments"],
+        queryFn: () => subDepartmentService.getAll(),
+        enabled: isEditing,
+      },
+    ],
+  });
 
   // Reset form fields when trainee changes
   useEffect(() => {
-    setPersonalId(trainee.personalId);
-    setFullName(trainee.fullName);
-    setMedicalProfile(trainee.medicalProfile);
-    setDepartmentId(trainee.departmentId);
-    setSubDepartmentId(trainee.subDepartmentId);
-    setBaseId(trainee.baseId);
-    setGender(trainee.gender);
-    setBirthDate(trainee.birthDate ? parseISO(trainee.birthDate) : undefined);
-    setOrthopedicCondition(trainee.orthopedicCondition);
-    setMedicalFormScore(trainee.medicalFormScore);
-    setMedicalCertificateProvided(trainee.medicalCertificateProvided || false);
-    setMedicalLimitation(trainee.medicalLimitation || "");
-    setMedicalApprovalExpiration(trainee.medicalApproval.expirationDate ? parseISO(trainee.medicalApproval.expirationDate) : undefined);
-    setIsEditing(false);
-  }, [trainee]);
+    if (populatedTrainee) {
+      setPersonalId(populatedTrainee.personalId);
+      setFullName(populatedTrainee.fullName);
+      setMedicalProfile(populatedTrainee.medicalProfile);
+      setDepartmentId(populatedTrainee.departmentId);
+      setSubDepartmentId(populatedTrainee.subDepartmentId || "");
+      setBaseId(populatedTrainee.baseId);
+      setGender(populatedTrainee.gender);
+      setBirthDate(
+        populatedTrainee.birthDate
+          ? new Date(populatedTrainee.birthDate)
+          : undefined
+      );
+      setOrthopedicCondition(populatedTrainee.orthopedicCondition);
+      setMedicalFormScore(populatedTrainee.medicalFormScore);
+      setMedicalCertificateProvided(
+        populatedTrainee.medicalCertificateProvided || false
+      );
+      setMedicalLimitation(populatedTrainee.medicalLimitation || "");
+      setMedicalApprovalExpiration(
+        populatedTrainee.medicalApproval.expirationDate
+          ? new Date(populatedTrainee.medicalApproval.expirationDate)
+          : undefined
+      );
+    }
+  }, [populatedTrainee]);
 
   const customStyles = `
   .react-datepicker {
@@ -153,26 +248,6 @@ const TraineeProfile: React.FC<TraineeProfileProps> = ({
     );
   };
 
-  const getDepartmentName = (departmentId: string) => {
-    const department = departments.find((dept) => dept._id === departmentId);
-    return department ? department.name : "";
-  };
-
-  // Get subDepartment name
-  const getSubDepartmentName = (subDepartmentId: string | undefined) => {
-    if (!subDepartmentId || subDepartmentId === "none") return "לא משויך";
-    const subDepartment = subDepartments.find(
-      (subDept) => subDept._id === subDepartmentId
-    );
-    return subDepartment ? subDepartment.name : "לא ידוע";
-  };
-
-  const getBaseName = (baseId: string) => {
-    if (!bases) return "לא ידוע";
-    const base = bases.find((base) => base._id === baseId);
-    return base ? base.name : "לא ידוע";
-  };
-
   const getPhoneNumberFormat = (phoneNumberToFormat: string) => {
     return `${phoneNumberToFormat.slice(0, 3)}-${phoneNumberToFormat.slice(
       3,
@@ -187,20 +262,30 @@ const TraineeProfile: React.FC<TraineeProfileProps> = ({
 
   const handleCancel = () => {
     // Reset all form fields to original values
-    setPersonalId(trainee.personalId);
-    setFullName(trainee.fullName);
+    setPersonalId(populatedTrainee.personalId);
+    setFullName(populatedTrainee.fullName);
     setShowMedicalApproval(false);
-    setMedicalProfile(trainee.medicalProfile);
-    setDepartmentId(trainee.departmentId);
-    setSubDepartmentId(trainee.subDepartmentId);
-    setBaseId(trainee.baseId);
-    setGender(trainee.gender);
-    setBirthDate(trainee.birthDate ? parseISO(trainee.birthDate) : undefined);
-    setOrthopedicCondition(trainee.orthopedicCondition);
-    setMedicalFormScore(trainee.medicalFormScore);
-    setMedicalCertificateProvided(trainee.medicalCertificateProvided || false);
-    setMedicalLimitation(trainee.medicalLimitation || "");
-    setMedicalApprovalExpiration(trainee.medicalApproval.expirationDate ? parseISO(trainee.medicalApproval.expirationDate) : undefined);
+    setMedicalProfile(populatedTrainee.medicalProfile);
+    setDepartmentId(populatedTrainee.departmentId);
+    setSubDepartmentId(populatedTrainee.subDepartmentId);
+    setBaseId(populatedTrainee.baseId);
+    setGender(populatedTrainee.gender);
+    setBirthDate(
+      populatedTrainee.birthDate
+        ? parseISO(populatedTrainee.birthDate)
+        : undefined
+    );
+    setOrthopedicCondition(populatedTrainee.orthopedicCondition);
+    setMedicalFormScore(populatedTrainee.medicalFormScore);
+    setMedicalCertificateProvided(
+      populatedTrainee.medicalCertificateProvided || false
+    );
+    setMedicalLimitation(populatedTrainee.medicalLimitation || "");
+    setMedicalApprovalExpiration(
+      populatedTrainee.medicalApproval.expirationDate
+        ? parseISO(populatedTrainee.medicalApproval.expirationDate)
+        : undefined
+    );
     setIsEditing(false);
   };
 
@@ -244,7 +329,10 @@ const TraineeProfile: React.FC<TraineeProfileProps> = ({
       return;
     }
 
-    if (!medicalApprovalExpiration && (medicalFormScore !== "partialScore" || medicalCertificateProvided)) {
+    if (
+      !medicalApprovalExpiration &&
+      (medicalFormScore !== "partialScore" || medicalCertificateProvided)
+    ) {
       toast({
         title: "שגיאה",
         description: "חובה לבחור תאריך לתפוקת אישור רפואי",
@@ -261,7 +349,7 @@ const TraineeProfile: React.FC<TraineeProfileProps> = ({
       });
       return;
     }
-    
+
     setIsSaving(true);
     try {
       setIsLoading?.(true);
@@ -272,33 +360,48 @@ const TraineeProfile: React.FC<TraineeProfileProps> = ({
         medicalCertificateProvided
       );
       // Use selected expiration date or calculate one year from now if approved
-      const expirationDate = medicalApprovalExpiration 
-      ? medicalApprovalExpiration.toISOString().split("T")[0]
-      : (approved ? addYears(new Date(), 1).toISOString().split("T")[0] : null);
-      
+      const expirationDate = medicalApprovalExpiration
+        ? medicalApprovalExpiration.toISOString().split("T")[0]
+        : approved
+        ? addYears(new Date(), 1).toISOString().split("T")[0]
+        : null;
       // Prepare the update data
       const updateData = {
         personalId,
         fullName,
-        medicalProfile: medicalProfile as "97" | "82" | "72" | "64" | "45" | "25",
-        departmentId,
-        subDepartmentId,
-        baseId: baseId || trainee.baseId,
+        medicalProfile: medicalProfile as
+          | "97"
+          | "82"
+          | "72"
+          | "64"
+          | "45"
+          | "25",
+        departmentId: getDepartmentId(departmentId),
+        subDepartmentId: getSubDepartmentId(subDepartmentId),
+        baseId: getBaseId(baseId) || getBaseId(populatedTrainee.baseId),
         gender: gender as "male" | "female",
         birthDate: birthDate?.toISOString().split("T")[0],
-        orthopedicCondition,
+        orthopedicCondition: orthopedicCondition || false,
         medicalFormScore,
-        medicalCertificateProvided: medicalFormScore === "partialScore" ? medicalCertificateProvided : undefined,
+        medicalCertificateProvided:
+          medicalFormScore === "partialScore"
+            ? medicalCertificateProvided
+            : undefined,
         medicalLimitation,
         medicalApproval: {
           approved,
-          expirationDate: medicalApprovalExpiration && approved ? medicalApprovalExpiration.toISOString().split("T")[0] : null
-        }
+          expirationDate:
+            medicalApprovalExpiration && approved
+              ? medicalApprovalExpiration.toISOString().split("T")[0]
+              : null,
+        },
       };
 
       // Update all trainee details
-      console.log('updateData', updateData);
-      const updatedTrainee = await traineeService.updateProfile(trainee._id, updateData);
+      const updatedTrainee = await traineeService.updateProfile(
+        populatedTrainee._id,
+        updateData
+      );
 
       onUpdate(updatedTrainee);
 
@@ -330,9 +433,9 @@ const TraineeProfile: React.FC<TraineeProfileProps> = ({
   };
 
   const hasExpiredMedicalApproval =
-    !trainee.medicalApproval.approved ||
-    (trainee.medicalApproval.expirationDate &&
-      new Date(trainee.medicalApproval.expirationDate) < new Date());
+    !populatedTrainee.medicalApproval.approved ||
+    (populatedTrainee.medicalApproval.expirationDate &&
+      new Date(populatedTrainee.medicalApproval.expirationDate) < new Date());
 
   return (
     <div className="glass p-6 rounded-xl border border-border/30 shadow-md">
@@ -341,7 +444,7 @@ const TraineeProfile: React.FC<TraineeProfileProps> = ({
           <div className="bg-primary/10 p-2 rounded-full ml-3">
             <User className="h-6 w-6 text-primary" />
           </div>
-          <h2 className="text-2xl font-bold">{trainee.fullName}</h2>
+          <h2 className="text-2xl font-bold">{populatedTrainee.fullName}</h2>
         </div>
         {!readOnly && (
           <div>
@@ -406,7 +509,9 @@ const TraineeProfile: React.FC<TraineeProfileProps> = ({
                     className={personalIdError ? "border-red-500" : ""}
                   />
                   {personalIdError && (
-                    <p className="text-red-500 text-sm mt-1">{personalIdError}</p>
+                    <p className="text-red-500 text-sm mt-1">
+                      {personalIdError}
+                    </p>
                   )}
                 </div>
 
@@ -423,22 +528,31 @@ const TraineeProfile: React.FC<TraineeProfileProps> = ({
                   <label className="text-sm font-medium">מין</label>
                   <Select
                     value={gender}
-                    onValueChange={(value) => setGender(value as 'male' | 'female')}
+                    onValueChange={(value) =>
+                      setGender(value as "male" | "female")
+                    }
                     disabled={isSaving}
+                    defaultValue={populatedTrainee.gender}
                   >
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="בחר מין" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="male" className="flex justify-end">זכר</SelectItem>
-                      <SelectItem value="female" className="flex justify-end">נקבה</SelectItem>
+                      <SelectItem value="male" className="flex justify-end">
+                        זכר
+                      </SelectItem>
+                      <SelectItem value="female" className="flex justify-end">
+                        נקבה
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
                 <div className="space-y-3">
                   <div className="flex flex-col">
-                    <label className="text-sm font-medium mb-2">תאריך לידה</label>
+                    <label className="text-sm font-medium mb-2">
+                      תאריך לידה
+                    </label>
                     <style>{customStyles}</style>
                     <DatePicker
                       selected={birthDate}
@@ -449,7 +563,7 @@ const TraineeProfile: React.FC<TraineeProfileProps> = ({
                       yearDropdownItemNumber={80}
                       placeholderText="dd/mm/yyyy"
                       maxDate={new Date()}
-                      minDate={new Date('1940-01-01')}
+                      minDate={new Date("1940-01-01")}
                       locale={he}
                       showPopperArrow={false}
                       className="input-field text-black text-sm font-[300] w-full"
@@ -464,25 +578,31 @@ const TraineeProfile: React.FC<TraineeProfileProps> = ({
               </div>
 
               <div className="space-y-4">
-                {admin?.role === 'generalAdmin' && (
+                {admin?.role === "generalAdmin" && (
                   <div className="space-y-2">
                     <label className="text-sm font-medium">בסיס</label>
                     <Select
-                      value={baseId || trainee.baseId}
+                      value={
+                        getBaseId(baseId) || getBaseId(populatedTrainee.baseId)
+                      }
                       onValueChange={(value) => {
-                        console.log('Base selected:', value);
                         setBaseId(value);
                         setDepartmentId(""); // Reset department when base changes
                         setSubDepartmentId("none"); // Reset sub-department when base changes
                       }}
                       disabled={isSaving}
+                      defaultValue={getBaseId(populatedTrainee.baseId)}
                     >
                       <SelectTrigger className="w-full">
                         <SelectValue placeholder="בחר בסיס" />
                       </SelectTrigger>
                       <SelectContent>
                         {bases?.map((base) => (
-                          <SelectItem key={base._id} value={base._id} className="flex justify-end">
+                          <SelectItem
+                            key={base._id}
+                            value={base._id}
+                            className="flex justify-end"
+                          >
                             {base.name}
                           </SelectItem>
                         ))}
@@ -494,21 +614,28 @@ const TraineeProfile: React.FC<TraineeProfileProps> = ({
                 <div className="space-y-2">
                   <label className="text-sm font-medium">מסגרת</label>
                   <Select
-                    value={departmentId}
+                    value={getDepartmentId(departmentId)}
                     onValueChange={(value) => {
                       setDepartmentId(value);
                       setSubDepartmentId("none"); // Reset sub-department when department changes
                     }}
                     disabled={isSaving}
+                    defaultValue={getDepartmentId(
+                      populatedTrainee.departmentId
+                    )}
                   >
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="בחר מסגרת" />
                     </SelectTrigger>
                     <SelectContent>
                       {departments
-                        .filter((dept) => dept.baseId === baseId)
+                        .filter((dept) => dept.baseId === getBaseId(baseId))
                         .map((dept) => (
-                          <SelectItem key={dept._id} value={dept._id} className="flex justify-end">
+                          <SelectItem
+                            key={dept._id}
+                            value={dept._id}
+                            className="flex justify-end"
+                          >
                             {dept.name}
                           </SelectItem>
                         ))}
@@ -519,19 +646,33 @@ const TraineeProfile: React.FC<TraineeProfileProps> = ({
                 <div className="space-y-2">
                   <label className="text-sm font-medium">תת-מסגרת</label>
                   <Select
-                    value={subDepartmentId}
+                    value={getSubDepartmentId(subDepartmentId)}
                     onValueChange={setSubDepartmentId}
                     disabled={isSaving}
+                    defaultValue={
+                      getSubDepartmentId(populatedTrainee.subDepartmentId) ||
+                      "none"
+                    }
                   >
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="בחר תת-מסגרת" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="none" className="flex justify-end">לא משויך</SelectItem>
+                      <SelectItem value="none" className="flex justify-end">
+                        לא משויך
+                      </SelectItem>
                       {subDepartments
-                        .filter((subDept) => subDept.departmentId === departmentId)
+                        .filter(
+                          (subDept) =>
+                            subDept.departmentId ===
+                            getDepartmentId(departmentId)
+                        )
                         .map((subDept) => (
-                          <SelectItem key={subDept._id} value={subDept._id} className="flex justify-end">
+                          <SelectItem
+                            key={subDept._id}
+                            value={subDept._id}
+                            className="flex justify-end"
+                          >
                             {subDept.name}
                           </SelectItem>
                         ))}
@@ -550,15 +691,17 @@ const TraineeProfile: React.FC<TraineeProfileProps> = ({
                   <h3 className="text-xs font-medium text-muted-foreground">
                     מספר אישי
                   </h3>
-                  <p className="font-medium">{trainee.personalId}</p>
+                  <p className="font-medium">{populatedTrainee.personalId}</p>
                 </div>
               </div>
               <div className="bg-card/50 p-3 rounded-lg flex items-center border border-border/30">
                 <User className="h-5 w-5 text-muted-foreground ml-3" />
                 <div>
-                  <h3 className="text-xs font-medium text-muted-foreground">מין</h3>
+                  <h3 className="text-xs font-medium text-muted-foreground">
+                    מין
+                  </h3>
                   <p className="font-medium">
-                    {trainee.gender === "male" ? "זכר" : "נקבה"}
+                    {populatedTrainee.gender === "male" ? "זכר" : "נקבה"}
                   </p>
                 </div>
               </div>
@@ -569,24 +712,27 @@ const TraineeProfile: React.FC<TraineeProfileProps> = ({
                   <h3 className="text-xs font-medium text-muted-foreground">
                     תאריך לידה
                   </h3>
-                  <p className="font-medium">{formatDate(trainee.birthDate)}</p>
-                </div>
-              </div>
-
-            </div>
-
-            <div className="space-y-4">
-              <div className="bg-card/50 p-3 rounded-lg flex items-center border border-border/30">
-                <Building className="h-5 w-5 text-muted-foreground ml-3" />
-                <div>
-                  <h3 className="text-xs font-medium text-muted-foreground">
-                    בסיס
-                  </h3>
                   <p className="font-medium">
-                    {getBaseName(trainee.baseId)}
+                    {formatDate(populatedTrainee.birthDate)}
                   </p>
                 </div>
               </div>
+            </div>
+
+            <div className="space-y-4">
+              {admin?.role === "generalAdmin" && (
+                <div className="bg-card/50 p-3 rounded-lg flex items-center border border-border/30">
+                  <Building className="h-5 w-5 text-muted-foreground ml-3" />
+                  <div>
+                    <h3 className="text-xs font-medium text-muted-foreground">
+                      בסיס
+                    </h3>
+                    <p className="font-medium">
+                      {getBaseName(populatedTrainee.baseId)}
+                    </p>
+                  </div>
+                </div>
+              )}
               <div className="bg-card/50 p-3 rounded-lg flex items-center border border-border/30">
                 <Building className="h-5 w-5 text-muted-foreground ml-3" />
                 <div>
@@ -594,7 +740,7 @@ const TraineeProfile: React.FC<TraineeProfileProps> = ({
                     מסגרת
                   </h3>
                   <p className="font-medium">
-                    {getDepartmentName(trainee.departmentId)}
+                    {getDepartmentName(populatedTrainee.departmentId)}
                   </p>
                 </div>
               </div>
@@ -606,7 +752,7 @@ const TraineeProfile: React.FC<TraineeProfileProps> = ({
                     תת-מסגרת
                   </h3>
                   <p className="font-medium">
-                    {getSubDepartmentName(trainee.subDepartmentId)}
+                    {getSubDepartmentName(populatedTrainee.subDepartmentId)}
                   </p>
                 </div>
               </div>
@@ -622,37 +768,53 @@ const TraineeProfile: React.FC<TraineeProfileProps> = ({
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {isEditing ? (
-              <div className="bg-card/50 p-4 rounded-lg border border-border/30">
-<h3 className="text-xs font-medium text-muted-foreground">
-                    פרופיל רפואי
-                  </h3>                <Select
-                  value={medicalProfile}
-                  onValueChange={setMedicalProfile}
-                  disabled={isSaving}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="בחר פרופיל רפואי" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="97" className="flex justify-end">97</SelectItem>
-                    <SelectItem value="82" className="flex justify-end">82</SelectItem>
-                    <SelectItem value="72" className="flex justify-end">72</SelectItem>
-                    <SelectItem value="64" className="flex justify-end">64</SelectItem>
-                    <SelectItem value="45" className="flex justify-end">45</SelectItem>
-                    <SelectItem value="25" className="flex justify-end">25</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>)
-        : (<div className="bg-card/50 p-3 rounded-lg flex items-center border border-border/30">
-                <Activity className="h-5 w-5 text-muted-foreground ml-3" />
-                <div>
-                  <h3 className="text-xs font-medium text-muted-foreground">
-                    פרופיל רפואי
-                  </h3>
-                  <p className="font-medium">{trainee.medicalProfile}</p>
-                </div>
-              </div>)}
+          {isEditing ? (
+            <div className="bg-card/50 p-4 rounded-lg border border-border/30">
+              <h3 className="text-xs font-medium text-muted-foreground">
+                פרופיל רפואי
+              </h3>{" "}
+              <Select
+                value={medicalProfile}
+                onValueChange={setMedicalProfile}
+                disabled={isSaving}
+                defaultValue={populatedTrainee.medicalProfile}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="בחר פרופיל רפואי" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="97" className="flex justify-end">
+                    97
+                  </SelectItem>
+                  <SelectItem value="82" className="flex justify-end">
+                    82
+                  </SelectItem>
+                  <SelectItem value="72" className="flex justify-end">
+                    72
+                  </SelectItem>
+                  <SelectItem value="64" className="flex justify-end">
+                    64
+                  </SelectItem>
+                  <SelectItem value="45" className="flex justify-end">
+                    45
+                  </SelectItem>
+                  <SelectItem value="25" className="flex justify-end">
+                    25
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          ) : (
+            <div className="bg-card/50 p-3 rounded-lg flex items-center border border-border/30">
+              <Activity className="h-5 w-5 text-muted-foreground ml-3" />
+              <div>
+                <h3 className="text-xs font-medium text-muted-foreground">
+                  פרופיל רפואי
+                </h3>
+                <p className="font-medium">{populatedTrainee.medicalProfile}</p>
+              </div>
+            </div>
+          )}
           {/* Orthopedic Condition */}
           <div className="bg-card/50 p-4 rounded-lg border border-border/30">
             <h4 className="text-sm font-medium text-muted-foreground mb-2">
@@ -663,7 +825,7 @@ const TraineeProfile: React.FC<TraineeProfileProps> = ({
                 <input
                   id="orthopedicCondition"
                   type="checkbox"
-                  checked={orthopedicCondition}
+                  defaultChecked={false}
                   onChange={(e) => setOrthopedicCondition(e.target.checked)}
                   className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary ml-2"
                   disabled={isSaving}
@@ -690,7 +852,13 @@ const TraineeProfile: React.FC<TraineeProfileProps> = ({
           </div>
 
           {/* Medical Form Score */}
-          <div className={medicalFormScore === "partialScore" ? "bg-card/50 p-4 rounded-lg border border-border/30" : "col-span-2 bg-card/50 p-4 rounded-lg border border-border/30"}>
+          <div
+            className={
+              medicalFormScore === "partialScore"
+                ? "bg-card/50 p-4 rounded-lg border border-border/30"
+                : "col-span-2 bg-card/50 p-4 rounded-lg border border-border/30"
+            }
+          >
             <h4 className="text-sm font-medium text-muted-foreground mb-2">
               ציון שאלון א"ס
             </h4>
@@ -698,30 +866,48 @@ const TraineeProfile: React.FC<TraineeProfileProps> = ({
               <div className="space-y-2">
                 <Select
                   value={medicalFormScore}
-                  onValueChange={(value) => setMedicalFormScore(value as MedicalFormScore)}
+                  onValueChange={(value) =>
+                    setMedicalFormScore(value as MedicalFormScore)
+                  }
                   disabled={isSaving}
+                  defaultValue={populatedTrainee.medicalFormScore}
                 >
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="בחר ציון" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="notRequired" className="flex justify-end">לא נזקק/ה למילוי שאלון</SelectItem>
-                    <SelectItem value="fullScore" className="flex justify-end">100 נקודות</SelectItem>
-                    <SelectItem value="partialScore" className="flex justify-end">פחות מ-100 נקודות</SelectItem>
-                    <SelectItem value="reserve" className="flex justify-end">מיל' או אע"צ, מילא/ה שאלון נפרד</SelectItem>
+                    <SelectItem
+                      value="notRequired"
+                      className="flex justify-end"
+                    >
+                      לא נזקק/ה למילוי שאלון
+                    </SelectItem>
+                    <SelectItem value="fullScore" className="flex justify-end">
+                      100 נקודות
+                    </SelectItem>
+                    <SelectItem
+                      value="partialScore"
+                      className="flex justify-end"
+                    >
+                      פחות מ-100 נקודות
+                    </SelectItem>
+                    <SelectItem value="reserve" className="flex justify-end">
+                      מיל' או אע"צ, מילא/ה שאלון נפרד
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             ) : (
               <p className="font-medium">
-                {getMedicalFormScoreText(trainee.medicalFormScore)}
+                {getMedicalFormScoreText(populatedTrainee.medicalFormScore)}
               </p>
             )}
           </div>
 
           {/* Medical Certificate */}
           {(isEditing && medicalFormScore === "partialScore") ||
-          (!isEditing && trainee.medicalFormScore === "partialScore") ? (
+          (!isEditing &&
+            populatedTrainee.medicalFormScore === "partialScore") ? (
             <div className="bg-card/50 p-4 rounded-lg border border-border/30">
               <h4 className="text-sm font-medium text-muted-foreground mb-2">
                 הוצג אישור רפואי
@@ -759,13 +945,13 @@ const TraineeProfile: React.FC<TraineeProfileProps> = ({
                 </div>
               ) : (
                 <div className="flex items-center">
-                  {trainee.medicalCertificateProvided ? (
+                  {populatedTrainee.medicalCertificateProvided ? (
                     <CheckCircle2 className="h-5 w-5 text-primary ml-2" />
                   ) : (
                     <XCircle className="h-5 w-5 text-muted-foreground ml-2" />
                   )}
                   <p className="font-medium">
-                    {trainee.medicalCertificateProvided ? "כן" : "לא"}
+                    {populatedTrainee.medicalCertificateProvided ? "כן" : "לא"}
                   </p>
                 </div>
               )}
@@ -773,124 +959,142 @@ const TraineeProfile: React.FC<TraineeProfileProps> = ({
           ) : null}
 
           {/* Medical Limitation */}
-          <div className={isEditing && medicalFormScore === "partialScore" && !medicalCertificateProvided ? "col-span-2 bg-card/50 p-4 rounded-lg border border-border/30" : "bg-card/50 p-4 rounded-lg border border-border/30"}>
+          <div
+            className={
+              isEditing &&
+              medicalFormScore === "partialScore" &&
+              !medicalCertificateProvided
+                ? "col-span-2 bg-card/50 p-4 rounded-lg border border-border/30"
+                : "bg-card/50 p-4 rounded-lg border border-border/30"
+            }
+          >
             <h4 className="text-sm font-medium text-muted-foreground mb-2">
               מגבלה רפואית
             </h4>
             {isEditing ? (
               <>
-              <Textarea
-                value={medicalLimitation}
-                onChange={(e) => setMedicalLimitation(e.target.value)}
-                className="min-h-[80px] border border-input mb-2"
-                placeholder="הזן מגבלות רפואיות אם קיימות"
-                disabled={isSaving}
+                <Textarea
+                  value={medicalLimitation}
+                  onChange={(e) => setMedicalLimitation(e.target.value)}
+                  className="min-h-[80px] border border-input mb-2"
+                  placeholder="הזן מגבלות רפואיות אם קיימות"
+                  disabled={isSaving}
                 />
-            <p className="text-xs text-muted-foreground mb-1">
-            <span className="text-red-500">*</span> מידע רפואי הרלוונטי לפעילות הגופנית בלבד (סכרת, אסטמה, יתר לחץ דם...)
-          </p>
-                </>
+                <p className="text-xs text-muted-foreground mb-1">
+                  <span className="text-red-500">*</span> מידע רפואי הרלוונטי
+                  לפעילות הגופנית בלבד (סכרת, אסטמה, יתר לחץ דם...)
+                </p>
+              </>
             ) : (
               <p className="font-medium">
-                {trainee.medicalLimitation || "אין"}
+                {populatedTrainee.medicalLimitation || "אין"}
               </p>
             )}
           </div>
 
           {/* Medical Approval Expiration Date */}
-          {isEditing && (medicalFormScore !== "partialScore" || medicalCertificateProvided) && (
-            <div className="bg-card/50 p-4 rounded-lg border border-border/30 flex flex-col gap-2 justify-center">
-              <h4 className="text-sm font-medium text-muted-foreground mb-2">
-                תאריך פקיעת האישור הרפואי
-              </h4>
-              <div className="flex flex-col md:flex-row gap-2">
-                {!showMedicalApproval ? (
-                  <div className="w-full h-24 bg-black/50 rounded-lg flex items-center justify-center text-center cursor-pointer" onClick={() => setShowMedicalApproval(true)}>
-                    <p className="text-white p-4">לחץ כדי לערוך את פרטי האישור הרפואי</p>
-                  </div>
-                ) : (
-                  <>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className="w-full md:w-[240px] justify-start text-left font-normal"
-                        >
-                          <CalendarIcon className="ml-2 h-4 w-4" />
-                          {medicalApprovalExpiration ? (
-                            format(medicalApprovalExpiration, "dd/MM/yyyy")
-                          ) : (
-                            <span>בחר תאריך</span>
-                          )}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={medicalApprovalExpiration}
-                          onSelect={setMedicalApprovalExpiration}
-                          initialFocus
-                        />
-                      </PopoverContent>
-                    </Popover>
-                    <Button
-                      variant="outline"
-                      onClick={() => setMedicalApprovalExpiration(addYears(new Date(), 1))}
-                      className="w-full md:w-auto"
+          {isEditing &&
+            (medicalFormScore !== "partialScore" ||
+              medicalCertificateProvided) && (
+              <div className="bg-card/50 p-4 rounded-lg border border-border/30 flex flex-col gap-2 justify-center">
+                <h4 className="text-sm font-medium text-muted-foreground mb-2">
+                  תאריך פקיעת האישור הרפואי
+                </h4>
+                <div className="flex flex-col md:flex-row gap-2">
+                  {!showMedicalApproval ? (
+                    <div
+                      className="w-full h-24 bg-black/50 rounded-lg flex items-center justify-center text-center cursor-pointer"
+                      onClick={() => setShowMedicalApproval(true)}
                     >
-                      שנה מהיום
-                    </Button>
-                  </>
+                      <p className="text-white p-4">
+                        לחץ כדי לערוך את פרטי האישור הרפואי
+                      </p>
+                    </div>
+                  ) : (
+                    <>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className="w-full md:w-[240px] justify-start text-left font-normal"
+                          >
+                            <CalendarIcon className="ml-2 h-4 w-4" />
+                            {medicalApprovalExpiration ? (
+                              format(medicalApprovalExpiration, "dd/MM/yyyy")
+                            ) : (
+                              <span>בחר תאריך</span>
+                            )}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={medicalApprovalExpiration}
+                            onSelect={setMedicalApprovalExpiration}
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <Button
+                        variant="outline"
+                        onClick={() =>
+                          setMedicalApprovalExpiration(addYears(new Date(), 1))
+                        }
+                        className="w-full md:w-auto"
+                      >
+                        שנה מהיום
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
+
+          {!isEditing && (
+            <div
+              className={`bg-card/50 p-3 rounded-lg flex items-center border ${
+                hasExpiredMedicalApproval
+                  ? "border-destructive/30"
+                  : "border-green-500/30"
+              }`}
+            >
+              <div
+                className={`shrink-0 ml-3 ${
+                  hasExpiredMedicalApproval
+                    ? "text-destructive"
+                    : "text-green-600"
+                }`}
+              >
+                {hasExpiredMedicalApproval ? (
+                  <AlertTriangle className="h-5 w-5" />
+                ) : (
+                  <Shield className="h-5 w-5" />
                 )}
+              </div>
+              <div className="flex-1">
+                <h3 className="text-xs font-medium text-muted-foreground">
+                  סטטוס אישור רפואי
+                </h3>
+                <div
+                  className={`flex items-center ${
+                    hasExpiredMedicalApproval
+                      ? "text-destructive"
+                      : "text-green-600"
+                  }`}
+                >
+                  <p className="font-medium">
+                    {populatedTrainee.medicalApproval.approved
+                      ? populatedTrainee.medicalApproval.expirationDate
+                        ? `בתוקף עד ${formatDate(
+                            populatedTrainee.medicalApproval.expirationDate
+                          )}`
+                        : "בתוקף"
+                      : "לא בתוקף"}
+                  </p>
+                </div>
               </div>
             </div>
           )}
-
-              {!isEditing && (
-                <div
-                  className={`bg-card/50 p-3 rounded-lg flex items-center border ${
-                    hasExpiredMedicalApproval
-                      ? "border-destructive/30"
-                      : "border-green-500/30"
-                  }`}
-                >
-                  <div
-                    className={`shrink-0 ml-3 ${
-                      hasExpiredMedicalApproval
-                        ? "text-destructive"
-                        : "text-green-600"
-                    }`}
-                  >
-                    {hasExpiredMedicalApproval ? (
-                      <AlertTriangle className="h-5 w-5" />
-                    ) : (
-                      <Shield className="h-5 w-5" />
-                    )}
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-xs font-medium text-muted-foreground">
-                      סטטוס אישור רפואי
-                    </h3>
-                    <div
-                      className={`flex items-center ${
-                        hasExpiredMedicalApproval
-                          ? "text-destructive"
-                          : "text-green-600"
-                      }`}
-                    >
-                      <p className="font-medium">
-                        {trainee.medicalApproval.approved
-                          ? trainee.medicalApproval.expirationDate
-                            ? `בתוקף עד ${formatDate(
-                                trainee.medicalApproval.expirationDate
-                              )}`
-                            : "בתוקף"
-                          : "לא בתוקף"}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
         </div>
       </div>
     </div>
