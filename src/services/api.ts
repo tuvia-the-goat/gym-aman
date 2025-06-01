@@ -407,7 +407,7 @@ export const traineeService = {
   },
 
   // Get trainees with medical approval stats
-  l: async (
+  getMedicalApprovalStats: async (
     baseId?: string
   ): Promise<{ approved: number; notApproved: number }> => {
     const response = await api.get("/trainees/medical-approval-stats", {
@@ -436,7 +436,7 @@ export const traineeService = {
   },
 
   // Get trainee by ID with optional population
-  getById: async (traineeId: string, populate?: string[]): Promise<Trainee> => {
+  getByIdPopulate: async (traineeId: string, populate?: string[]): Promise<Trainee> => {
     const queryParams = new URLSearchParams();
     if (populate?.length) {
       queryParams.append("populate", populate.join(","));

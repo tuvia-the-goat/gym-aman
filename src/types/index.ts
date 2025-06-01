@@ -14,6 +14,7 @@ export interface Base {
   _id: string;
   name: string;
   location: string; // Added location property
+  departmentCount?: number;
   isActive: boolean;
 }
 
@@ -159,4 +160,8 @@ export interface DepartmentService {
     departments: Department[];
     subDepartments: SubDepartment[];
   }>;
+}
+
+export interface PopulatedAdmin extends Omit<Admin, 'baseId'> {
+  baseId?: { _id: string; name: string } | null;
 }

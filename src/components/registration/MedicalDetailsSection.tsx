@@ -137,7 +137,7 @@ const MedicalDetailsSection = ({
             <span className="text-xs text-muted-foreground">(רשות)</span>
           </div>
           <p className="text-xs text-muted-foreground mb-1">
-            <span className="text-red-500">*</span> מידע רפואי הרלוונטי לפעילות הגופנית בלבד (סכרת, אסטמה, יתר לחץ דם...)
+             מידע רפואי הרלוונטי לפעילות הגופנית בלבד (סכרת, אסטמה, יתר לחץ דם...)
           </p>
           <Textarea
             id="medicalLimitation"
