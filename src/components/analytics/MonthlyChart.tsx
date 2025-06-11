@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import ChartCard from './ChartCard';
@@ -27,7 +26,7 @@ const MonthlyChart: React.FC<MonthlyChartProps> = ({ data }) => {
             />
             <Line 
               type="monotone" 
-              dataKey={"value"} 
+              dataKey="value" 
               stroke="#8884d8" 
               activeDot={{ r: 8 }}
               strokeWidth={2} 

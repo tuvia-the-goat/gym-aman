@@ -85,9 +85,9 @@ const TopDepartmentsChart: React.FC<TopDepartmentsChartProps> = ({
                   {showBaseColumn && (
                     <TableHead className="text-right">בסיס</TableHead>
                   )}
-                  <TableHead className="text-right">כניסות</TableHead>
-                  <TableHead className="text-right">כמות תקנים</TableHead>
-                  <TableHead className="text-right">אחוז מכמות אנשים</TableHead>
+                  <TableHead className="text-right">מספר כניסות </TableHead>
+                  <TableHead className="text-right">תקנים</TableHead>
+                  <TableHead className="text-right">אחוז כניסות</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

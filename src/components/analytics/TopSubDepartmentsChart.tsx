@@ -89,14 +89,14 @@ const TopSubDepartmentsChart: React.FC<TopSubDepartmentsChartProps> = ({
                 {showBaseColumn && (
                   <TableHead className="text-right">בסיס</TableHead>
                 )}
-                <TableHead className="text-right">אחוז כניסות</TableHead>
                 <TableHead className="text-right">מספר כניסות</TableHead>
                 <TableHead className="text-right">תקנים</TableHead>
+                <TableHead className="text-right">אחוז כניסות</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {data.map((item) => (
-                <TableRow key={item.name}>
+              {data.map((item, index) => (
+                <TableRow key={index}>
                   <TableCell className="text-right">{item.name}</TableCell>
                   <TableCell className="text-right">
                     {item.departmentName}
@@ -106,11 +106,11 @@ const TopSubDepartmentsChart: React.FC<TopSubDepartmentsChartProps> = ({
                       {item.baseName}
                     </TableCell>
                   )}
-                  <TableCell className="text-right">{item.value}%</TableCell>
                   <TableCell className="text-right">{item.rawValue}</TableCell>
                   <TableCell className="text-right">
                     {item.numOfPeople}
                   </TableCell>
+                  <TableCell className="text-right">{item.value}%</TableCell>
                 </TableRow>
               ))}
             </TableBody>

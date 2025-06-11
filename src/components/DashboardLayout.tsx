@@ -248,7 +248,7 @@ const DashboardLayout = ({ children, activeTab }: DashboardLayoutProps) => {
           `}
         >
           <SidebarHeader className="px-6 py-6 flex flex-col items-center justify-center text-center">
-            <h1 className="text-3xl font-bold">מערכת אימ"ון 2.0</h1>
+            <h1 className="text-3xl font-bold">מערכת אימ"ון</h1>
             <div className="mt-3 px-4 py-2 bg-primary/10 text-primary rounded-full text-sm font-medium">
               {admin.role === "generalAdmin"
                 ? "מנהל כללי"

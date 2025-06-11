@@ -108,14 +108,7 @@ const FilterDialog: React.FC<FilterDialogProps> = ({
   const [traineeSearch, setTraineeSearch] = useState("");
   const [showDateRange, setShowDateRange] = useState(false);
 
-  // Set default date range to last month on component mount
-  useEffect(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const lastMonthStart = subMonths(today, 1);
-    setStartDate(lastMonthStart);
-    setEndDate(today);
-  }, []);
+
 
   // Filter trainees based on search term
   const filterTraineesBySearch = (trainees: Trainee[]) => {

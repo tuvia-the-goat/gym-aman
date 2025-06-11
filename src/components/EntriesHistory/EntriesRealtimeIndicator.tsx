@@ -44,27 +44,7 @@ const EntriesRealtimeIndicator: React.FC<EntriesRealtimeIndicatorProps> = ({ cla
   };
 
   return (
-    <div 
-      className={cn(
-        "relative flex items-center gap-2 rounded-lg px-3 py-1 text-xs cursor-pointer",
-        isConnected ? "bg-green-100 text-green-800" : "bg-amber-100 text-amber-800",
-        className
-      )}
-      onClick={handleClick}
-      title={isConnected ? "מחובר בזמן אמת" : "לא מחובר בזמן אמת"}
-    >
-      {isConnected ? (
-        <>
-          <WifiIcon className="h-3.5 w-3.5" />
-          <span>מחובר בזמן אמת</span>
-        </>
-      ) : (
-        <>
-          <WifiOffIcon className="h-3.5 w-3.5" />
-          <span>לא מחובר</span>
-        </>
-      )}
-    </div>
+<></>
   );
 };
 

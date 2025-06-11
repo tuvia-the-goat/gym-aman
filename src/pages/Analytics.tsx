@@ -1,8 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import DashboardLayout from '../components/DashboardLayout';
 import { useAnalyticsFilters } from '../hooks/useAnalyticsFilters';
 import { useAnalyticsData } from '../hooks/useAnalyticsData';
 import { subDays, subWeeks, subMonths } from 'date-fns';
+import { Loader2 } from 'lucide-react';
+import axios from 'axios';
+import { useAdmin } from '../context/AdminContext';
 
 // Import refactored components
 import FilterHeader from '../components/analytics/FilterHeader';
@@ -22,6 +25,22 @@ import AgeDistributionChart from '../components/analytics/AgeDistributionChart';
 import MedicalProfileChart from '../components/analytics/MedicalProfileChart';
 
 const Analytics = () => {
+  const { admin } = useAdmin();
+  const [analyticsData, setAnalyticsData] = useState({
+    weekdaysData: [],
+    monthlyData: [],
+    topTraineesData: [],
+    topDepartmentsData: [],
+    topSubDepartmentsData: [],
+    basesData: [],
+    genderDistributionData: [],
+    genderEntriesDistributionData: [],
+    ageDistributionData: [],
+    detailedTraineeAgeData: [],
+    medicalProfileData: [],
+    hourlyDistributionData: []
+  });
+
   const {
     startDate,
     setStartDate,
@@ -63,16 +82,23 @@ const Analytics = () => {
     ageDistributionData,
     detailedTraineeAgeData,
     medicalProfileData,
-    avgEntriesPerTrainee,
+    hourlyDistributionData,
     isGeneralAdmin,
     getDepartmentName,
-    getBaseName
+    getBaseName,
+    entries,
+    trainees,
+    loadingStates,
+    fetchHourlyData
   } = useAnalyticsData(
     filteredEntries,
     filteredTrainees,
     startDate,
     endDate,
-    hasSpecificFilters
+    hasSpecificFilters,
+    selectedDepartmentIds,
+    selectedSubDepartmentIds,
+    selectedTrainees
   );
 
   const handleQuickDateSelect = (value: string) => {
@@ -115,6 +141,12 @@ const Analytics = () => {
       setSelectedSubDepartmentIds([]);
     }
   };
+
+  const handleHourlyDayChange = async (day: string) => {
+    const selectedDay = day === 'כל הימים' ? undefined : day;
+    await fetchHourlyData(selectedDay);
+  };
+
 
   return (
     <DashboardLayout activeTab="analytics">
@@ -171,46 +203,81 @@ const Analytics = () => {
         />
         
         {/* Summary Stats */}
-        <SummaryStats 
-          entriesCount={filteredEntries.length}
-          traineesCount={filteredTrainees.length}
-          avgEntriesPerTrainee={avgEntriesPerTrainee}
-        />
+          <SummaryStats 
+            entriesCount={entries?.count || 0}
+            traineesCount={trainees?.count || 0}
+            avgEntriesPerTrainee={Number((entries?.count / (trainees?.count || 1)).toFixed(2))}
+            isLoadingEntries={loadingStates.entries}
+            isLoadingTrainees={loadingStates.trainees}
+            isLoadingAvg={loadingStates.entries || loadingStates.trainees}
+          />
         
         
         {/* New Chart - Hourly Distribution */}
-        <HourlyDistributionChart entries={filteredEntries} />
+        <HourlyDistributionChart 
+          data={hourlyDistributionData || []} 
+          isLoading={loadingStates.hourlyDistribution}
+          onDayChange={handleHourlyDayChange}
+        />
         
         {/* Main Charts - always visible, even with specific filters */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Entries by Day of Week */}
-          <WeekdayChart data={weekdaysData} />
+          {loadingStates.weekday ? (
+            <div className="bg-card shadow-sm rounded-lg p-6 border h-80 flex items-center justify-center">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : (
+            <WeekdayChart data={weekdaysData || []} />
+          )}
           
           {/* Monthly Entries */}
-          <MonthlyChart data={monthlyData} />
+          {loadingStates.monthly ? (
+            <div className="bg-card shadow-sm rounded-lg p-6 border h-80 flex items-center justify-center">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : (
+            <MonthlyChart data={monthlyData || []} />
+          )}
         </div>
         
         {/* Top Trainees and Departments - always visible */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Top Trainees */}
-          <TopTraineesChart 
-            data={topTraineesData} 
-            hasSpecificFilters={hasSpecificFilters}
-            showBaseColumn={isGeneralAdmin}
-          />
-          
-          {/* Top Departments - only show if no specific filters active */}
-          {!hasSpecificFilters && (
-            <TopDepartmentsChart 
-            data={topDepartmentsData}
-            showBaseColumn={isGeneralAdmin}
+          {loadingStates.topPerformers ? (
+            <div className="bg-card shadow-sm rounded-lg p-6 border h-80 flex items-center justify-center">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : (
+            <TopTraineesChart 
+              data={topTraineesData || []} 
+              hasSpecificFilters={hasSpecificFilters}
+              showBaseColumn={isGeneralAdmin}
             />
           )}
+          
+          {/* Top Departments - only show if no specific filters active */}
+          {
+            loadingStates.topPerformers ? (
+              <div className="bg-card shadow-sm rounded-lg p-6 border h-80 flex items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : (
+              <TopDepartmentsChart 
+                data={topDepartmentsData || []}
+                showBaseColumn={isGeneralAdmin}
+              />
+            )
+          }
         </div>
 
         {/* Top SubDepartments - our new chart */}
         <div className="w-full">
-          {topSubDepartmentsData.length > 0 ? (
+          {loadingStates.topSubDepartments ? (
+            <div className="bg-card shadow-sm rounded-lg p-6 border h-80 flex items-center justify-center">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : topSubDepartmentsData?.length > 0 ? (
             <TopSubDepartmentsChart
               data={topSubDepartmentsData}
               showBaseColumn={isGeneralAdmin}
@@ -219,29 +286,60 @@ const Analytics = () => {
             <div className="bg-card shadow-sm rounded-lg p-6 border">
               <h3 className="text-lg font-medium mb-4">5 תתי-המסגרות המובילות</h3>
               <div className="h-60 flex items-center justify-center">
-                <p className="text-center text-muted-foreground">אין נתונים זמינים על תתי-מסגרות{selectedSubDepartmentIds.length > 0 ? " עם הסינון הנוכחי" : ""}</p>
+                <p className="text-center text-muted-foreground">אין נתונים זמינים על תתי-מסגרות{selectedSubDepartmentIds?.length > 0 ? " עם הסינון הנוכחי" : ""}</p>
               </div>
             </div>
           )}
         </div>
         
-        <MedicalProfileChart 
-          data={medicalProfileData}
-        />
+        {/* Medical Profile Chart */}
+        {!startDate && !endDate && (
+          loadingStates.medicalProfile ? (
+            <div className="bg-card shadow-sm rounded-lg p-6 border h-80 flex items-center justify-center">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : (
+            <MedicalProfileChart 
+              data={medicalProfileData || []}
+            />
+          )
+        )}
+
         {/* New Charts - Gender, Age, and Medical Profile Distribution */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <GenderDistributionChart 
-            data={genderDistributionData} 
-            entriesData={genderEntriesDistributionData} 
-          />
-          <AgeDistributionChart 
-            data={ageDistributionData} 
-            traineeDetails={detailedTraineeAgeData}
-          />
-        </div>
+        {!startDate && !endDate && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {loadingStates.gender ? (
+              <div className="bg-card shadow-sm rounded-lg p-6 border h-80 flex items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : (
+              <GenderDistributionChart 
+                data={genderDistributionData || []} 
+                entriesData={genderEntriesDistributionData || []} 
+              />
+            )}
+            {loadingStates.age ? (
+              <div className="bg-card shadow-sm rounded-lg p-6 border h-80 flex items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : (
+              <AgeDistributionChart 
+                data={ageDistributionData || []} 
+                traineeDetails={detailedTraineeAgeData || []}
+              />
+            )}
+          </div>
+        )}
+
         {/* Bases Chart (only for allBasesAdmin) and no specific filters */}
-        {isGeneralAdmin && !hasSpecificFilters && basesData.length > 0 && (
-          <BasesChart data={basesData} />
+        {isGeneralAdmin && !hasSpecificFilters && (
+          loadingStates.bases ? (
+            <div className="bg-card shadow-sm rounded-lg p-6 border h-80 flex items-center justify-center">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : basesData?.length > 0 && (
+            <BasesChart data={basesData} />
+          )
         )}
       </div>
     </DashboardLayout>

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import ChartCard from './ChartCard';
@@ -10,7 +9,6 @@ interface WeekdayChartProps {
 }
 
 const WeekdayChart: React.FC<WeekdayChartProps> = ({ data }) => {
-  
   return (
     <ChartCard title="כניסות לפי ימים בשבוע">
       <div className="h-80">
@@ -26,7 +24,7 @@ const WeekdayChart: React.FC<WeekdayChartProps> = ({ data }) => {
               ]} 
             />
             <Bar 
-              dataKey={"value"} 
+              dataKey="value" 
               fill="#3b82f6" 
             />
           </BarChart>

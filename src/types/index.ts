@@ -89,6 +89,16 @@ export interface Entry {
 export interface AdminContextType {
   admin: Admin | null;
   setAdmin: (admin: Admin | null) => void;
+  bases: Base[];
+  setBases: (bases: Base[]) => void;
+  departments: Department[];
+  setDepartments: (departments: Department[]) => void;
+  subDepartments: SubDepartment[];
+  setSubDepartments: (subDepartments: SubDepartment[]) => void;
+  trainees: Trainee[];
+  setTrainees: (trainees: Trainee[]) => void;
+  entries: Entry[];
+  setEntries: (entries: Entry[]) => void;
   loading: boolean;
   setLoading: (loading: boolean) => void;
 }
@@ -123,6 +133,7 @@ export interface Trainee {
   notes?: string;
   medicalFormScore: MedicalFormScore;
   medicalCertificateProvided?: boolean;
+  count?: number;
 }
 
 export interface PopulatedTrainee extends Omit<Trainee, 'departmentId' | 'baseId' | 'subDepartmentId'> {
