@@ -46,12 +46,12 @@ const HourlyDistributionChart: React.FC<HourlyDistributionChartProps> = ({ data,
               <SelectValue placeholder="בחר יום" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="כל הימים">כל הימים</SelectItem>
               {dayNames.map((day) => (
                 <SelectItem key={day} value={day}>
                   {day}
                 </SelectItem>
               ))}
+              <SelectItem value="כל הימים">כל הימים</SelectItem>
             </SelectContent>
           </Select>
         </div>

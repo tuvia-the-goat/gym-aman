@@ -1137,7 +1137,7 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({
           >
             {filteredDepartments.length === 0 && searchQuery ? (
               <div className="text-center py-8 text-muted-foreground">
-                לא נמצאו מסגרות או תתי-מסגרות התואמות לחיפוש
+                לא נמצאו מסגרות התואמות לחיפוש
               </div>
             ) : (
               <>

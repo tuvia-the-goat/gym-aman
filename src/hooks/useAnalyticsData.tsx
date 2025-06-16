@@ -4,7 +4,6 @@ import { useCallback, useEffect, useState } from 'react';
 import axios from 'axios';
 
 export const useAnalyticsData = (
-  filteredEntries: Entry[],
   filteredTrainees: Trainee[],
   startDate?: Date,
   endDate?: Date,
@@ -253,7 +252,7 @@ export const useAnalyticsData = (
     } catch (err) {
       console.error('Error in concurrent data fetch:', err);
     }
-  }, [admin, startDate, endDate, filteredEntries]);
+  }, [admin, startDate, endDate, selectedDepartmentIds, selectedSubDepartmentIds, selectedTrainees]);
 
   const fetchHourlyData = useCallback(async (selectedDay?: string) => {
     if (!admin) return;
@@ -293,7 +292,7 @@ export const useAnalyticsData = (
 
   useEffect(() => {
     fetchAnalyticsData();
-  }, [fetchAnalyticsData]);
+  }, [fetchAnalyticsData, selectedDepartmentIds, selectedSubDepartmentIds, selectedTrainees]);
 
   // Check if any data is still loading
   const isAnyLoading = Object.values(isLoading).some(Boolean);

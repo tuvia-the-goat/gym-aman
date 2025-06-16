@@ -252,7 +252,7 @@ const DashboardLayout = ({ children, activeTab }: DashboardLayoutProps) => {
             <div className="mt-3 px-4 py-2 bg-primary/10 text-primary rounded-full text-sm font-medium">
               {admin.role === "generalAdmin"
                 ? "מנהל כללי"
-                : `מנהל חדר כושר- בסיס ${baseName}`}
+                : `מנהל חדר כושר-  ${baseName}`}
             </div>
           </SidebarHeader>
 

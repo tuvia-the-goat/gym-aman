@@ -1,73 +1,51 @@
 import { useState, useMemo } from "react";
 import { isWithinInterval, parseISO } from "date-fns";
 import { useAdmin } from "../context/AdminContext";
+import { useQuery } from "@tanstack/react-query";
+import { departmentService, subDepartmentService, traineeService, entryService } from "../services/api";
 
 export const useAnalyticsFilters = () => {
-  const { admin, entries, trainees, departments, subDepartments } = useAdmin();
+  const { admin } = useAdmin();
 
   // Filtering state
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
-  const [selectedDepartmentIds, setSelectedDepartmentIds] = useState<string[]>(
-    []
-  );
-  const [selectedSubDepartmentIds, setSelectedSubDepartmentIds] = useState<
-    string[]
-  >([]);
+  const [selectedDepartmentIds, setSelectedDepartmentIds] = useState<string[]>([]);
+  const [selectedSubDepartmentIds, setSelectedSubDepartmentIds] = useState<string[]>([]);
   const [selectedTrainees, setSelectedTrainees] = useState<string[]>([]);
   const [showFilterDialog, setShowFilterDialog] = useState(false);
 
+
+
+  // Fetch departments using TanStack Query
+  const { data: departments = [] } = useQuery({
+    queryKey: ['departments', admin?.role, admin?.baseId],
+    queryFn: () => departmentService.getAll(admin?.role === "gymAdmin" ? admin.baseId : undefined),
+  });
+
+  // Fetch subDepartments using TanStack Query
+  const { data: subDepartments = [] } = useQuery({
+    queryKey: ['subDepartments', selectedDepartmentIds],
+    queryFn: async () => {
+      // Fetch subdepartments for each selected department and combine results
+      const results = await Promise.all(
+        selectedDepartmentIds.map(deptId => 
+          subDepartmentService.getByDepartment(deptId)
+        )
+      );
+      return results.flat();
+    },
+
+  });
+
+  // Fetch trainees using TanStack Query
+  const { data: trainees = [] } = useQuery({
+    queryKey: ['trainees', admin?.role, admin?.baseId],
+    queryFn: () => traineeService.getAll(),
+  });
+
   // Filter data based on admin role and filters
-  const filteredEntries = useMemo(() => {
-    // Start with only successful entries
-    let filtered = entries.filter((entry) => entry.status === "success");
 
-    // Admin role filter
-    if (admin?.role === "gymAdmin" && admin.baseId) {
-      filtered = filtered.filter((entry) => entry.baseId === admin.baseId);
-    }
-
-    // Date range filter
-    if (startDate && endDate) {
-      filtered = filtered.filter((entry) => {
-        const entryDate = parseISO(entry.entryDate);
-        return isWithinInterval(entryDate, { start: startDate, end: endDate });
-      });
-    }
-
-    // Department filter
-    if (selectedDepartmentIds.length > 0) {
-      filtered = filtered.filter((entry) =>
-        selectedDepartmentIds.includes(entry.departmentId)
-      );
-    }
-
-    // SubDepartment filter
-    if (selectedSubDepartmentIds.length > 0) {
-      filtered = filtered.filter(
-        (entry) =>
-          entry.subDepartmentId &&
-          selectedSubDepartmentIds.includes(entry.subDepartmentId)
-      );
-    }
-
-    // Selected trainees filter
-    if (selectedTrainees.length > 0) {
-      filtered = filtered.filter((entry) =>
-        selectedTrainees.includes(entry.traineeId)
-      );
-    }
-
-    return filtered;
-  }, [
-    admin,
-    entries,
-    startDate,
-    endDate,
-    selectedDepartmentIds,
-    selectedSubDepartmentIds,
-    selectedTrainees,
-  ]);
 
   const filteredTrainees = useMemo(() => {
     let filtered = trainees;
@@ -293,7 +271,6 @@ export const useAnalyticsFilters = () => {
     setSelectedTrainees,
     showFilterDialog,
     setShowFilterDialog,
-    filteredEntries,
     filteredTrainees,
     availableDepartments,
     availableSubDepartments,

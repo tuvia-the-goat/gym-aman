@@ -54,7 +54,6 @@ const Analytics = () => {
     setSelectedTrainees,
     showFilterDialog,
     setShowFilterDialog,
-    filteredEntries,
     filteredTrainees,
     availableDepartments,
     availableSubDepartments,
@@ -91,7 +90,6 @@ const Analytics = () => {
     loadingStates,
     fetchHourlyData
   } = useAnalyticsData(
-    filteredEntries,
     filteredTrainees,
     startDate,
     endDate,

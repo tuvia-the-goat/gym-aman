@@ -67,16 +67,7 @@ const TraineeProfileDialog: React.FC<TraineeProfileDialogProps> = ({
               מגבלה רפואית
             </span>
           )}
-          {admin?.role === "gymAdmin" && trainee?.baseId !== admin?.baseId && (
-            <span className="inline-flex items-center px-2 py-1 bg-purple-100 text-purple-800 text-sm rounded-md">
-              <AlertTriangle className="h-4 w-4 ml-1.5" />
-              <div className="flex flex-col mr-2">
-                <div>מתאמן מבסיס אחר</div>
-                <div>אנא צור קשר עם מנהל המערכת </div>
-                <div>כדי לשייך אותו לבסיסך</div>
-              </div>
-            </span>
-          )}
+
         </DialogTitle>
       </DialogHeader>
 

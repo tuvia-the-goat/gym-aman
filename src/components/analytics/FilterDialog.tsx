@@ -108,7 +108,10 @@ const FilterDialog: React.FC<FilterDialogProps> = ({
   const [traineeSearch, setTraineeSearch] = useState("");
   const [showDateRange, setShowDateRange] = useState(false);
 
-
+  const getDepartmentNameFromId = (departmentId: string): string => {
+    const department = availableDepartments.find(dept => dept._id === departmentId);
+    return department?.name || 'מסגרת לא ידועה';
+  };
 
   // Filter trainees based on search term
   const filterTraineesBySearch = (trainees: Trainee[]) => {
@@ -161,6 +164,8 @@ const FilterDialog: React.FC<FilterDialogProps> = ({
     }
   };
 
+  
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md flex flex-col">
@@ -198,7 +203,7 @@ const FilterDialog: React.FC<FilterDialogProps> = ({
                     <CommandGroup>
                       {availableDepartments.map((department) => (
                         <CommandItem
-                          key={department._id}
+                        key={department._id}
                           value={department.name}
                           onSelect={() => {
                             toggleDepartment(department._id);
@@ -231,7 +236,7 @@ const FilterDialog: React.FC<FilterDialogProps> = ({
                     key={deptId}
                     className="bg-muted text-sm rounded-md px-2 py-1 flex items-center gap-1"
                   >
-                    {getDepartmentName(deptId)}
+                    {getDepartmentNameFromId(deptId)}
                     <button
                       onClick={() => toggleDepartment(deptId)}
                       className="hover:text-destructive"

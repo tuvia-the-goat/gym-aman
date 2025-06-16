@@ -58,7 +58,6 @@ const EntriesHistory = () => {
     goToPage,
     refreshEntries,
   } = useEntriesFilter();
-  console.log(selectedDepartment)
   // Set up WebSocket event handler for new entries
   useEffect(() => {
     // Register handler for new entries

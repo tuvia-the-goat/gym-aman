@@ -133,7 +133,7 @@ const TraineeProfile: React.FC<TraineeProfileProps> = ({
   const { data: populatedTrainee, isLoading: isLoadingTrainee } = useQuery({
     queryKey: ["trainee-populated", trainee._id],
     queryFn: () =>
-      traineeService.getById(trainee._id, [
+      traineeService.getByIdPopulate(trainee._id, [
         "subDepartmentId",
         "departmentId",
         "baseId",
