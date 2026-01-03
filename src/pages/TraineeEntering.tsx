@@ -452,7 +452,7 @@ const TraineeEntering = () => {
                                 <li className="flex items-start">
                                   <CheckCircle className="h-4 w-4 ml-2 mt-0.5 text-primary shrink-0" />
                                   <span>
-                                    הנני כשיר לאימון כולל תרגילי כוח ופעילות
+                                    הנני כשיר/ה לאימון כולל תרגילי כוח ופעילות
                                     אירובית.
                                     <b>
                                       {" "}
@@ -482,7 +482,7 @@ const TraineeEntering = () => {
                                 <li className="flex items-start">
                                   <CheckCircle className="h-4 w-4 ml-2 mt-0.5 text-primary shrink-0" />
                                   <span>
-                                    בחתימתי בכניסה לחד"כ אני מצהירה כי{" "}
+                                    בחתימתי בכניסה לחד"כ אני מצהיר/ה כי{" "}
                                     <b>
                                       נמצא בידיי אישור רופא לביצוע פ"ג ואני כשיר
                                       לבצע אימון
