@@ -571,7 +571,7 @@ const TraineeProfile: React.FC<TraineeProfileProps> = ({
                       popperClassName="rtl-datepicker"
                       id="birthDate"
                       calendarClassName="font-medium text-black"
-                      autoComplete="off"
+                      autoComplete="on"
                     />
                   </div>
                 </div>

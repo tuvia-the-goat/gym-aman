@@ -22,7 +22,7 @@ const GenderDistributionChart: React.FC<GenderChartProps> = ({ data, entriesData
   const [dataType, setDataType] = useState<"trainees" | "entries">("entries");
   
   const displayData = dataType === "trainees" ? data : entriesData;
-
+  console.log(displayData);
   return (
     <ChartCard title="התפלגות מגדרית">
       <div className="flex justify-end mb-4 gap-2">

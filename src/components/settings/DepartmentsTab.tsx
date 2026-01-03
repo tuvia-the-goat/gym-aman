@@ -196,7 +196,13 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({
     if (!query.trim()) {
       setSearchResults(null);
       setOpenAccordionItems([]);
-      await loadDepartments(1);
+      setDepartments([]); // Clear current departments
+      setIsLoading(true); // Set loading state
+      try {
+        await loadDepartments(1);
+      } finally {
+        setIsLoading(false);
+      }
       return;
     }
 
@@ -224,7 +230,6 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({
           ...prev,
           ...subDeptsByDepartment
         }));
-        console.log(subDeptsByDepartment);
       } catch (error) {
         console.error("Error searching departments:", error);
         toast({
@@ -1113,13 +1118,19 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({
             {searchQuery && (
               <button
                 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                onClick={() => {
+                onClick={async () => {
                   setSearchQuery("");
                   setSearchResults(null);
                   setOpenAccordionItems([]);
                   setCurrentPage(1);
                   setHasMore(true);
-                  loadDepartments(1);
+                  setDepartments([]); // Clear current departments
+                  setIsLoading(true); // Set loading state
+                  try {
+                    await loadDepartments(1);
+                  } finally {
+                    setIsLoading(false);
+                  }
                 }}
               >
                 <X className="h-4 w-4" />
